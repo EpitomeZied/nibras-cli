@@ -20,8 +20,6 @@ function printUsage() {
 ██║ ╚████║██║██████╔╝██║  ██║██║  ██║███████║
 ╚═╝  ╚═══╝╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
-Nibras
-
 nibras <subject> <command> <project> [options]
 
 Commands
