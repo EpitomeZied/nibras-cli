@@ -7,6 +7,7 @@ const { loadTask } = require("./task");
 const { pingRemote } = require("./ping");
 const { updateBuildpack } = require("./updateBuildpack");
 const { resolveManualScore, computePercentage: computeManualPercentage } = require("./manualGrade");
+const { autoCheck } = require("./autoCheck");
 
 function printUsage() {
   // eslint-disable-next-line no-console
@@ -58,7 +59,8 @@ function runTest(argv, subject, project, config) {
     .option("--local", "Run checks locally (default true)")
     .option("--earned <number>", "Earned points for check grading")
     .option("--total <number>", "Total points for check grading")
-    .option("--scores <path>", "Scores JSON file for check grading");
+    .option("--scores <path>", "Scores JSON file for check grading")
+    .option("--grading <path>", "grading.json file for auto-checking");
   cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
@@ -95,6 +97,34 @@ function runTest(argv, subject, project, config) {
 
   if (projectType !== "check") {
     throw new Error(`Unsupported project type "${projectType}". Use "check" or "check50".`);
+  }
+
+  const gradingFile = opts.grading || projectConfig.gradingFile || "grading.json";
+  const auto = autoCheck({
+    cwd: process.cwd(),
+    projectPath: projectConfig.path || project,
+    gradingFile
+  });
+
+  if (auto.used) {
+    // eslint-disable-next-line no-console
+    console.log(`Auto-check: ${auto.earnedPoints}/${auto.totalPoints} (${auto.percentage}%)`);
+    auto.results.forEach((result) => {
+      if (result.missing) {
+        // eslint-disable-next-line no-console
+        console.log(`${result.id}: missing answer file (${result.answerPath})`);
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log(
+        `${result.id}: ${result.earned}/${result.points} (${result.matched}/${result.totalItems} items matched)`
+      );
+    });
+    const minScore = toNumber(opts.minScore, 100);
+    if (auto.percentage < minScore) {
+      process.exitCode = 1;
+    }
+    return Promise.resolve();
   }
 
   const { earnedPoints, totalPoints } = resolveManualScore({

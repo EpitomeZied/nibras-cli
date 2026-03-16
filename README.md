@@ -31,7 +31,26 @@ Create `.nibras.json` in your project root:
 }
 ```
 
-Create `Stanford Data/cs161/Exams/1/scores.json`:
+For auto-checking, add `grading.json` to the project folder and create one
+answer file per question (e.g., `q1.txt`).
+
+Example `grading.json`:
+
+```json
+{
+  "totalPoints": 100,
+  "questions": [
+    {
+      "id": "q1",
+      "points": 45,
+      "answerFile": "q1.txt",
+      "solutions": ["Answer A", "Answer B"]
+    }
+  ]
+}
+```
+
+For manual grading, create `scores.json`:
 
 ```json
 {
@@ -52,8 +71,10 @@ nibras ping
 
 ## Grading
 
-`check` grading uses `earnedPoints / totalPoints * 100`. You can set
-`totalPoints` in `.nibras.json` or in `scores.json`. Validation rules:
+`check` grading prefers auto-checking if `grading.json` exists. Otherwise it
+falls back to `scores.json`.
+
+Validation rules:
 - `earnedPoints` must be >= 0
 - `totalPoints` must be > 0
 - `earnedPoints` must be <= `totalPoints`
