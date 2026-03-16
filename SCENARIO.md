@@ -1,7 +1,25 @@
-# Nibras CLI Process (Instructor Workflow)
+# Nibras CLI Scenario (User + Instructor)
 
-This document describes the end-to-end process for preparing materials,
-running setup, and grading with instructor-only rules.
+This document describes an end-to-end scenario for users (students) and
+instructors, plus local manual test data.
+
+## Quick Scenario (User)
+
+1. Download the project bundle:
+```
+nibras cs161 setup exam1
+```
+2. Write answers in a folder you control:
+```
+/home/zied/answers/cs161/exam1/q1.txt
+/home/zied/answers/cs161/exam1/q2.txt
+/home/zied/answers/cs161/exam1/q3.txt
+```
+3. (Optional) Run a local check if you have access to grading rules:
+```
+NIBRAS_GRADING_ROOT=/home/zied/grading \
+nibras cs161 test exam1 --answers-dir /home/zied/answers/cs161/exam1
+```
 
 ## 1) Prepare Exam Bundle
 
@@ -52,7 +70,7 @@ nibras cs161 setup exam1
 
 Store grading rules outside the student repo:
 ```
-/private/grading/cs161/exam1/grading.json
+/home/zied/grading/cs161/exam1/grading.json
 ```
 
 Example `grading.json` schema:
@@ -88,7 +106,7 @@ Keep answers in any directory, for example:
 ## 6) Run Grading
 
 ```
-NIBRAS_GRADING_ROOT=/private/grading \
+NIBRAS_GRADING_ROOT=/home/zied/grading \
 nibras cs161 test exam1 --answers-dir /home/zied/answers/cs161/exam1
 ```
 
@@ -102,3 +120,17 @@ The checker fails if:
 - Sum of question points does not equal `totalPoints`.
 - Any answer file is missing or empty.
 
+## 8) Manual Test Data (Included)
+
+This repo includes sample answers for manual testing:
+```
+sample-answers/cs161/exam1/q1.txt
+sample-answers/cs161/exam1/q2.txt
+sample-answers/cs161/exam1/q3.txt
+```
+
+To test locally:
+```
+NIBRAS_GRADING_ROOT=/home/zied/grading \
+nibras cs161 test exam1 --answers-dir /home/zied/nibras-cli/sample-answers/cs161/exam1
+```
