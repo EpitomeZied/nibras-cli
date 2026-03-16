@@ -1,7 +1,7 @@
 # Nibras CLI Scenario (User + Instructor)
 
 This document describes an end-to-end scenario for users (students) and
-instructors, plus local manual test data.
+instructors, plus sample answer data.
 
 ## Quick Scenario (User)
 
@@ -25,14 +25,7 @@ nibras cs161 test exam1 --answers-dir /home/zied/answers/cs161/exam1
 
 1. Create the project folder (example for exam1):
    - `Stanford Data/cs161/Exams/1/`
-2. Add `scores.json` for manual fallback:
-```json
-{
-  "earnedPoints": 0,
-  "totalPoints": 100
-}
-```
-3. Zip the folder:
+2. Zip the folder:
 ```
 cd "Stanford Data/cs161/Exams"
 zip -r /home/zied/nibras-cli/exam1.zip "1"
@@ -115,14 +108,14 @@ Output includes per-question PASS/FAIL and total percentage.
 ## 7) Validation Behavior
 
 The checker fails if:
-- `grading.json` is missing (when grading root is set).
+- `grading.json` is missing (when `requireGrading` is enabled or grading root is set).
 - Question IDs are duplicated.
 - Sum of question points does not equal `totalPoints`.
 - Any answer file is missing or empty.
 
-## 8) Manual Test Data (Included)
+## 8) Sample Answers (Included)
 
-This repo includes sample answers for manual testing:
+This repo includes sample answers for testing:
 ```
 sample-answers/cs161/exam1/q1.txt
 sample-answers/cs161/exam1/q2.txt
