@@ -35,7 +35,8 @@ Create `Stanford Data/cs161/Exams/1/scores.json`:
 
 ```json
 {
-  "earnedPoints": 60
+  "earnedPoints": 60,
+  "totalPoints": 100
 }
 ```
 
@@ -52,4 +53,7 @@ nibras ping
 ## Grading
 
 `check` grading uses `earnedPoints / totalPoints * 100`. You can set
-`totalPoints` in `.nibras.json` or in `scores.json`.
+`totalPoints` in `.nibras.json` or in `scores.json`. Validation rules:
+- `earnedPoints` must be >= 0
+- `totalPoints` must be > 0
+- `earnedPoints` must be <= `totalPoints`
