@@ -79,7 +79,7 @@ function runTest(argv, subject, project, config) {
   cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
-  const { projectConfig } = resolveProject(config, subject, project);
+  const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
   const projectType = projectConfig.type || (projectConfig.check50Slug ? "check50" : "check");
 
   if (projectType === "check50") {
@@ -128,7 +128,13 @@ function runTest(argv, subject, project, config) {
   } else if (!path.isAbsolute(gradingFile)) {
     gradingPath = gradingFile;
   }
-  const requireGrading = Boolean(gradingRoot || opts.grading);
+  const requireGrading = Boolean(
+    opts.grading ||
+      gradingRoot ||
+      projectConfig.requireGrading ||
+      subjectConfig.requireGrading ||
+      config.requireGrading
+  );
   const auto = autoCheck({
     cwd: process.cwd(),
     projectPath: projectConfig.path || project,

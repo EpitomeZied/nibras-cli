@@ -6,6 +6,7 @@ const DEFAULT_CONFIG = {
   submitRemote: "",
   taskUrlBase: "",
   localChecks: true,
+  requireGrading: false,
   subjects: {},
   buildpack: {
     node: "18"
