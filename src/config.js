@@ -30,7 +30,8 @@ function loadConfig(cwd) {
   const envConfig = {
     slug: process.env.NIBRAS_SLUG || "",
     submitRemote: process.env.NIBRAS_SUBMIT_REMOTE || "",
-    taskUrlBase: process.env.NIBRAS_TASK_URL_BASE || ""
+    taskUrlBase: process.env.NIBRAS_TASK_URL_BASE || "",
+    gradingRoot: process.env.NIBRAS_GRADING_ROOT || ""
   };
   return {
     ...DEFAULT_CONFIG,

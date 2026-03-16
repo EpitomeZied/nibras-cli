@@ -9,6 +9,7 @@ const { updateBuildpack } = require("./updateBuildpack");
 const { resolveManualScore, computePercentage: computeManualPercentage } = require("./manualGrade");
 const { autoCheck } = require("./autoCheck");
 const { setupProject } = require("./setup");
+const path = require("path");
 
 function printUsage() {
   // eslint-disable-next-line no-console
@@ -75,6 +76,7 @@ function runTest(argv, subject, project, config) {
     .option("--total <number>", "Total points for check grading")
     .option("--scores <path>", "Scores JSON file for check grading")
     .option("--grading <path>", "grading.json file for auto-checking")
+    .option("--grading-root <path>", "Root directory for private grading files")
     .option("--answers-dir <path>", "Directory that contains answer files");
   cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
@@ -115,10 +117,23 @@ function runTest(argv, subject, project, config) {
   }
 
   const gradingFile = opts.grading || projectConfig.gradingFile || "grading.json";
+  const gradingRoot =
+    opts.gradingRoot ||
+    projectConfig.gradingRoot ||
+    (config.subjects?.[subject] && config.subjects[subject].gradingRoot) ||
+    config.gradingRoot;
+
+  let gradingPath = gradingFile;
+  if (gradingRoot) {
+    const root = path.isAbsolute(gradingRoot) ? gradingRoot : path.join(process.cwd(), gradingRoot);
+    gradingPath = path.join(root, subject, project, gradingFile);
+  } else if (!path.isAbsolute(gradingFile)) {
+    gradingPath = gradingFile;
+  }
   const auto = autoCheck({
     cwd: process.cwd(),
     projectPath: projectConfig.path || project,
-    gradingFile,
+    gradingFile: gradingPath,
     answersDir: opts.answersDir || projectConfig.answersDir
   });
 

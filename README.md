@@ -31,9 +31,9 @@ Create `.nibras.json` in your project root:
 }
 ```
 
-For auto-checking, add `grading.json` to the project folder and create one
-answer file per question (e.g., `q1.txt`). You can store answers elsewhere and
-pass `--answers-dir`.
+For auto-checking, keep `grading.json` in a private grading repo and point
+`nibras` to it using `--grading-root` or `NIBRAS_GRADING_ROOT`. Students only
+need to submit their answer files.
 
 Example `grading.json`:
 
@@ -73,8 +73,8 @@ nibras ping
 
 ## Grading
 
-`check` grading prefers auto-checking if `grading.json` exists. Otherwise it
-falls back to `scores.json`.
+`check` grading prefers auto-checking if a grading file is found (private
+grading root or local `grading.json`). Otherwise it falls back to `scores.json`.
 
 Validation rules:
 - `earnedPoints` must be >= 0
