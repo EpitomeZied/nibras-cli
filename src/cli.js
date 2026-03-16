@@ -12,7 +12,18 @@ const { setupProject } = require("./setup");
 
 function printUsage() {
   // eslint-disable-next-line no-console
-  console.log(`nibras <subject> <command> <project> [options]
+  console.log(`  _..._   .--./|
+.'     '. |__|||
+.   .-.   ..--.||        .-,.--.
+|  '   '  ||  |||  __    |  .-. |    __
+|  |   |  ||  |||/'__ '. | |  | | .:--.'.
+|  |   |  ||  ||:/\`  '. '| |  | |/ |   \\ |
+|  |   |  ||  |||     | || |  '- \`" __ | |
+|  |   |  ||__|||\\    / '| |      .'.''| |
+|  |   |  |    |/\\'..' / | |     / /   | |_
+'--'   '--'                       \`--'  \`"
+
+nibras <subject> <command> <project> [options]
 
 Commands
   test              Run checks or grading
