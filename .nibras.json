@@ -7,7 +7,8 @@
           "type": "check",
           "path": "Stanford Data/cs161/Exams/1",
           "totalPoints": 100,
-          "scoresFile": "scores.json"
+          "scoresFile": "scores.json",
+          "gradingFile": "grading.json"
         },
         "exam2": {
           "type": "check",

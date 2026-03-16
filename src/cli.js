@@ -8,6 +8,7 @@ const { pingRemote } = require("./ping");
 const { updateBuildpack } = require("./updateBuildpack");
 const { resolveManualScore, computePercentage: computeManualPercentage } = require("./manualGrade");
 const { autoCheck } = require("./autoCheck");
+const { setupProject } = require("./setup");
 
 function printUsage() {
   // eslint-disable-next-line no-console
@@ -17,6 +18,7 @@ Commands
   test              Run checks or grading
   submit            Commit changes & submit
   task              View current stage instructions
+  setup             Download and unzip project materials
 
 Global commands
   ping              Test the connection to a submission remote
@@ -26,6 +28,7 @@ Example
   nibras cs161 test exam1
   nibras cs161 test exam1 --earned 60
   nibras cs161 submit exam1
+  nibras cs161 setup exam1
 `);
 }
 
@@ -194,6 +197,30 @@ function runTask(argv, subject, project, config) {
   });
 }
 
+function runSetup(argv, subject, project, config) {
+  const cmd = new Command();
+  cmd.option("--url <url>", "Override setup zip URL");
+  cmd.option("--dir <path>", "Override destination directory");
+  cmd.parse(["node", "nibras", ...argv], { from: "user" });
+  const opts = cmd.opts();
+
+  const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
+  const projectCfg = { ...projectConfig };
+  if (opts.url) projectCfg.setupUrl = opts.url;
+  if (opts.dir) projectCfg.setupDir = opts.dir;
+
+  return setupProject({
+    cwd: process.cwd(),
+    subject,
+    project,
+    projectConfig: projectCfg,
+    subjectConfig
+  }).then((result) => {
+    // eslint-disable-next-line no-console
+    console.log(`Downloaded and extracted to ${result.destPath}`);
+  });
+}
+
 async function run(argv) {
   const subject = argv[2];
   const command = argv[3];
@@ -248,6 +275,10 @@ async function run(argv) {
   }
   if (command === "task") {
     await runTask(rest, subject, project, config);
+    return;
+  }
+  if (command === "setup") {
+    await runSetup(rest, subject, project, config);
     return;
   }
 

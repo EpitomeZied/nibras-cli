@@ -67,6 +67,7 @@ nibras cs161 test exam1
 nibras cs161 test exam1 --earned 60 --total 100
 nibras cs161 submit exam1
 nibras cs161 task exam1
+nibras cs161 setup exam1 --url https://example.com/exam1.zip
 nibras ping
 ```
 
