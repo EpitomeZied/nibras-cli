@@ -10,6 +10,12 @@ const { resolveManualScore, computePercentage: computeManualPercentage } = requi
 const { autoCheck } = require("./autoCheck");
 const { setupProject } = require("./setup");
 const { writeReviewOutput } = require("./reviewOutput");
+const {
+  resolveNearestDefined,
+  resolveProjectPath,
+  resolveRelativeToProjectOrAbsolute,
+  resolveRelativeToCwdOrAbsolute
+} = require("./gradingPaths");
 const path = require("path");
 
 function printUsage() {
@@ -119,39 +125,44 @@ function runTest(argv, subject, project, config) {
     throw new Error(`Unsupported project type "${projectType}". Use "check" or "check50".`);
   }
 
+  const cwd = process.cwd();
+  const projectPath = projectConfig.path || project;
+  const resolvedProjectPath = resolveProjectPath(cwd, projectPath);
   const gradingFile = opts.grading || projectConfig.gradingFile || "grading.json";
   const gradingRoot =
     opts.gradingRoot ||
     projectConfig.gradingRoot ||
     (config.subjects?.[subject] && config.subjects[subject].gradingRoot) ||
     config.gradingRoot;
+  const strictGrading = Boolean(
+    opts.grading ||
+      resolveNearestDefined(
+        projectConfig.requireGrading,
+        subjectConfig.requireGrading,
+        config.requireGrading,
+        false
+      )
+  );
 
   let gradingPath = gradingFile;
   if (path.isAbsolute(gradingFile)) {
     gradingPath = gradingFile;
   } else if (gradingRoot) {
-    const root = path.isAbsolute(gradingRoot) ? gradingRoot : path.join(process.cwd(), gradingRoot);
+    const root = resolveRelativeToCwdOrAbsolute(cwd, gradingRoot);
     gradingPath = path.join(root, subject, project, gradingFile);
   } else {
-    gradingPath = gradingFile;
+    gradingPath = resolveRelativeToProjectOrAbsolute(cwd, projectPath, gradingFile);
   }
   const aiConfig = {
     ...(config.ai || {}),
     model: opts.aiModel || (config.ai && config.ai.model) || ""
   };
-  const requireGrading = Boolean(
-    opts.grading ||
-      gradingRoot ||
-      projectConfig.requireGrading ||
-      subjectConfig.requireGrading ||
-      config.requireGrading
-  );
   const auto = autoCheck({
-    cwd: process.cwd(),
-    projectPath: projectConfig.path || project,
+    cwd,
+    projectPath: resolvedProjectPath,
     gradingFile: gradingPath,
     answersDir: opts.answersDir || projectConfig.answersDir,
-    requireGrading,
+    requireGrading: strictGrading,
     aiConfig,
     aiEnabled: opts.ai !== false,
     subject,
@@ -161,7 +172,7 @@ function runTest(argv, subject, project, config) {
   return Promise.resolve(auto).then((resolvedAuto) => {
     if (!resolvedAuto.used) {
       const { earnedPoints, totalPoints } = resolveManualScore({
-        cwd: process.cwd(),
+        cwd,
         project,
         projectConfig,
         earnedOverride: opts.earned,

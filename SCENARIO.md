@@ -1,33 +1,31 @@
-# CS161 Operational Scenario
+# CS161 Release Playbook
 
-This document describes the concrete CS161 workflow for this repository.
+This document describes the current CS161 operating model for this repository.
+It is written for course staff who need to release work, validate grading, and
+support student submissions.
 
-Roles:
-- Course operator or instructor: prepares content, private grading rules, and
-  submission infrastructure
-- Student: downloads materials, reads the task, writes answers, optionally
-  checks locally, and submits
+## Roles
 
-Assumptions:
-- `.nibras.json` already contains the CS161 project catalog
-- Private grading files live outside the student-facing repo
-- A submission remote exists or will be created before release
-- `exam1` strict grading is validated with sample answers and a private grading
-  root
+- Course operator: maintains `.nibras.json`, release content, and the submission
+  remote
+- Instructor or grader: authors private grading rules and reviews edge cases
+- Student: reads the task, writes answers, optionally tests locally, and
+  submits
 
-## Repo Assets and Paths
+## Repo Assets
 
-This repo already contains the main CS161 assets:
+Key assets already present in this repo:
 
-- `.nibras.json`: project catalog and current course configuration
-- `CS161.md`: CS161 project IDs and task overview
-- `Stanford Data/cs161/Exams/...`: exam directories
-- `Stanford Data/cs161/sections/...`: section directories
+- `.nibras.json`: CS161 project catalog and grading defaults
+- `CS161.md`: course task and project reference
+- `Stanford Data/cs161/Exams/...`: exam folders
+- `Stanford Data/cs161/sections/...`: section folders
 - `sample-answers/cs161/exam1/q1.txt`
 - `sample-answers/cs161/exam1/q2.txt`
 - `sample-answers/cs161/exam1/q3.txt`
 
 Configured CS161 project IDs:
+
 - `exam1`
 - `exam2`
 - `exam-final`
@@ -40,11 +38,29 @@ Configured CS161 project IDs:
 - `section7`
 - `section8`
 
-## Instructor Setup Workflow
+## Core Grading Model
 
-### 1. Prepare course content
+CS161 currently uses `check` projects only.
 
-Keep one folder per project under the CS161 tree:
+Important grading rules:
+
+- `gradingRoot` only tells `nibras` where to look for private `grading.json`
+  files
+- A missing `grading.json` is only fatal when strict grading is enabled or
+  `--grading` is passed explicitly
+- `requireGrading` is resolved from project, then subject, then top-level config
+- A narrower `requireGrading: false` can disable a broader `true`
+- If strict grading is off and no grading file is found, `nibras` falls back to
+  manual scoring from `scores.json` or `--earned/--total`
+
+This makes mixed courses possible: one project can use strict private grading
+while another uses manual scores under the same top-level `gradingRoot`.
+
+## Staff Setup
+
+### 1. Keep project directories in place
+
+Expected content layout:
 
 ```text
 Stanford Data/cs161/Exams/1
@@ -57,20 +73,19 @@ Stanford Data/cs161/sections/8
 
 ### 2. Define `.nibras.json`
 
-Map each project ID to its directory and grading defaults.
-
 Current repo pattern:
-- `taskFile` is `CS161.md`
-- each project uses `type: "check"`
-- each project sets `path`
-- each project sets `totalPoints: 100`
-- each project sets `scoresFile: "scores.json"`
 
-Example from the current repo:
+- subject task file is `CS161.md`
+- projects use `type: "check"`
+- each project defines `path`
+- most projects define `totalPoints: 100`
+- manual fallback reads `scores.json`
+
+Example mixed configuration:
 
 ```json
 {
-  "requireGrading": true,
+  "gradingRoot": "/private/grading",
   "subjects": {
     "cs161": {
       "taskFile": "CS161.md",
@@ -78,6 +93,14 @@ Example from the current repo:
         "exam1": {
           "type": "check",
           "path": "Stanford Data/cs161/Exams/1",
+          "requireGrading": true,
+          "totalPoints": 100,
+          "scoresFile": "scores.json"
+        },
+        "section1": {
+          "type": "check",
+          "path": "Stanford Data/cs161/sections/1",
+          "requireGrading": false,
           "totalPoints": 100,
           "scoresFile": "scores.json"
         }
@@ -87,17 +110,22 @@ Example from the current repo:
 }
 ```
 
-### 3. Prepare private grading rules
+In that example:
 
-Keep grading outside the student repo.
+- `exam1` must find `grading.json`
+- `section1` may use private grading if present
+- `section1` falls back to manual scoring if no grading file exists
+
+### 3. Store private grading outside the repo
 
 Expected layout:
 
 ```text
 <grading-root>/cs161/exam1/grading.json
+<grading-root>/cs161/section1/grading.json
 ```
 
-Example:
+Exact-match grading example:
 
 ```json
 {
@@ -105,58 +133,52 @@ Example:
   "questions": [
     {
       "id": "q1",
-      "points": 40,
+      "points": 45,
       "answerFile": "q1.txt",
-      "solutions": ["Expected answer for question 1"]
+      "solutions": ["Expected answer A", "Expected answer B"]
     },
     {
       "id": "q2",
-      "points": 30,
+      "points": 35,
       "answerFile": "q2.txt",
-      "solutions": ["Expected answer for question 2"]
+      "solutions": ["Expected answer C"]
     },
     {
       "id": "q3",
-      "points": 30,
+      "points": 20,
       "answerFile": "q3.txt",
-      "solutions": ["Expected answer for question 3"]
+      "solutions": ["Expected answer D"]
     }
   ]
 }
 ```
 
-Rules enforced by the CLI:
-- One answer file per question
-- Whitespace is trimmed and collapsed before matching
-- Matching is case-sensitive
-- A question gets full credit or zero
-- For `exam1`, the expected answer-file contract is `q1.txt`, `q2.txt`, and
-  `q3.txt`
+The CLI enforces:
+
+- one answer file per question
+- trimmed and collapsed whitespace matching
+- case-sensitive exact comparison
+- full credit or zero per exact-match question
 
 ### 4. Prepare the submission remote
 
-Create a Git remote that will receive submission branches.
-
-One simple local example:
+One local example:
 
 ```bash
 git init --bare /srv/submissions/cs161.git
 ```
 
-Then configure `submitRemote`:
-- globally at the top level
-- at the subject level
-- or at the project level
+Then configure `submitRemote` at the top level, subject level, or project level.
 
-You can verify reachability with:
+Validate reachability:
 
 ```bash
 nibras ping --remote /srv/submissions/cs161.git
 ```
 
-### 5. Validate the release flow
+### 5. Validate before release
 
-Before release, test the entire path:
+Recommended pre-release checks:
 
 ```bash
 nibras cs161 task exam1
@@ -166,15 +188,13 @@ nibras ping --remote /srv/submissions/cs161.git
 ```
 
 This confirms:
-- task text resolves correctly
-- grading rules load
-- answer files are found
+
+- task resolution works
+- private grading is reachable
+- answer file names match the grading schema
 - the submission remote is reachable
 
-## Student Workflow
-
-Students only need the student-facing repo, the CLI, and a submission remote
-configured by the course.
+## Student Flow
 
 ### 1. Install and inspect
 
@@ -192,7 +212,7 @@ nibras cs161 task exam1
 
 ### 3. Write answers
 
-Store one file per question:
+Example answer layout:
 
 ```text
 my-answers/exam1/q1.txt
@@ -202,17 +222,19 @@ my-answers/exam1/q3.txt
 
 ### 4. Optionally test locally
 
-If the student has access to the grading rules:
+If private grading is available:
 
 ```bash
 NIBRAS_GRADING_ROOT=/private/grading \
 nibras cs161 test exam1 --answers-dir my-answers/exam1
 ```
 
-Important:
-- Students do not need the private grading repo in order to submit
-- When `requireGrading` is enabled, strict local auto-checking only works if
-  grading rules are available
+Notes:
+
+- students do not need private grading in order to submit
+- a configured grading root does not by itself force strict grading
+- strict grading only blocks manual fallback when `requireGrading` resolves to
+  `true`
 
 ### 5. Submit
 
@@ -220,41 +242,40 @@ Important:
 nibras cs161 submit exam1
 ```
 
-The CLI creates a temporary commit and pushes a branch named
-`submit/<submissionRef>`.
+The CLI creates a temporary commit and pushes `submit/<submissionRef>`.
 
-## Instructor Grading and Demo Workflow
+## Instructor Demo and Triage Flow
 
-This repo already includes sample answer files for `exam1`:
-
-```text
-sample-answers/cs161/exam1/q1.txt
-sample-answers/cs161/exam1/q2.txt
-sample-answers/cs161/exam1/q3.txt
-```
-
-Use them to validate the grading path:
+Use the bundled sample answers to validate `exam1` quickly:
 
 ```bash
 NIBRAS_GRADING_ROOT=/private/grading \
 nibras cs161 test exam1 --answers-dir sample-answers/cs161/exam1
 ```
 
-The CLI prints:
-- a total line in the form `Auto-check: earned/total (percentage%)`
-- one line per question showing PASS or FAIL and earned points
+Expected output shape:
 
-This is the fastest way to verify that:
-- your `grading.json` file is reachable
-- question IDs and point totals are valid
-- answer file names match the grading schema
+- `Auto-check: earned/total (percentage%)`
+- one line per question with `PASS` or `FAIL`
 
-## Failure Scenarios
+Use manual fallback for projects that are intentionally not strict:
+
+```bash
+nibras cs161 test section1
+```
+
+That path reads `scores.json` or explicit manual-score flags when no grading
+file is active.
+
+## Failure Modes
 
 ### Missing grading rules
 
-If `requireGrading` is enabled and `grading.json` cannot be found, `test`
-fails immediately.
+If strict grading is enabled and `grading.json` cannot be found, `test` fails
+immediately.
+
+If strict grading is disabled, `test` can still succeed through manual scoring
+even when `gradingRoot` is configured.
 
 ### Missing or empty answer files
 
@@ -267,18 +288,15 @@ If `submitRemote` is not configured and no `--remote` flag is provided,
 
 ### Missing task source
 
-If no `--file`, `taskFile`, `taskUrl`, or `taskUrlBase + slug` source is
-available, `task` fails.
+If no local task file or task URL can be resolved, `task` fails.
 
 ### No files to submit
 
-If `submit` cannot resolve files from `--files`, project config,
-`.cs50.yaml`, or `git ls-files`, submission fails.
+If `submit` cannot resolve files from flags, config, `.cs50.yaml`, or tracked
+Git files, submission fails.
 
-## Operational Notes
+## Notes
 
-- `SCENARIO.md` is intentionally CS161-specific; use `README.md` for the generic
-  command and configuration reference.
-- `CS161.md` is the project map for course operators and students.
-- The repo currently uses `check` projects only; `check50` remains optional and
-  is documented in `README.md`.
+- `SCENARIO.md` is the CS161-specific playbook
+- `README.md` is the generic command and config reference
+- `CS161.md` is the course task and project map

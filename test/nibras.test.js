@@ -81,11 +81,53 @@ async function withWorkingDirectory(cwd, fn) {
   }
 }
 
+async function captureRunInDirectory(cwd, argv, envOverrides = null) {
+  return withWorkingDirectory(cwd, () => {
+    const execute = () => captureLogs(() => run(argv));
+    return envOverrides ? withEnv(envOverrides, execute) : execute();
+  });
+}
+
+async function withExitCodeReset(fn) {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+  try {
+    return await fn();
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+}
+
 function commandExists(command) {
   const result = spawnSync("sh", ["-lc", `command -v ${command}`], {
     encoding: "utf8"
   });
   return result.status === 0;
+}
+
+function writeCheckConfig(dir, {
+  topLevel = {},
+  subject = {},
+  project = {}
+} = {}) {
+  fs.writeFileSync(
+    path.join(dir, ".nibras.json"),
+    JSON.stringify({
+      ...topLevel,
+      subjects: {
+        cs161: {
+          ...subject,
+          projects: {
+            exam1: {
+              type: "check",
+              path: "student/exam1",
+              ...project
+            }
+          }
+        }
+      }
+    })
+  );
 }
 
 function createSemanticQuestion(overrides = {}) {
@@ -582,6 +624,204 @@ test("run test uses config-backed exact auto-check flow", async () => {
     process.chdir(previousCwd);
     process.exitCode = previousExitCode;
   }
+});
+
+test("run test falls back to manual scoring when gradingRoot is set but grading is absent", async () => {
+  const dir = makeTempDir();
+  const gradingRoot = path.join(dir, "grading");
+  const projectDir = path.join(dir, "student", "exam1");
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(path.join(projectDir, "scores.json"), JSON.stringify({ earnedPoints: 100, totalPoints: 100 }));
+  writeCheckConfig(dir, {
+    topLevel: { gradingRoot },
+    project: { totalPoints: 100, scoresFile: "scores.json" }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Score: 100% \(100\/100\)/);
+});
+
+test("run test lets project requireGrading false override top-level strict grading", async () => {
+  const dir = makeTempDir();
+  const projectDir = path.join(dir, "student", "exam1");
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(path.join(projectDir, "scores.json"), JSON.stringify({ earnedPoints: 100, totalPoints: 100 }));
+  writeCheckConfig(dir, {
+    topLevel: { requireGrading: true },
+    project: {
+      requireGrading: false,
+      totalPoints: 100,
+      scoresFile: "scores.json"
+    }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Score: 100% \(100\/100\)/);
+});
+
+test("run test lets subject requireGrading false override top-level strict grading", async () => {
+  const dir = makeTempDir();
+  const projectDir = path.join(dir, "student", "exam1");
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(path.join(projectDir, "scores.json"), JSON.stringify({ earnedPoints: 100, totalPoints: 100 }));
+  writeCheckConfig(dir, {
+    topLevel: { requireGrading: true },
+    subject: { requireGrading: false },
+    project: { totalPoints: 100, scoresFile: "scores.json" }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Score: 100% \(100\/100\)/);
+});
+
+test("run test treats explicit --grading as strict even when requireGrading is false", async () => {
+  const dir = makeTempDir();
+  const projectDir = path.join(dir, "student", "exam1");
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(path.join(projectDir, "scores.json"), JSON.stringify({ earnedPoints: 100, totalPoints: 100 }));
+  writeCheckConfig(dir, {
+    project: { requireGrading: false, totalPoints: 100, scoresFile: "scores.json" }
+  });
+
+  await withWorkingDirectory(dir, () =>
+    assert.rejects(
+      () =>
+        run([
+          "node",
+          "bin/nibras.js",
+          "cs161",
+          "test",
+          "exam1",
+          "--grading",
+          "missing.json"
+        ]),
+      /grading\.json not found|missing\.json not found/
+    )
+  );
+});
+
+test("run test auto-checks when gradingRoot contains grading even without strict mode", async () => {
+  const dir = makeTempDir();
+  const gradingRoot = path.join(dir, "grading");
+  const answersDir = path.join(dir, "answers");
+  fs.mkdirSync(path.join(gradingRoot, "cs161", "exam1"), { recursive: true });
+  fs.mkdirSync(answersDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(gradingRoot, "cs161", "exam1", "grading.json"),
+    JSON.stringify({
+      totalPoints: 100,
+      questions: [
+        {
+          id: "q1",
+          points: 100,
+          answerFile: "q1.txt",
+          solutions: ["correct"]
+        }
+      ]
+    })
+  );
+  fs.writeFileSync(path.join(answersDir, "q1.txt"), "correct");
+  writeCheckConfig(dir, {
+    topLevel: { gradingRoot }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1", "--answers-dir", answersDir])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Auto-check: 100\/100 \(100%\)/);
+  assert.doesNotMatch(logs.join("\n"), /Score:/);
+});
+
+test("run test supports absolute project paths for manual grading", async () => {
+  const dir = makeTempDir();
+  const absoluteProjectDir = path.join(dir, "absolute-exam1");
+  fs.mkdirSync(absoluteProjectDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(absoluteProjectDir, "scores.json"),
+    JSON.stringify({ earnedPoints: 100, totalPoints: 100 })
+  );
+  writeCheckConfig(dir, {
+    project: {
+      path: absoluteProjectDir,
+      totalPoints: 100,
+      scoresFile: "scores.json"
+    }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Score: 100% \(100\/100\)/);
+});
+
+test("run test supports absolute project paths for auto-check default files", async () => {
+  const dir = makeTempDir();
+  const absoluteProjectDir = path.join(dir, "absolute-exam1");
+  fs.mkdirSync(absoluteProjectDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(absoluteProjectDir, "grading.json"),
+    JSON.stringify({
+      totalPoints: 100,
+      questions: [
+        {
+          id: "q1",
+          points: 100,
+          answerFile: "q1.txt",
+          solutions: ["correct"]
+        }
+      ]
+    })
+  );
+  fs.writeFileSync(path.join(absoluteProjectDir, "q1.txt"), "correct");
+  writeCheckConfig(dir, {
+    topLevel: { requireGrading: true },
+    project: { path: absoluteProjectDir }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Auto-check: 100\/100 \(100%\)/);
+  assert.match(logs.join("\n"), /q1: .*PASS/);
+});
+
+test("run test falls back to manual scoring when grading root comes from env only", async () => {
+  const dir = makeTempDir();
+  const projectDir = path.join(dir, "student", "exam1");
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(path.join(projectDir, "scores.json"), JSON.stringify({ earnedPoints: 100, totalPoints: 100 }));
+  writeCheckConfig(dir, {
+    project: { totalPoints: 100, scoresFile: "scores.json" }
+  });
+
+  const logs = await withExitCodeReset(() =>
+    captureRunInDirectory(
+      dir,
+      ["node", "bin/nibras.js", "cs161", "test", "exam1"],
+      { NIBRAS_GRADING_ROOT: path.join(dir, "grading") }
+    )
+  );
+
+  assert.equal(process.exitCode, undefined);
+  assert.match(logs.join("\n"), /Score: 100% \(100\/100\)/);
 });
 
 test("run test supports repo-backed exam1 strict grading with relative paths", async () => {

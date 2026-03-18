@@ -83,8 +83,8 @@ Supported environment overrides:
 | `submitRemote` | string | Default Git remote for `submit` and `ping`. |
 | `taskUrlBase` | string | Base URL used by `task` when no local file or direct task URL is configured. |
 | `localChecks` | boolean | Default local execution preference for `check50` projects. |
-| `requireGrading` | boolean | When true, missing `grading.json` is an error and manual fallback is blocked for `check` projects. |
-| `gradingRoot` | string | Root directory that contains private grading files. |
+| `requireGrading` | boolean | When true, missing `grading.json` is an error and manual fallback is blocked for `check` projects. Narrower project or subject values override broader ones, including explicit `false`. |
+| `gradingRoot` | string | Root directory used to look up private grading files for auto-checking. It does not by itself make missing grading files fatal. |
 | `buildpack.node` | string | Node version recorded by `nibras update-buildpack`. |
 | `subjects` | object | Per-subject configuration and project catalog. |
 
@@ -96,8 +96,8 @@ Supported environment overrides:
 | `taskUrl` | string | Direct remote task URL for the subject. |
 | `taskUrlBase` | string | Subject-level override for remote task loading. |
 | `submitRemote` | string | Subject-level submission remote. |
-| `gradingRoot` | string | Subject-level private grading root. |
-| `requireGrading` | boolean | Subject-level override for strict grading. |
+| `gradingRoot` | string | Subject-level private grading root for auto-check lookup. |
+| `requireGrading` | boolean | Subject-level override for strict grading. This value overrides the top-level setting when defined. |
 | `projects` | object | Project definitions keyed by project ID. |
 
 ### Project-level keys
@@ -105,7 +105,7 @@ Supported environment overrides:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `type` | string | Project type. Supported values are `check` and `check50`. |
-| `path` | string | Project directory used for answers, scores, and default local files. |
+| `path` | string | Project directory used for answers, scores, and default local files. Relative paths resolve from the current working directory; absolute paths are supported. |
 | `totalPoints` | number | Manual grading fallback total when `scores.json` does not define one. |
 | `scoresFile` | string | Manual grading file name, default `scores.json`. |
 | `setupUrl` | string | Local path, `file://` URL, or HTTP(S) URL for `setup`. |
@@ -113,14 +113,14 @@ Supported environment overrides:
 | `setupDir` | string | Destination directory for extraction. |
 | `answersDir` | string | Default answer directory for auto-checking. |
 | `gradingFile` | string | Grading file name, default `grading.json`. |
-| `gradingRoot` | string | Project-level private grading root. |
+| `gradingRoot` | string | Project-level private grading root for auto-check lookup. |
 | `submitRemote` | string | Project-level submission remote override. |
 | `submitRef` | string | Submission ref override. Branch becomes `submit/<submitRef>`. |
 | `files` | string or array | Explicit submit file list. |
 | `slug` | string | Project slug for task or `check50` resolution. |
 | `check50Slug` | string | Alternate slug field for `check50` projects. |
 | `localChecks` | boolean | Project-level local `check50` preference. |
-| `requireGrading` | boolean | Project-level strict grading override. |
+| `requireGrading` | boolean | Project-level strict grading override. This value overrides subject and top-level settings when defined. |
 | `taskFile` | string | Project-level local task file. |
 | `taskUrl` | string | Project-level direct task URL. |
 | `taskUrlBase` | string | Project-level base URL for remote task loading. |
@@ -358,6 +358,13 @@ Grading root resolution:
 - `gradingRoot`
 - `NIBRAS_GRADING_ROOT`
 
+Strict grading resolution:
+- explicit `--grading`
+- `projectConfig.requireGrading` when defined
+- `subjectConfig.requireGrading` when defined
+- `requireGrading`
+- default `false`
+
 Answer file resolution:
 - `--answers-dir`
 - `projectConfig.answersDir`
@@ -395,7 +402,7 @@ Validation rules:
 - sum of question points must equal `totalPoints`
 
 Failure modes:
-- `grading.json` is missing when grading is required
+- `grading.json` is missing when grading is required or `--grading` is passed explicitly
 - Duplicate question IDs
 - Invalid totals
 - Missing answer files
@@ -434,8 +441,35 @@ Validation rules:
 - Total values must be positive
 - Earned cannot exceed total
 
-If `requireGrading` is true at the project, subject, or top level, missing
+If `requireGrading` resolves to `true` at the nearest defined scope, missing
 `grading.json` is treated as an error and this fallback is effectively disabled.
+If a grading root is configured but no grading file is found, manual scoring can
+still run as long as strict grading is not required.
+
+Mixed-course example:
+
+```json
+{
+  "gradingRoot": "/private/grading",
+  "subjects": {
+    "cs161": {
+      "projects": {
+        "exam1": {
+          "type": "check",
+          "path": "student/exam1",
+          "requireGrading": true
+        },
+        "section1": {
+          "type": "check",
+          "path": "student/section1",
+          "requireGrading": false,
+          "scoresFile": "scores.json"
+        }
+      }
+    }
+  }
+}
+```
 
 ### `check50` projects
 

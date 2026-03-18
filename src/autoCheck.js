@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { gradeSemanticAnswer } = require("./aiGrade");
+const { resolveProjectPath, resolveRelativeToProjectOrAbsolute } = require("./gradingPaths");
 
 function readJson(filePath) {
   const raw = fs.readFileSync(filePath, "utf8");
@@ -141,7 +142,7 @@ function validateGradingSchema(grading, gradingPath) {
 
 function resolveAnswerBase(cwd, projectPath, answersDir) {
   if (!answersDir) {
-    return path.join(cwd, projectPath);
+    return resolveProjectPath(cwd, projectPath);
   }
   return path.isAbsolute(answersDir) ? answersDir : path.join(cwd, answersDir);
 }
@@ -239,9 +240,7 @@ async function autoCheck({
   subject = "",
   project = ""
 }) {
-  const gradingPath = path.isAbsolute(gradingFile)
-    ? gradingFile
-    : path.join(cwd, projectPath, gradingFile);
+  const gradingPath = resolveRelativeToProjectOrAbsolute(cwd, projectPath, gradingFile);
 
   if (!fs.existsSync(gradingPath)) {
     if (requireGrading) {

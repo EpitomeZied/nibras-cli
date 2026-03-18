@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { resolveProjectPath } = require("./gradingPaths");
 
 function readJsonIfExists(filePath) {
   try {
@@ -62,7 +63,7 @@ function resolveManualScore({
   totalOverride,
   scoresPathOverride
 }) {
-  const projectPath = path.join(cwd, projectConfig.path || project);
+  const projectPath = resolveProjectPath(cwd, projectConfig.path || project);
   const scoresPath = scoresPathOverride
     ? path.isAbsolute(scoresPathOverride)
       ? scoresPathOverride
