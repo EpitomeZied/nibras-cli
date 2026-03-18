@@ -1,0 +1,15 @@
+{
+  "name": "@nibras/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nibras/contracts": "file:../../packages/contracts",
+    "@nibras/core": "file:../../packages/core",
+    "picocolors": "^1.1.1"
+  }
+}

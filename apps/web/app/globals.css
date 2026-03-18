@@ -1,0 +1,148 @@
+:root {
+  --ink: #10233a;
+  --paper: #f6f4ec;
+  --accent: #0b6e4f;
+  --accent-2: #cb5d1e;
+  --muted: #51606f;
+  --panel: rgba(255, 255, 255, 0.78);
+  --line: rgba(16, 35, 58, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(203, 93, 30, 0.16), transparent 30%),
+    radial-gradient(circle at top right, rgba(11, 110, 79, 0.18), transparent 26%),
+    linear-gradient(180deg, #f8f5ee 0%, #f0ebe1 100%);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+main {
+  min-height: 100vh;
+}
+
+.shell {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 64px;
+}
+
+.hero {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(255,255,255,0.68));
+  box-shadow: 0 24px 50px rgba(16, 35, 58, 0.08);
+}
+
+.eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero h1, .card h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 6vw, 4.6rem);
+  line-height: 0.96;
+  font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
+}
+
+.hero p, .card p, .muted {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.button, .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 700;
+}
+
+.button {
+  background: var(--ink);
+  color: white;
+}
+
+.button-secondary {
+  border-color: var(--line);
+  background: rgba(255,255,255,0.7);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px;
+  background: var(--panel);
+  box-shadow: 0 18px 40px rgba(16, 35, 58, 0.06);
+}
+
+.mono {
+  font-family: "IBM Plex Mono", monospace;
+  word-break: break-word;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(11, 110, 79, 0.12);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  margin: 8px 0;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100% - 20px, 1100px);
+    padding-top: 20px;
+  }
+
+  .hero,
+  .card {
+    padding: 18px;
+  }
+}

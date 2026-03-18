@@ -1,0 +1,14 @@
+{
+  "name": "@nibras/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nibras/contracts": "file:../../packages/contracts",
+    "minimatch": "^10.0.1"
+  }
+}

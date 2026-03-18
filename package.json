@@ -1,19 +1,43 @@
 {
   "name": "nibras",
   "version": "0.1.0",
-  "description": "CLI to run checks and submit stages with percentage grading.",
+  "description": "Hosted, GitHub-linked CLI for project setup, testing, and submission.",
   "bin": {
     "nibras": "bin/nibras.js"
   },
   "type": "commonjs",
   "main": "src/cli.js",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "start": "node bin/nibras.js",
-    "test": "node --test",
+    "db:generate": "npx prisma generate",
+    "db:push": "npx prisma db push",
+    "build": "npm run db:generate && npm run build -w @nibras/contracts && npm run build -w @nibras/core && npm run build -w @nibras/github && npm run build -w @nibras/grading && npm run build -w @nibras/api && npm run build -w @nibras/cli",
+    "api:dev": "node apps/api/dist/server.js",
+    "web:dev": "npm run dev -w @nibras/web",
+    "web:build": "npm run build -w @nibras/web",
+    "test": "npm run build && node --test",
     "lint": "node -e \"console.log('no lint configured')\""
   },
+  "files": [
+    "apps",
+    "bin",
+    "packages",
+    "prisma",
+    "src",
+    "README.md"
+  ],
   "dependencies": {
+    "@prisma/client": "^6.5.0",
     "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prisma": "^6.5.0",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">=18.0.0"

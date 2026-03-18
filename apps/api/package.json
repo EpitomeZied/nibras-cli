@@ -1,0 +1,17 @@
+{
+  "name": "@nibras/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@nibras/contracts": "file:../../packages/contracts",
+    "@nibras/github": "file:../../packages/github",
+    "@prisma/client": "^6.5.0",
+    "fastify": "^5.3.3",
+    "fastify-raw-body": "^5.0.0"
+  }
+}

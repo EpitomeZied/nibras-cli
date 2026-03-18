@@ -1,0 +1,29 @@
+{
+  "projectKey": "cs161/exam1",
+  "releaseVersion": "2026-03-01",
+  "apiBaseUrl": "http://127.0.0.1:4848",
+  "defaultBranch": "main",
+  "buildpack": {
+    "node": "20"
+  },
+  "test": {
+    "mode": "public-grading",
+    "command": "npm test",
+    "supportsPrevious": true
+  },
+  "submission": {
+    "allowedPaths": [
+      ".nibras/**",
+      "src/**",
+      "test/**",
+      "README.md",
+      "CS161.md",
+      "package.json",
+      "apps/**",
+      "packages/**",
+      "bin/**",
+      "tsconfig.base.json"
+    ],
+    "waitForVerificationSeconds": 30
+  }
+}

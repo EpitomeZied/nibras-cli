@@ -5,6 +5,13 @@ task text, grading `check` projects, optionally running `check50`, and pushing
 submissions to a Git remote. It is designed for instructors and course
 operators first, with student-facing commands built on top of the same config.
 
+This repo now also includes a hosted-style v1 vertical slice:
+- project-local commands with `nibras test`, `nibras submit`, and `nibras task`
+- a device-login flow with `nibras login`, `logout`, and `whoami`
+- a Fastify API app under `apps/api/`
+- shared contracts and core helpers under `packages/`
+- compatibility routing back to the legacy `nibras <subject> <command> <project>` flow
+
 Supported workflows:
 - Strict private auto-grading with `grading.json`
 - Semantic grading with review output for written answers
@@ -58,6 +65,58 @@ Verification:
 ```bash
 npm test
 ```
+
+Hosted-style development flow:
+
+```bash
+npm install
+npm run db:generate
+npm run build
+npm run api:dev
+nibras login
+nibras whoami
+nibras ping
+nibras test
+nibras task
+```
+
+Postgres-backed API development:
+
+```bash
+cp .env.example .env
+docker compose up -d
+npm run db:push
+npm run api:dev
+```
+
+When `DATABASE_URL` is set, the API uses Prisma/Postgres instead of the
+file-backed dev store. The Prisma schema lives in `prisma/schema.prisma`.
+
+GitHub App + web dashboard development:
+
+```bash
+cp .env.example .env
+docker compose up -d
+npm run db:push
+npm run api:dev
+npm run web:dev
+```
+
+Required GitHub App settings:
+- Set the GitHub App `Setup URL` to `http://127.0.0.1:3000/install/complete`
+- Set the callback URL for the OAuth flow to `http://127.0.0.1:4848/v1/github/oauth/callback`
+- Fill `GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`,
+  `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_NAME`, and `GITHUB_WEBHOOK_SECRET`
+- Optionally set `GITHUB_TEMPLATE_OWNER` and `GITHUB_TEMPLATE_REPO` to enable
+  repository generation from a template during `setup`
+
+Implemented product pieces:
+- Real GitHub device flow and browser OAuth flow through the API
+- Signed OAuth state handling
+- GitHub App installation link generation
+- Installation ownership verification before linking an installation to a user
+- HMAC verification for GitHub webhooks using `X-Hub-Signature-256`
+- A real Next.js web app under `apps/web/`
 
 ## Quick Start
 

@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubmissionStatus {
+  queued
+  running
+  passed
+  failed
+  needs_review
+}
+
+enum RepoVisibility {
+  private
+  public
+}
+
+enum AssetVisibility {
+  public
+  private
+}
+
+model User {
+  id                String             @id @default(cuid())
+  username          String             @unique
+  email             String             @unique
+  githubLinked      Boolean            @default(false)
+  githubAppInstalled Boolean           @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  githubAccount     GithubAccount?
+  deviceCodes       DeviceCode[]
+  cliSessions       CliSession[]
+  userProjectRepos  UserProjectRepo[]
+  submissionAttempts SubmissionAttempt[]
+  auditLogs         AuditLog[]
+}
+
+model GithubAccount {
+  id                        String   @id @default(cuid())
+  userId                    String   @unique
+  githubUserId              String   @unique
+  login                     String
+  installationId            String?
+  userAccessToken           String?
+  userRefreshToken          String?
+  userAccessTokenExpiresAt  DateTime?
+  userRefreshTokenExpiresAt DateTime?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeviceCode {
+  id              String   @id @default(cuid())
+  deviceCode      String   @unique
+  userCode        String   @unique
+  expiresAt       DateTime
+  intervalSeconds Int
+  status          String
+  userId          String?
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model CliSession {
+  id            String   @id @default(cuid())
+  accessToken   String   @unique
+  refreshToken  String   @unique
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  revokedAt     DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  projects    Project[]
+}
+
+model Project {
+  id               String            @id @default(cuid())
+  subjectId        String
+  slug             String            @unique
+  name             String
+  defaultBranch    String            @default("main")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  subject          Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  releases         ProjectRelease[]
+  userProjectRepos UserProjectRepo[]
+  submissions      SubmissionAttempt[]
+}
+
+model ProjectRelease {
+  id               String         @id @default(cuid())
+  projectId        String
+  version          String
+  taskText         String
+  manifestJson     Json
+  publicAssetRef   String?
+  privateAssetRef  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assets           ProjectAsset[]
+  submissions      SubmissionAttempt[]
+
+  @@unique([projectId, version])
+}
+
+model ProjectAsset {
+  id                String          @id @default(cuid())
+  projectReleaseId  String
+  visibility        AssetVisibility
+  kind              String
+  storageKey        String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  projectRelease    ProjectRelease  @relation(fields: [projectReleaseId], references: [id], onDelete: Cascade)
+}
+
+model UserProjectRepo {
+  id              String         @id @default(cuid())
+  userId          String
+  projectId       String
+  owner           String
+  name            String
+  githubRepoId    String?
+  cloneUrl        String?
+  defaultBranch   String
+  visibility      RepoVisibility @default(private)
+  installStatus   String         @default("provisioned")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submissions     SubmissionAttempt[]
+
+  @@unique([userId, projectId])
+}
+
+model SubmissionAttempt {
+  id               String            @id @default(cuid())
+  userId           String
+  projectId        String
+  projectReleaseId String
+  userProjectRepoId String
+  commitSha        String
+  repoUrl          String
+  branch           String
+  status           SubmissionStatus  @default(queued)
+  summary          String
+  localTestExitCode Int?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectRelease   ProjectRelease    @relation(fields: [projectReleaseId], references: [id], onDelete: Cascade)
+  userProjectRepo  UserProjectRepo   @relation(fields: [userProjectRepoId], references: [id], onDelete: Cascade)
+  verificationRuns VerificationRun[]
+
+  @@unique([userId, projectId, commitSha])
+}
+
+model VerificationRun {
+  id                  String            @id @default(cuid())
+  submissionAttemptId String
+  status              SubmissionStatus  @default(queued)
+  log                 String
+  startedAt           DateTime?
+  finishedAt          DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  submissionAttempt   SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  targetType String
+  targetId   String
+  payload    Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
