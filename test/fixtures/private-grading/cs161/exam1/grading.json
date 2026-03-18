@@ -1,0 +1,30 @@
+{
+  "totalPoints": 100,
+  "questions": [
+    {
+      "id": "q1",
+      "points": 45,
+      "answerFile": "q1.txt",
+      "solutions": [
+        "Multiple Choice Answers:\n(a) A, D, E\n(b) Only A\n(c) A, D"
+      ]
+    },
+    {
+      "id": "q2",
+      "points": 35,
+      "answerFile": "q2.txt",
+      "solutions": [
+        "Algorithm Design:\nDivide array into two halves, recursively find max sub-array product, max/min prefix/suffix products, and total product for each half.\nCombine results: maxProd = max(LmaxProd, RmaxProd, LmaxSuff*RmaxPre, LminSuff*RminPre).\nMax prefix/suffix and total product calculated accordingly.\nRunning time: O(n), recurrence T(n) = 2T(n/2) + O(1)"
+      ]
+    },
+    {
+      "id": "q3",
+      "points": 20,
+      "answerFile": "q3.txt",
+      "solutions": [
+        "Proving Stuff:\nDefine g(n) recursively, base cases n <= 4.\nInductive Hypothesis: g(n) <= log log n + 1\nUse strong induction, apply hypothesis to g(floor(sqrt(n))), conclude g(n) = O(log log n).",
+        "Proving Stuff:\nDefine g(n) recursively, base cases n <= 4\nInductive Hypothesis: g(n) <= log log n + 1\nUse strong induction, apply hypothesis to g(floor(sqrt(n))), conclude g(n) = O(log log n)"
+      ]
+    }
+  ]
+}

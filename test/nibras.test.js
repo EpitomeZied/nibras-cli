@@ -15,6 +15,8 @@ const { setupProject } = require("../src/setup");
 const { submit } = require("../src/submit");
 const { updateBuildpack } = require("../src/updateBuildpack");
 
+const repoRoot = path.resolve(__dirname, "..");
+
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "nibras-test-"));
 }
@@ -67,6 +69,16 @@ async function captureLogs(fn) {
   }
 
   return lines;
+}
+
+async function withWorkingDirectory(cwd, fn) {
+  const previousCwd = process.cwd();
+  process.chdir(cwd);
+  try {
+    return await fn();
+  } finally {
+    process.chdir(previousCwd);
+  }
 }
 
 function commandExists(command) {
@@ -570,6 +582,135 @@ test("run test uses config-backed exact auto-check flow", async () => {
     process.chdir(previousCwd);
     process.exitCode = previousExitCode;
   }
+});
+
+test("run test supports repo-backed exam1 strict grading with relative paths", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+
+  try {
+    const logs = await withWorkingDirectory(repoRoot, () =>
+      captureLogs(() =>
+        run([
+          "node",
+          "bin/nibras.js",
+          "cs161",
+          "test",
+          "exam1",
+          "--grading-root",
+          "test/fixtures/private-grading",
+          "--answers-dir",
+          "test/fixtures/answers/exam1/all-correct"
+        ])
+      )
+    );
+
+    assert.equal(process.exitCode, undefined);
+    assert.match(logs.join("\n"), /Auto-check: 100\/100 \(100%\)/);
+    assert.match(logs.join("\n"), /q1: .*PASS.*\(45\/45\)/);
+    assert.match(logs.join("\n"), /q2: .*PASS.*\(35\/35\)/);
+    assert.match(logs.join("\n"), /q3: .*PASS.*\(20\/20\)/);
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+test("repo config no longer advertises a broken exam1 setup URL", () => {
+  const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".nibras.json"), "utf8"));
+  assert.equal(config.subjects.cs161.projects.exam1.setupUrl, undefined);
+  assert.equal(config.subjects.cs161.projects.exam1.setupZipName, undefined);
+});
+
+test("run test supports repo-backed exam1 mixed scoring and alternate accepted solutions", async () => {
+  const previousExitCode = process.exitCode;
+  process.exitCode = undefined;
+
+  try {
+    const logs = await withWorkingDirectory(repoRoot, () =>
+      captureLogs(() =>
+        run([
+          "node",
+          "bin/nibras.js",
+          "cs161",
+          "test",
+          "exam1",
+          "--grading-root",
+          "test/fixtures/private-grading",
+          "--answers-dir",
+          "test/fixtures/answers/exam1/mixed"
+        ])
+      )
+    );
+
+    assert.equal(process.exitCode, 1);
+    assert.match(logs.join("\n"), /Auto-check: 65\/100 \(65%\)/);
+    assert.match(logs.join("\n"), /q1: .*PASS.*\(45\/45\)/);
+    assert.match(logs.join("\n"), /q2: FAIL \(0\/35\)/);
+    assert.match(logs.join("\n"), /q3: .*PASS.*\(20\/20\)/);
+  } finally {
+    process.exitCode = previousExitCode;
+  }
+});
+
+test("run test fails for repo-backed exam1 when an answer file is missing", async () => {
+  const answersDir = makeTempDir();
+  fs.writeFileSync(
+    path.join(answersDir, "q1.txt"),
+    fs.readFileSync(path.join(repoRoot, "test/fixtures/answers/exam1/all-correct/q1.txt"), "utf8")
+  );
+  fs.writeFileSync(
+    path.join(answersDir, "q2.txt"),
+    fs.readFileSync(path.join(repoRoot, "test/fixtures/answers/exam1/all-correct/q2.txt"), "utf8")
+  );
+
+  await withWorkingDirectory(repoRoot, () =>
+    assert.rejects(
+      () =>
+        run([
+          "node",
+          "bin/nibras.js",
+          "cs161",
+          "test",
+          "exam1",
+          "--grading-root",
+          "test/fixtures/private-grading",
+          "--answers-dir",
+          answersDir
+        ]),
+      /Missing answer file for q3/
+    )
+  );
+});
+
+test("run test fails for repo-backed exam1 when an answer file is empty", async () => {
+  const answersDir = makeTempDir();
+  fs.writeFileSync(
+    path.join(answersDir, "q1.txt"),
+    fs.readFileSync(path.join(repoRoot, "test/fixtures/answers/exam1/all-correct/q1.txt"), "utf8")
+  );
+  fs.writeFileSync(
+    path.join(answersDir, "q2.txt"),
+    fs.readFileSync(path.join(repoRoot, "test/fixtures/answers/exam1/all-correct/q2.txt"), "utf8")
+  );
+  fs.writeFileSync(path.join(answersDir, "q3.txt"), "   \n");
+
+  await withWorkingDirectory(repoRoot, () =>
+    assert.rejects(
+      () =>
+        run([
+          "node",
+          "bin/nibras.js",
+          "cs161",
+          "test",
+          "exam1",
+          "--grading-root",
+          "test/fixtures/private-grading",
+          "--answers-dir",
+          answersDir
+        ]),
+      /Answer file is empty for q3/
+    )
+  );
 });
 
 test("run test supports semantic grading, review files, and fail-on-review", async () => {

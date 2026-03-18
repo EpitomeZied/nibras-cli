@@ -1,0 +1,4 @@
+Proving Stuff:
+Define g(n) recursively, base cases n <= 4.
+Inductive Hypothesis: g(n) <= log log n + 1
+Use strong induction, apply hypothesis to g(floor(sqrt(n))), conclude g(n) = O(log log n).

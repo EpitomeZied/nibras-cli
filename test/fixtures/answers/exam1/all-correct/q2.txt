@@ -1,0 +1,5 @@
+Algorithm Design:
+Divide array into two halves, recursively find max sub-array product, max/min prefix/suffix products, and total product for each half.
+Combine results: maxProd = max(LmaxProd, RmaxProd, LmaxSuff*RmaxPre, LminSuff*RminPre).
+Max prefix/suffix and total product calculated accordingly.
+Running time: O(n), recurrence T(n) = 2T(n/2) + O(1)

@@ -6,5 +6,9 @@ dist/
 tmp/
 .idea/
 exam1.zip
-exam1/
+/exam1/
+!/test/fixtures/answers/exam1/
+!/test/fixtures/answers/exam1/**
+!/test/fixtures/private-grading/cs161/exam1/
+!/test/fixtures/private-grading/cs161/exam1/**
 package-lock.json
