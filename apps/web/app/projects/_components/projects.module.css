@@ -1,0 +1,392 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.16), transparent 26%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.14), transparent 26%),
+    linear-gradient(180deg, #0f0e17 0%, #171525 100%);
+  color: #f8f7ff;
+}
+
+.shell {
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 64px;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 0.95;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: #b4b0d0;
+}
+
+.progressBadge {
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.projectTab {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 28, 46, 0.82);
+  color: inherit;
+  text-align: left;
+}
+
+.activeTab {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.18);
+}
+
+.tabBadge,
+.milestoneBadge,
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.badgeApproved {
+  background: rgba(52, 211, 153, 0.14);
+  color: #9cecc0;
+}
+
+.badgeSubmitted {
+  background: rgba(96, 165, 250, 0.14);
+  color: #a9d0ff;
+}
+
+.badgeOpen {
+  background: rgba(139, 92, 246, 0.14);
+  color: #d5c4ff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.95fr);
+  gap: 18px;
+}
+
+.leftColumn,
+.rightColumn {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.card,
+.stateCard {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(30, 28, 46, 0.86);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.24);
+}
+
+.stateCard {
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 20px 0;
+}
+
+.cardHead h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cardBody {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.metaLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: #9f9abf;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timeline {
+  display: grid;
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.timelineMarker {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  margin-top: 6px;
+}
+
+.timelineContent {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.timelineTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.dueDate {
+  color: #aba5cc;
+  font-size: 14px;
+}
+
+.finalSubmission {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 20px;
+}
+
+.progressPanel {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 20px;
+}
+
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.progressTrack,
+.miniTrack {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progressFill,
+.miniFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #60a5fa);
+}
+
+.statList {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.statList div,
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statList dt,
+.resources p {
+  color: #a7a2c5;
+}
+
+.statList dd {
+  margin: 0;
+}
+
+.breakdown {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 20px;
+}
+
+.breakdownRow {
+  align-items: center;
+}
+
+.breakdownRow > div {
+  flex: 1;
+}
+
+.resources {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px 20px;
+}
+
+.resourceLink {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.16);
+}
+
+.primaryButton,
+.secondaryButton,
+.closeButton {
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primaryButton {
+  padding: 12px 18px;
+  background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+  color: white;
+  font-weight: 700;
+}
+
+.secondaryButton {
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 7, 15, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 22px;
+  background: #19172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.formField {
+  display: grid;
+  gap: 8px;
+}
+
+.formField span {
+  color: #c7c2e8;
+  font-size: 14px;
+}
+
+.formField input,
+.formField select,
+.formField textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font: inherit;
+}
+
+.githubNote {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.githubNote code {
+  overflow-wrap: anywhere;
+  color: #d7c9ff;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100% - 20px, 1200px);
+    padding-top: 20px;
+  }
+
+  .pageHeader {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .timelineTop,
+  .breakdownRow,
+  .statList div,
+  .modalActions {
+    flex-direction: column;
+    align-items: start;
+  }
+}

@@ -20,7 +20,7 @@
     "proxy:dev": "node apps/proxy/dist/server.js",
     "web:dev": "npm run dev -w @nibras/web",
     "web:build": "npm run build -w @nibras/web",
-    "test": "npm run build && node --test",
+    "test": "npm run build && node --test test/*.js",
     "lint": "node -e \"console.log('no lint configured')\""
   },
   "files": [

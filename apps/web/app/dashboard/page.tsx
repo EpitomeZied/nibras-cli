@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "../lib/session";
 
 type MePayload = {
   user: {
@@ -23,25 +24,28 @@ export default function DashboardPage() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const apiBaseUrl = window.localStorage.getItem("nibras.apiBaseUrl") || process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL || "http://127.0.0.1:4848";
     const accessToken = window.localStorage.getItem("nibras.accessToken");
     if (!accessToken) {
       setError("No web session found. Start from the home page and sign in with GitHub.");
       return;
     }
 
-    const headers = { authorization: `Bearer ${accessToken}` };
-    void Promise.all([
-      fetch(`${apiBaseUrl}/v1/me`, { headers }).then((response) => response.json()),
-      fetch(`${apiBaseUrl}/v1/github/install-url`, { headers }).then((response) => response.json())
-    ]).then(([mePayload, installPayload]) => {
-      setMe(mePayload as MePayload);
-      if ((installPayload as InstallUrlPayload).installUrl) {
-        setInstallUrl((installPayload as InstallUrlPayload).installUrl);
+    void (async () => {
+      try {
+        const [meResponse, installResponse] = await Promise.all([
+          apiFetch("/v1/me", { auth: true }),
+          apiFetch("/v1/github/install-url", { auth: true })
+        ]);
+        const mePayload = await meResponse.json() as MePayload;
+        const installPayload = await installResponse.json() as InstallUrlPayload;
+        setMe(mePayload);
+        if (installPayload.installUrl) {
+          setInstallUrl(installPayload.installUrl);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
       }
-    }).catch((err) => {
-      setError(err instanceof Error ? err.message : String(err));
-    });
+    })();
   }, []);
 
   return (

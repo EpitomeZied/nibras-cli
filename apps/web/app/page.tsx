@@ -1,7 +1,24 @@
-const apiBaseUrl = process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL || "http://127.0.0.1:4848";
+"use client";
+
+import { useState } from "react";
+import { discoverApiBaseUrl } from "./lib/session";
 
 export default function HomePage() {
-  const loginUrl = `${apiBaseUrl}/v1/github/oauth/start?return_to=${encodeURIComponent(`${process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL || "http://127.0.0.1:3000"}/auth/complete`)}`;
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSignIn() {
+    setError("");
+    setSubmitting(true);
+    try {
+      const apiBaseUrl = await discoverApiBaseUrl();
+      const returnTo = `${window.location.origin}/auth/complete`;
+      window.location.href = `${apiBaseUrl}/v1/github/oauth/start?return_to=${encodeURIComponent(returnTo)}`;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setSubmitting(false);
+    }
+  }
 
   return (
     <main>
@@ -14,9 +31,12 @@ export default function HomePage() {
             and connect the CLI to a hosted backend instead of a local-only demo flow.
           </p>
           <div className="actions">
-            <a className="button" href={loginUrl}>Sign in with GitHub</a>
+            <button className="button" type="button" onClick={() => void handleSignIn()} disabled={submitting}>
+              {submitting ? "Connecting..." : "Sign in with GitHub"}
+            </button>
             <a className="button-secondary" href="https://github.com/apps" target="_blank" rel="noreferrer">GitHub Apps</a>
           </div>
+          {error ? <p>{error}</p> : null}
         </section>
 
         <div className="grid">

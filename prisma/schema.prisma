@@ -15,6 +15,41 @@ enum SubmissionStatus {
   needs_review
 }
 
+enum SystemRole {
+  user
+  admin
+}
+
+enum CourseRole {
+  student
+  instructor
+  ta
+}
+
+enum ProjectStatus {
+  draft
+  published
+  archived
+}
+
+enum DeliveryMode {
+  individual
+  team
+}
+
+enum TrackingSubmissionType {
+  github
+  link
+  text
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  changes_requested
+  graded
+}
+
 enum RepoVisibility {
   private
   public
@@ -31,14 +66,44 @@ model User {
   email             String             @unique
   githubLinked      Boolean            @default(false)
   githubAppInstalled Boolean           @default(false)
+  systemRole        SystemRole         @default(user)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   githubAccount     GithubAccount?
+  courseMemberships CourseMembership[]
   deviceCodes       DeviceCode[]
   cliSessions       CliSession[]
   userProjectRepos  UserProjectRepo[]
   submissionAttempts SubmissionAttempt[]
   auditLogs         AuditLog[]
+  reviews           Review[]
+}
+
+model Course {
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  title       String
+  termLabel   String
+  courseCode  String
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  memberships CourseMembership[]
+  projects    Project[]
+  auditLogs   AuditLog[]
+}
+
+model CourseMembership {
+  id         String     @id @default(cuid())
+  courseId   String
+  userId     String
+  role       CourseRole
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
 }
 
 model GithubAccount {
@@ -93,15 +158,24 @@ model Subject {
 model Project {
   id               String            @id @default(cuid())
   subjectId        String
+  courseId         String?
   slug             String            @unique
   name             String
   defaultBranch    String            @default("main")
+  description      String            @default("")
+  status           ProjectStatus     @default(draft)
+  deliveryMode     DeliveryMode      @default(individual)
+  rubricJson       Json?
+  resourcesJson    Json?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   subject          Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  course           Course?           @relation(fields: [courseId], references: [id], onDelete: SetNull)
   releases         ProjectRelease[]
+  milestones       Milestone[]
   userProjectRepos UserProjectRepo[]
   submissions      SubmissionAttempt[]
+  auditLogs        AuditLog[]
 }
 
 model ProjectRelease {
@@ -158,11 +232,16 @@ model SubmissionAttempt {
   projectId        String
   projectReleaseId String
   userProjectRepoId String
+  milestoneId      String?
   commitSha        String
   repoUrl          String
   branch           String
   status           SubmissionStatus  @default(queued)
   summary          String
+  submissionType   TrackingSubmissionType @default(github)
+  submissionValue  String?
+  notes            String?
+  submittedAt      DateTime?
   localTestExitCode Int?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -170,9 +249,60 @@ model SubmissionAttempt {
   project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectRelease   ProjectRelease    @relation(fields: [projectReleaseId], references: [id], onDelete: Cascade)
   userProjectRepo  UserProjectRepo   @relation(fields: [userProjectRepoId], references: [id], onDelete: Cascade)
+  milestone        Milestone?        @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  reviews          Review[]
+  githubDeliveries GithubDelivery[]
+  auditLogs        AuditLog[]
   verificationRuns VerificationRun[]
 
   @@unique([userId, projectId, commitSha])
+}
+
+model Milestone {
+  id          String              @id @default(cuid())
+  projectId   String
+  title       String
+  description String             @default("")
+  order       Int
+  dueAt       DateTime?
+  isFinal     Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  project     Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submissions SubmissionAttempt[]
+  auditLogs   AuditLog[]
+
+  @@unique([projectId, order])
+}
+
+model Review {
+  id                 String            @id @default(cuid())
+  submissionAttemptId String
+  reviewerUserId     String
+  status             ReviewStatus
+  score              Float?
+  feedback           String            @default("")
+  rubricJson         Json?
+  reviewedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  submissionAttempt  SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+  reviewer           User              @relation(fields: [reviewerUserId], references: [id], onDelete: Cascade)
+}
+
+model GithubDelivery {
+  id                  String            @id @default(cuid())
+  submissionAttemptId String
+  repoUrl             String
+  eventType           String
+  deliveryId          String
+  ref                 String
+  commitSha           String
+  payloadJson         Json?
+  receivedAt          DateTime          @default(now())
+  submissionAttempt   SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId])
 }
 
 model VerificationRun {
@@ -190,10 +320,18 @@ model VerificationRun {
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String?
+  courseId   String?
+  projectId  String?
+  milestoneId String?
+  submissionAttemptId String?
   action     String
   targetType String
   targetId   String
   payload    Json?
   createdAt  DateTime @default(now())
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  course     Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  milestone  Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  submissionAttempt SubmissionAttempt? @relation(fields: [submissionAttemptId], references: [id], onDelete: SetNull)
 }
