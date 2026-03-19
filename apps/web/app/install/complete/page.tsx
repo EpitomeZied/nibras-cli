@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { apiFetch } from "../../lib/session";
 
 export default function InstallCompletePage() {
   const [installationId, setInstallationId] = useState("");
@@ -8,26 +9,25 @@ export default function InstallCompletePage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const apiBaseUrl = window.localStorage.getItem("nibras.apiBaseUrl") || process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL || "http://127.0.0.1:4848";
     const accessToken = window.localStorage.getItem("nibras.accessToken");
     if (!accessToken) {
       setStatus("No web session found.");
       return;
     }
-    const response = await fetch(`${apiBaseUrl}/v1/github/setup/complete`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({ installationId })
-    });
-    const payload = await response.json();
-    if (!response.ok) {
-      setStatus(payload.error || "Failed to complete installation.");
-      return;
+    try {
+      const response = await apiFetch("/v1/github/setup/complete", {
+        method: "POST",
+        auth: true,
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({ installationId })
+      });
+      const payload = await response.json();
+      setStatus(`Installation ${payload.installationId} linked successfully.`);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : String(err));
     }
-    setStatus(`Installation ${payload.installationId} linked successfully.`);
   }
 
   return (

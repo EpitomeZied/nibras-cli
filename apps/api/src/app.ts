@@ -1,4 +1,5 @@
 import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import cors from "@fastify/cors";
 import rawBodyPlugin from "fastify-raw-body";
 import {
   DevicePollResponseSchema,
@@ -34,8 +35,52 @@ import {
 import { PrismaStore } from "./prisma-store";
 import { AppStore, FileStore, getStorePath } from "./store";
 
+function normalizeOrigin(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAllowedCorsOrigins(): string[] {
+  const configuredOrigins = process.env.NIBRAS_WEB_CORS_ORIGINS;
+  const candidates = configuredOrigins
+    ? configuredOrigins.split(",")
+    : [
+        process.env.NIBRAS_WEB_BASE_URL,
+        process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL,
+        "http://127.0.0.1:3000",
+        "http://localhost:3000"
+      ];
+
+  const origins = new Set<string>();
+  for (const candidate of candidates) {
+    const normalized = normalizeOrigin(candidate?.trim());
+    if (normalized) {
+      origins.add(normalized);
+    }
+  }
+  return Array.from(origins);
+}
+
 function requestBaseUrl(request: FastifyRequest): string {
-  return `${request.protocol}://${request.headers.host || "127.0.0.1:4848"}`;
+  const forwardedProto = request.headers["x-forwarded-proto"];
+  const forwardedHost = request.headers["x-forwarded-host"];
+  const proto = Array.isArray(forwardedProto)
+    ? forwardedProto[0]
+    : typeof forwardedProto === "string"
+      ? forwardedProto.split(",")[0]?.trim()
+      : request.protocol;
+  const host = Array.isArray(forwardedHost)
+    ? forwardedHost[0]
+    : typeof forwardedHost === "string"
+      ? forwardedHost.split(",")[0]?.trim()
+      : request.headers.host || "127.0.0.1:4848";
+  return `${proto || "http"}://${host}`;
 }
 
 function getBearerToken(request: FastifyRequest): string | null {
@@ -70,6 +115,19 @@ function createDefaultStore(): AppStore {
 export function buildApp(store: AppStore = createDefaultStore()): FastifyInstance {
   const app = Fastify({ logger: false });
   const githubConfig = loadGitHubAppConfig();
+  const allowedCorsOrigins = new Set(getAllowedCorsOrigins());
+
+  void app.register(cors, {
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["authorization", "content-type"],
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      callback(null, allowedCorsOrigins.has(origin));
+    }
+  });
 
   void app.register(rawBodyPlugin, {
     field: "rawBody",

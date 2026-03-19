@@ -102,6 +102,12 @@ npm run api:dev
 npm run web:dev
 ```
 
+In this split-origin local mode, the browser app runs on `http://127.0.0.1:3000`
+and calls the API on `http://127.0.0.1:4848`, so the API must allow browser
+origins through CORS. By default, the API allows the configured web base URL plus
+local Next.js dev origins. Override that allowlist with `NIBRAS_WEB_CORS_ORIGINS`
+if you need a stricter browser origin set.
+
 ngrok-ready local development:
 
 ```bash
@@ -120,6 +126,9 @@ Use one HTTPS tunnel:
 The local proxy fans requests out like this:
 - `/v1/*` and `/dev/*` -> local API `http://127.0.0.1:4848`
 - everything else -> local web app `http://127.0.0.1:3000`
+
+This same-origin proxy mode is the preferred way to test GitHub callbacks and
+webhooks because the browser, API, and public tunnel all share one origin.
 
 GitHub cannot call `127.0.0.1`, so the public tunnel URLs must be used in both
 the GitHub App settings and the `.env` file.
@@ -205,6 +214,8 @@ Use this checklist when creating the GitHub App for Nibras.
    `Setup URL`
    `Webhook URL`
    and the matching env vars in `.env`.
+   Stale public tunnel URLs in `.env` or browser localStorage will break the
+   dashboard until you update them and sign in again.
 
 11. Verify webhook signing.
    GitHub Docs: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
