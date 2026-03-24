@@ -65,9 +65,21 @@ export function loadGitHubAppConfig(): GitHubAppConfig | null {
   };
 }
 
+async function importGitHubPrivateKey(privateKey: string) {
+  const normalized = privateKey.replace(/\\n/g, "\n");
+  if (normalized.includes("BEGIN RSA PRIVATE KEY")) {
+    const pkcs8 = crypto.createPrivateKey(normalized).export({
+      format: "pem",
+      type: "pkcs8"
+    });
+    return importPKCS8(pkcs8.toString(), "RS256");
+  }
+  return importPKCS8(normalized, "RS256");
+}
+
 export async function createAppJwt(config: GitHubAppConfig): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const key = await importPKCS8(config.privateKey.replace(/\\n/g, "\n"), "RS256");
+  const key = await importGitHubPrivateKey(config.privateKey);
   return new SignJWT({})
     .setProtectedHeader({ alg: "RS256", typ: "JWT" })
     .setIssuedAt(now - 60)

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
 const {
+  createAppJwt,
   createSignedState,
   verifySignedState,
   verifyWebhookSignature
@@ -16,6 +17,30 @@ test("GitHub signed state round-trips and rejects tampering", () => {
   const decoded = verifySignedState(secret, signed);
   assert.deepEqual(decoded, { returnTo: "http://127.0.0.1:3000/auth/complete" });
   assert.equal(verifySignedState(secret, `${signed}tampered`), null);
+});
+
+test("GitHub app JWT generation accepts RSA private keys from GitHub", async () => {
+  const { privateKey } = crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    privateKeyEncoding: {
+      format: "pem",
+      type: "pkcs1"
+    },
+    publicKeyEncoding: {
+      format: "pem",
+      type: "spki"
+    }
+  });
+  const jwt = await createAppJwt({
+    appId: "3126322",
+    clientId: "client-id",
+    clientSecret: "client-secret",
+    privateKey,
+    webhookSecret: "webhook-secret",
+    appName: "nibras-dev-zied"
+  });
+  assert.equal(typeof jwt, "string");
+  assert.match(jwt, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
 });
 
 test("GitHub webhook signature verification validates X-Hub-Signature-256", () => {

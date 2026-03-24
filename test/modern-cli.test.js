@@ -6,6 +6,7 @@ const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 
 const { buildApp } = require("../apps/api/dist/app");
+const { FileStore } = require("../apps/api/dist/store");
 
 const repoRoot = path.resolve(__dirname, "..");
 
@@ -16,7 +17,7 @@ function makeTempDir() {
 async function startApi(storePath) {
   const previousStore = process.env.NIBRAS_API_STORE;
   process.env.NIBRAS_API_STORE = storePath;
-  const app = buildApp();
+  const app = buildApp(new FileStore(storePath));
   await app.listen({ port: 0, host: "127.0.0.1" });
   const address = app.server.address();
   const apiBaseUrl = `http://127.0.0.1:${address.port}`;
@@ -88,6 +89,29 @@ test("modern CLI help renders the new command surface", async () => {
   assert.match(result.stdout, /CLI to interact with Nibras/);
   assert.match(result.stdout, /login:/);
   assert.match(result.stdout, /legacy:/);
+});
+
+test("API uses forwarded host and protocol when building public URLs", async () => {
+  const app = buildApp(new FileStore(path.join(makeTempDir(), "store.json")));
+  try {
+    const started = await app.inject({
+      method: "POST",
+      url: "/v1/device/start",
+      headers: {
+        "x-forwarded-proto": "https",
+        "x-forwarded-host": "nondefined-gustavo-languidly.ngrok-free.dev"
+      }
+    });
+    assert.equal(started.statusCode, 200);
+    const payload = started.json();
+    assert.equal(payload.verificationUri, "https://nondefined-gustavo-languidly.ngrok-free.dev/dev/approve");
+    assert.match(
+      payload.verificationUriComplete,
+      /^https:\/\/nondefined-gustavo-languidly\.ngrok-free\.dev\/dev\/approve\?user_code=/
+    );
+  } finally {
+    await app.close();
+  }
 });
 
 test("modern CLI setup bootstraps a local project from the API", async () => {
