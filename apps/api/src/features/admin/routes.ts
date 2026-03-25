@@ -57,26 +57,43 @@ export function registerAdminRoutes(app: FastifyInstance, store: AppStore): void
       });
     }
 
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!submission) {
       return reply.code(404).send({ error: "Unknown submission." });
     }
 
-    // updateTrackingSubmission only accepts submission content fields, not status —
-    // we need the store to expose a status-override path for production. For now we
-    // mark the submission by updating via the generic updateLocalTestResult endpoint
-    // which naturally sets exit code 0/nonzero; for full production this should be a
-    // dedicated store method. The PrismaStore path can be added as store.overrideSubmissionStatus.
-    const exitCode = body.status === "passed" ? 0 : 1;
     const summary = body.summary || (body.status === "passed"
       ? "Manually marked as passed by admin."
       : body.status === "needs_review"
         ? "Manually flagged for review by admin."
         : "Manually marked as failed by admin.");
 
-    await store.updateLocalTestResult(requestBaseUrl(request), params.submissionId, exitCode, summary);
+    const updated = await store.overrideSubmissionStatus(
+      requestBaseUrl(request),
+      params.submissionId,
+      body.status as SubmissionWorkflowStatus,
+      summary,
+      auth.user.id
+    );
+    if (!updated) {
+      return reply.code(404).send({ error: "Unknown submission." });
+    }
 
-    return { ok: true, submissionId: params.submissionId, status: body.status };
+    return { ok: true, submissionId: params.submissionId, status: updated.status, summary: updated.summary };
+  });
+
+  app.get("/v1/admin/submissions/:submissionId/logs", async (request, reply) => {
+    const auth = await requireUser(request, reply, store);
+    if (!requireAdmin(auth, reply)) return;
+
+    const params = request.params as { submissionId: string };
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
+    if (!submission) {
+      return reply.code(404).send({ error: "Unknown submission." });
+    }
+
+    const logs = await store.listSubmissionVerificationLogs(requestBaseUrl(request), params.submissionId);
+    return { submissionId: params.submissionId, logs };
   });
 
   /**

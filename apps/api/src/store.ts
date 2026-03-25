@@ -19,6 +19,15 @@ export type SessionRecord = {
   createdAt: string;
 };
 
+export type WebSessionRecord = {
+  sessionToken: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+};
+
 export type SystemRole = "user" | "admin";
 export type MembershipRole = "student" | "instructor" | "ta";
 export type ProjectStatus = "draft" | "published" | "archived";
@@ -139,6 +148,18 @@ export type ReviewRecord = {
   updatedAt: string;
 };
 
+export type VerificationLogRecord = {
+  id: string;
+  submissionId: string;
+  attempt: number;
+  status: SubmissionWorkflowStatus;
+  log: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type GithubDeliveryRecord = {
   id: string;
   submissionId: string;
@@ -194,7 +215,9 @@ export type StoreData = {
   courseMemberships: CourseMembershipRecord[];
   deviceCodes: DeviceCodeRecord[];
   sessions: SessionRecord[];
+  webSessions: WebSessionRecord[];
   submissions: SubmissionRecord[];
+  verificationLogs: VerificationLogRecord[];
   projects: ProjectRecord[];
   milestones: MilestoneRecord[];
   reviews: ReviewRecord[];
@@ -208,14 +231,32 @@ export interface AppStore {
   pollDeviceCode(apiBaseUrl: string, deviceCode: string): Promise<{ record: DeviceCodeRecord | null; session: SessionRecord | null }>;
   getUserByToken(apiBaseUrl: string, accessToken: string): Promise<UserRecord | null>;
   deleteSession(apiBaseUrl: string, accessToken: string): Promise<void>;
+  createWebSession(apiBaseUrl: string, userId: string): Promise<WebSessionRecord>;
+  getUserByWebSession(apiBaseUrl: string, sessionToken: string): Promise<UserRecord | null>;
+  deleteWebSession(apiBaseUrl: string, sessionToken: string): Promise<void>;
   getProject(apiBaseUrl: string, projectKey: string): Promise<ProjectRecord | null>;
   provisionProjectRepo(apiBaseUrl: string, projectKey: string, userId: string): Promise<RepoRecord>;
   createOrReuseSubmission(
     apiBaseUrl: string,
     payload: { userId: string; projectKey: string; commitSha: string; repoUrl: string; branch: string }
   ): Promise<SubmissionRecord>;
-  updateLocalTestResult(apiBaseUrl: string, submissionId: string, exitCode: number, summary: string): Promise<SubmissionRecord | null>;
-  getSubmission(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null>;
+  updateLocalTestResult(
+    apiBaseUrl: string,
+    submissionId: string,
+    requesterUserId: string,
+    exitCode: number,
+    summary: string
+  ): Promise<SubmissionRecord | null>;
+  getSubmission(apiBaseUrl: string, submissionId: string, requesterUserId: string): Promise<SubmissionRecord | null>;
+  getSubmissionForAdmin(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null>;
+  overrideSubmissionStatus(
+    apiBaseUrl: string,
+    submissionId: string,
+    status: SubmissionWorkflowStatus,
+    summary: string,
+    actorUserId: string
+  ): Promise<SubmissionRecord | null>;
+  listSubmissionVerificationLogs(apiBaseUrl: string, submissionId: string): Promise<VerificationLogRecord[]>;
   listCourseMemberships(apiBaseUrl: string, userId: string): Promise<CourseMembershipRecord[]>;
   listTrackingCourses(apiBaseUrl: string, userId: string): Promise<CourseRecord[]>;
   listTrackingProjects(apiBaseUrl: string, courseId: string): Promise<ProjectRecord[]>;
@@ -362,6 +403,10 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+function futureIso(days: number): string {
+  return new Date(Date.now() + days * 86_400_000).toISOString();
+}
+
 function formatDateLabel(value: string | null): string {
   if (!value) return "No due date";
   return new Date(value).toLocaleDateString("en-US", {
@@ -500,7 +545,9 @@ function seedData(apiBaseUrl: string): StoreData {
     ],
     deviceCodes: [],
     sessions: [],
+    webSessions: [],
     submissions: [],
+    verificationLogs: [],
     projects: [
       {
         id: projectId,
@@ -686,6 +733,44 @@ export class FileStore implements AppStore {
     this.write(data);
   }
 
+  async createWebSession(apiBaseUrl: string, userId: string): Promise<WebSessionRecord> {
+    const data = this.read(apiBaseUrl);
+    const session: WebSessionRecord = {
+      sessionToken: `web_${randomUUID()}`,
+      userId,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+      expiresAt: futureIso(30),
+      revokedAt: null
+    };
+    data.webSessions.push(session);
+    this.write(data);
+    return session;
+  }
+
+  async getUserByWebSession(apiBaseUrl: string, sessionToken: string): Promise<UserRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const session = data.webSessions.find((entry) => entry.sessionToken === sessionToken);
+    if (!session) {
+      return null;
+    }
+    if (session.revokedAt || new Date(session.expiresAt).getTime() <= Date.now()) {
+      return null;
+    }
+    return data.users.find((entry) => entry.id === session.userId) || null;
+  }
+
+  async deleteWebSession(apiBaseUrl: string, sessionToken: string): Promise<void> {
+    const data = this.read(apiBaseUrl);
+    const session = data.webSessions.find((entry) => entry.sessionToken === sessionToken);
+    if (!session) {
+      return;
+    }
+    session.revokedAt = nowIso();
+    session.updatedAt = nowIso();
+    this.write(data);
+  }
+
   async getProject(apiBaseUrl: string, projectKey: string): Promise<ProjectRecord | null> {
     const data = this.read(apiBaseUrl);
     return data.projects.find((entry) => entry.projectKey === projectKey) || null;
@@ -751,13 +836,30 @@ export class FileStore implements AppStore {
       localTestExitCode: null
     };
     data.submissions.push(record);
+    data.verificationLogs.push({
+      id: randomUUID(),
+      submissionId: record.id,
+      attempt: 0,
+      status: "queued",
+      log: "Queued",
+      startedAt: null,
+      finishedAt: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    });
     this.write(data);
     return record;
   }
 
-  async updateLocalTestResult(apiBaseUrl: string, submissionId: string, exitCode: number, summary: string): Promise<SubmissionRecord | null> {
+  async updateLocalTestResult(
+    apiBaseUrl: string,
+    submissionId: string,
+    requesterUserId: string,
+    exitCode: number,
+    summary: string
+  ): Promise<SubmissionRecord | null> {
     const data = this.read(apiBaseUrl);
-    const submission = data.submissions.find((entry) => entry.id === submissionId);
+    const submission = data.submissions.find((entry) => entry.id === submissionId && entry.userId === requesterUserId);
     if (!submission) {
       return null;
     }
@@ -768,13 +870,68 @@ export class FileStore implements AppStore {
     return submission;
   }
 
-  async getSubmission(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null> {
+  async getSubmission(apiBaseUrl: string, submissionId: string, requesterUserId: string): Promise<SubmissionRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const submission = data.submissions.find((entry) => entry.id === submissionId && entry.userId === requesterUserId);
+    if (!submission) {
+      return null;
+    }
+    return this.touchSubmissionLifecycle(data, submission);
+  }
+
+  async getSubmissionForAdmin(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null> {
     const data = this.read(apiBaseUrl);
     const submission = data.submissions.find((entry) => entry.id === submissionId);
     if (!submission) {
       return null;
     }
     return this.touchSubmissionLifecycle(data, submission);
+  }
+
+  async overrideSubmissionStatus(
+    apiBaseUrl: string,
+    submissionId: string,
+    status: SubmissionWorkflowStatus,
+    summary: string,
+    actorUserId: string
+  ): Promise<SubmissionRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const submission = data.submissions.find((entry) => entry.id === submissionId);
+    if (!submission) {
+      return null;
+    }
+    const previousStatus = submission.status;
+    submission.status = status;
+    submission.summary = summary;
+    submission.updatedAt = nowIso();
+    data.verificationLogs.push({
+      id: randomUUID(),
+      submissionId,
+      attempt: data.verificationLogs.filter((entry) => entry.submissionId === submissionId).length,
+      status,
+      log: `Manual override by ${actorUserId}: ${summary}`,
+      startedAt: nowIso(),
+      finishedAt: nowIso(),
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    });
+    data.activity.unshift(makeActivityRecord({
+      actorUserId,
+      courseId: data.projects.find((entry) => entry.id === submission.projectId)?.courseId || null,
+      projectId: submission.projectId,
+      milestoneId: submission.milestoneId,
+      submissionId,
+      action: "submission.overridden",
+      summary: `Submission status changed from ${previousStatus} to ${status}.`
+    }));
+    this.write(data);
+    return submission;
+  }
+
+  async listSubmissionVerificationLogs(apiBaseUrl: string, submissionId: string): Promise<VerificationLogRecord[]> {
+    return this.read(apiBaseUrl).verificationLogs
+      .filter((entry) => entry.submissionId === submissionId)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }
 
   async listCourseMemberships(apiBaseUrl: string, userId: string): Promise<CourseMembershipRecord[]> {

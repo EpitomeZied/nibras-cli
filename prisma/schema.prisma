@@ -73,6 +73,7 @@ model User {
   courseMemberships CourseMembership[]
   deviceCodes       DeviceCode[]
   cliSessions       CliSession[]
+  webSessions       WebSession[]
   userProjectRepos  UserProjectRepo[]
   submissionAttempts SubmissionAttempt[]
   auditLogs         AuditLog[]
@@ -144,6 +145,17 @@ model CliSession {
   updatedAt     DateTime @updatedAt
   revokedAt     DateTime?
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WebSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  revokedAt    DateTime?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Subject {
@@ -309,6 +321,7 @@ model GithubDelivery {
 model VerificationRun {
   id                  String            @id @default(cuid())
   submissionAttemptId String
+  attempt             Int               @default(0)
   status              SubmissionStatus  @default(queued)
   log                 String
   startedAt           DateTime?
@@ -316,6 +329,8 @@ model VerificationRun {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
   submissionAttempt   SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionAttemptId, attempt])
 }
 
 model VerificationJob {
@@ -329,6 +344,8 @@ model VerificationJob {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
   submissionAttempt   SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+
+  @@index([status, claimedAt, createdAt])
 }
 
 model AuditLog {

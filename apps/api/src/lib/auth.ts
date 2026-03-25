@@ -10,7 +10,26 @@ function getBearerToken(request: FastifyRequest): string | null {
   return raw.slice("Bearer ".length).trim();
 }
 
+function getCookieValue(request: FastifyRequest, name: string): string | null {
+  const raw = request.headers.cookie;
+  if (!raw) {
+    return null;
+  }
+  for (const part of raw.split(";")) {
+    const [cookieName, ...rest] = part.trim().split("=");
+    if (cookieName === name) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+  return null;
+}
+
+export function getWebSessionToken(request: FastifyRequest): string | null {
+  return getCookieValue(request, "nibras_web_session");
+}
+
 export type AuthenticatedRequest = {
+  authKind: "bearer" | "web";
   token: string;
   user: UserRecord;
   memberships: CourseMembershipRecord[];
@@ -21,18 +40,26 @@ export async function requireUser(
   reply: FastifyReply,
   store: AppStore
 ): Promise<AuthenticatedRequest | null> {
-  const token = getBearerToken(request);
-  if (!token) {
-    reply.code(401).send({ error: "Missing bearer token." });
+  const apiBaseUrl = requestBaseUrl(request);
+  const bearerToken = getBearerToken(request);
+  const webSessionToken = getWebSessionToken(request);
+
+  const authKind = bearerToken ? "bearer" : webSessionToken ? "web" : null;
+  const token = bearerToken || webSessionToken;
+  if (!authKind || !token) {
+    reply.code(401).send({ error: "Authentication required." });
     return null;
   }
-  const user = await store.getUserByToken(requestBaseUrl(request), token);
+
+  const user = authKind === "bearer"
+    ? await store.getUserByToken(apiBaseUrl, token)
+    : await store.getUserByWebSession(apiBaseUrl, token);
   if (!user) {
-    reply.code(401).send({ error: "Invalid bearer token." });
+    reply.code(401).send({ error: "Invalid session." });
     return null;
   }
-  const memberships = await store.listCourseMemberships(requestBaseUrl(request), user.id);
-  return { token, user, memberships };
+  const memberships = await store.listCourseMemberships(apiBaseUrl, user.id);
+  return { authKind, token, user, memberships };
 }
 
 export function hasCourseRole(

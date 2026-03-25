@@ -12,8 +12,9 @@ import {
 import { GitHubAppConfig } from "@nibras/github";
 import { PrismaStore } from "../../prisma-store";
 import { AppStore } from "../../store";
-import { requireUser } from "../../lib/auth";
+import { getWebSessionToken, requireUser } from "../../lib/auth";
 import { requestBaseUrl } from "../../lib/request-base-url";
+import { clearWebSessionCookie } from "../../lib/web-session";
 
 export function registerHostedCliRoutes(
   app: FastifyInstance,
@@ -38,7 +39,12 @@ export function registerHostedCliRoutes(
   app.post("/v1/logout", async (request, reply) => {
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
-    await store.deleteSession(requestBaseUrl(request), auth.token);
+    if (auth.authKind === "bearer") {
+      await store.deleteSession(requestBaseUrl(request), auth.token);
+    } else {
+      await store.deleteWebSession(requestBaseUrl(request), auth.token);
+      void reply.header("Set-Cookie", clearWebSessionCookie(request));
+    }
     return { ok: true };
   });
 
@@ -49,6 +55,24 @@ export function registerHostedCliRoutes(
       user: auth.user,
       apiBaseUrl: requestBaseUrl(request)
     });
+  });
+
+  app.get("/v1/web/session", async (request, reply) => {
+    const auth = await requireUser(request, reply, store);
+    if (!auth) return;
+    return MeResponseSchema.parse({
+      user: auth.user,
+      apiBaseUrl: requestBaseUrl(request)
+    });
+  });
+
+  app.post("/v1/web/logout", async (request, reply) => {
+    const sessionToken = getWebSessionToken(request);
+    if (sessionToken) {
+      await store.deleteWebSession(requestBaseUrl(request), sessionToken);
+    }
+    void reply.header("Set-Cookie", clearWebSessionCookie(request));
+    return { ok: true };
   });
 
   app.get("/v1/projects/:projectKey/manifest", async (request, reply) => {
@@ -131,11 +155,13 @@ export function registerHostedCliRoutes(
     const submission = await store.updateLocalTestResult(
       requestBaseUrl(request),
       params.submissionId,
+      auth.user.id,
       payload.exitCode,
       payload.summary
     );
     if (!submission) {
-      reply.code(404).send({ error: "Unknown submission." });
+      const existing = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
+      reply.code(existing ? 403 : 404).send({ error: existing ? "Forbidden." : "Unknown submission." });
       return;
     }
     return { ok: true };
@@ -145,9 +171,10 @@ export function registerHostedCliRoutes(
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId, auth.user.id);
     if (!submission) {
-      reply.code(404).send({ error: "Unknown submission." });
+      const existing = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
+      reply.code(existing ? 403 : 404).send({ error: existing ? "Forbidden." : "Unknown submission." });
       return;
     }
     return SubmissionStatusResponseSchema.parse({

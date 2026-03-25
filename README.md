@@ -13,6 +13,10 @@ This repo now also includes a hosted-style v1 vertical slice:
 - compatibility routing back to the legacy `nibras <subject> <command> <project>` flow
 - a tracked student projects dashboard at `/projects` backed by `/v1/tracking/*`
 
+Current repo layout:
+- `apps/` and `packages/` are the active product surface
+- `xx/` is a legacy prototype/reference and is not part of the active implementation
+
 Supported workflows:
 - Strict private auto-grading with `grading.json`
 - Semantic grading with review output for written answers
@@ -86,7 +90,7 @@ Postgres-backed API development:
 ```bash
 cp .env.example .env
 docker compose up -d
-npm run db:push
+npm run db:push   # disposable local dev only
 npm run api:dev
 ```
 
@@ -98,10 +102,13 @@ GitHub App + web dashboard development:
 ```bash
 cp .env.example .env
 docker compose up -d
-npm run db:push
+npm run db:push   # disposable local dev only
 npm run api:dev
 npm run web:dev
 ```
+
+The browser app now uses an HTTP-only `nibras_web_session` cookie for web auth.
+It no longer stores API access or refresh tokens in browser-readable storage.
 
 In this split-origin local mode, the browser app runs on `http://127.0.0.1:3000`
 and calls the API on `http://127.0.0.1:4848`, so the API must allow browser
@@ -114,7 +121,7 @@ ngrok-ready local development:
 ```bash
 cp .env.ngrok.example .env
 docker compose up -d
-npm run db:push
+npm run db:push   # disposable local dev only
 npm run api:dev
 npm run web:dev
 npm run proxy:dev
@@ -146,12 +153,14 @@ Required GitHub App settings:
 
 Implemented product pieces:
 - Real GitHub device flow and browser OAuth flow through the API
+- Cookie-based browser sessions for the web app
 - Signed OAuth state handling
 - GitHub App installation link generation
 - Installation ownership verification before linking an installation to a user
 - HMAC verification for GitHub webhooks using `X-Hub-Signature-256`
 - A real Next.js web app under `apps/web/`
 - Integrated project tracking for courses, milestones, reviews, and activity feeds
+- Worker-owned verification status transitions and manual admin overrides
 
 Project tracking docs:
 - `docs/project-tracking.md`
@@ -206,7 +215,7 @@ Use this checklist when creating the GitHub App for Nibras.
    For ngrok:
    `cp .env.ngrok.example .env`
    `docker compose up -d`
-   `npm run db:push`
+   `npm run db:push` for disposable local development only
    `npm run api:dev`
    `npm run web:dev`
    `npm run proxy:dev`

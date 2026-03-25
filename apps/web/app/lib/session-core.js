@@ -129,7 +129,8 @@ export async function apiFetchWith({
   try {
     response = await fetchImpl(createApiUrl(apiBaseUrl, path), {
       ...init,
-      headers
+      headers,
+      credentials: auth ? "include" : init.credentials
     });
   } catch {
     throw new Error(formatApiFetchError(apiBaseUrl));

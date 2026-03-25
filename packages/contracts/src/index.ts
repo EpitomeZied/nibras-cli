@@ -134,13 +134,6 @@ export const GitHubConfigResponseSchema = z.object({
   webBaseUrl: z.string().optional()
 });
 
-export const GitHubSessionBootstrapSchema = z.object({
-  accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
-  user: UserSchema,
-  apiBaseUrl: z.string().url()
-});
-
 export const GitHubInstallationCompleteRequestSchema = z.object({
   installationId: z.string().min(1)
 });
@@ -164,6 +157,5 @@ export type SubmissionStatusResponse = z.infer<typeof SubmissionStatusResponseSc
 export type PingResponse = z.infer<typeof PingResponseSchema>;
 export type GitHubInstallUrlResponse = z.infer<typeof GitHubInstallUrlResponseSchema>;
 export type GitHubConfigResponse = z.infer<typeof GitHubConfigResponseSchema>;
-export type GitHubSessionBootstrap = z.infer<typeof GitHubSessionBootstrapSchema>;
 export type GitHubInstallationCompleteRequest = z.infer<typeof GitHubInstallationCompleteRequestSchema>;
 export type GitHubInstallationCompleteResponse = z.infer<typeof GitHubInstallationCompleteResponseSchema>;

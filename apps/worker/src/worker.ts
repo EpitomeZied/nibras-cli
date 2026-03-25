@@ -1,11 +1,20 @@
-import { PrismaClient, SubmissionStatus } from "@prisma/client";
+import { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
 
 const POLL_INTERVAL_MS = parseInt(process.env.WORKER_POLL_INTERVAL_MS || "2000", 10);
-const MAX_CLAIM_AGE_MS = 60_000; // reclaim a job stuck in "running" for > 1 min
+const HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || "9090", 10);
+const MAX_CLAIM_AGE_MS = 5 * 60_000;
 
 let shuttingDown = false;
+
+type ClaimedJob = {
+  id: string;
+  submissionAttemptId: string;
+  attempt: number;
+  maxAttempts: number;
+};
 
 function log(level: "info" | "warn" | "error", message: string, extra?: Record<string, unknown>) {
   const entry = {
@@ -20,30 +29,41 @@ function log(level: "info" | "warn" | "error", message: string, extra?: Record<s
 
 async function claimJob(
   prisma: PrismaClient
-): Promise<{ id: string; submissionAttemptId: string; attempt: number; maxAttempts: number } | null> {
-  // Use a transaction to atomically find-and-claim one queued job.
-  // We also reclaim jobs whose claimedAt is older than MAX_CLAIM_AGE_MS (crashed worker).
+): Promise<ClaimedJob | null> {
+  const staleBefore = new Date(Date.now() - MAX_CLAIM_AGE_MS);
   return prisma.$transaction(async (tx) => {
-    const job = await tx.verificationJob.findFirst({
-      where: {
-        status: SubmissionStatus.queued,
-        OR: [
-          { claimedAt: null },
-          { claimedAt: { lt: new Date(Date.now() - MAX_CLAIM_AGE_MS) } }
-        ]
-      },
-      orderBy: { createdAt: "asc" }
-    });
+    const claimed = await tx.$queryRaw<ClaimedJob[]>(Prisma.sql`
+      WITH candidate AS (
+        SELECT id
+        FROM "VerificationJob"
+        WHERE
+          "status" = 'queued'::"SubmissionStatus"
+          OR (
+            "status" = 'running'::"SubmissionStatus"
+            AND "claimedAt" IS NOT NULL
+            AND "claimedAt" < ${staleBefore}
+          )
+        ORDER BY "createdAt" ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+      ),
+      claimed AS (
+        UPDATE "VerificationJob"
+        SET
+          "status" = 'running'::"SubmissionStatus",
+          "claimedAt" = NOW(),
+          "finishedAt" = NULL,
+          "updatedAt" = NOW()
+        WHERE id IN (SELECT id FROM candidate)
+        RETURNING id, "submissionAttemptId", attempt, "maxAttempts"
+      )
+      SELECT * FROM claimed
+    `);
+    const job = claimed[0] || null;
     if (!job) {
       return null;
     }
-    await tx.verificationJob.update({
-      where: { id: job.id },
-      data: {
-        status: SubmissionStatus.running,
-        claimedAt: new Date()
-      }
-    });
+
     await tx.submissionAttempt.update({
       where: { id: job.submissionAttemptId },
       data: {
@@ -51,12 +71,19 @@ async function claimJob(
         summary: "Verification is running."
       }
     });
-    return {
-      id: job.id,
-      submissionAttemptId: job.submissionAttemptId,
-      attempt: job.attempt,
-      maxAttempts: job.maxAttempts
-    };
+    await tx.verificationRun.updateMany({
+      where: {
+        submissionAttemptId: job.submissionAttemptId,
+        attempt: job.attempt,
+        startedAt: null
+      },
+      data: {
+        status: SubmissionStatus.running,
+        startedAt: new Date(),
+        log: "Verification is running."
+      }
+    });
+    return job;
   });
 }
 
@@ -132,6 +159,7 @@ async function runVerification(
 async function finalizeJob(
   jobId: string,
   submissionAttemptId: string,
+  attempt: number,
   exitCode: number,
   verificationLog: string,
   prisma: PrismaClient
@@ -145,15 +173,20 @@ async function finalizeJob(
       where: { id: jobId },
       data: {
         status: finalStatus,
+        claimedAt: null,
         finishedAt: new Date()
       }
     }),
-    prisma.verificationRun.create({
+    prisma.verificationRun.update({
+      where: {
+        submissionAttemptId_attempt: {
+          submissionAttemptId,
+          attempt
+        }
+      },
       data: {
-        submissionAttemptId,
         status: finalStatus,
         log: verificationLog,
-        startedAt: new Date(),
         finishedAt: new Date()
       }
     }),
@@ -178,9 +211,8 @@ async function failJob(
   const summary = exhausted
     ? `Verification failed after ${maxAttempts} attempts: ${errorMessage}`
     : `Attempt ${nextAttempt}/${maxAttempts} failed, will retry: ${errorMessage}`;
-
-  await prisma.$transaction([
-    prisma.verificationJob.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.verificationJob.update({
       where: { id: jobId },
       data: {
         status: nextStatus,
@@ -188,15 +220,38 @@ async function failJob(
         claimedAt: null,
         finishedAt: exhausted ? new Date() : null
       }
-    }),
-    prisma.submissionAttempt.update({
+    });
+    await tx.verificationRun.update({
+      where: {
+        submissionAttemptId_attempt: {
+          submissionAttemptId,
+          attempt
+        }
+      },
+      data: {
+        status: exhausted ? SubmissionStatus.failed : SubmissionStatus.queued,
+        log: errorMessage,
+        finishedAt: exhausted ? new Date() : null
+      }
+    });
+    if (!exhausted) {
+      await tx.verificationRun.create({
+        data: {
+          submissionAttemptId,
+          attempt: nextAttempt,
+          status: SubmissionStatus.queued,
+          log: "Queued for retry"
+        }
+      });
+    }
+    await tx.submissionAttempt.update({
       where: { id: submissionAttemptId },
       data: {
         status: exhausted ? SubmissionStatus.failed : SubmissionStatus.queued,
         summary
       }
-    })
-  ]);
+    });
+  });
 }
 
 async function tick(prisma: PrismaClient): Promise<void> {
@@ -208,7 +263,7 @@ async function tick(prisma: PrismaClient): Promise<void> {
 
   try {
     const { exitCode, log: verificationLog } = await runVerification(job.submissionAttemptId, prisma);
-    await finalizeJob(job.id, job.submissionAttemptId, exitCode, verificationLog, prisma);
+    await finalizeJob(job.id, job.submissionAttemptId, job.attempt, exitCode, verificationLog, prisma);
     log("info", "Job completed", { jobId: job.id, exitCode });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -219,6 +274,15 @@ async function tick(prisma: PrismaClient): Promise<void> {
 
 async function main(): Promise<void> {
   const prisma = new PrismaClient();
+  const healthServer = createServer((request, response) => {
+    if (request.url === "/healthz") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end(JSON.stringify({ error: "Not found" }));
+  });
 
   process.on("SIGTERM", () => {
     log("info", "Received SIGTERM, draining and shutting down");
@@ -229,6 +293,9 @@ async function main(): Promise<void> {
     shuttingDown = true;
   });
 
+  await new Promise<void>((resolve) => {
+    healthServer.listen(HEALTH_PORT, "0.0.0.0", resolve);
+  });
   log("info", "Worker started", { pollIntervalMs: POLL_INTERVAL_MS });
 
   while (!shuttingDown) {
@@ -245,6 +312,9 @@ async function main(): Promise<void> {
   }
 
   await prisma.$disconnect();
+  await new Promise<void>((resolve, reject) => {
+    healthServer.close((error) => error ? reject(error) : resolve());
+  });
   log("info", "Worker shut down cleanly");
 }
 

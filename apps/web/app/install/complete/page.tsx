@@ -9,11 +9,6 @@ export default function InstallCompletePage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const accessToken = window.localStorage.getItem("nibras.accessToken");
-    if (!accessToken) {
-      setStatus("No web session found.");
-      return;
-    }
     try {
       const response = await apiFetch("/v1/github/setup/complete", {
         method: "POST",

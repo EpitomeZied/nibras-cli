@@ -22,6 +22,7 @@ import {
 } from "@nibras/github";
 import { requireUser } from "../../lib/auth";
 import { requestBaseUrl } from "../../lib/request-base-url";
+import { createWebSessionCookie } from "../../lib/web-session";
 import { PrismaStore } from "../../prisma-store";
 import { AppStore } from "../../store";
 
@@ -154,7 +155,7 @@ export function registerGitHubRoutes(
     }
     const tokenResponse = await exchangeGitHubOAuthCode(githubConfig, query.code);
     const githubUser = await getGitHubUser(githubConfig, tokenResponse.accessToken);
-    const { user, session } = await store.upsertGitHubUserSession({
+    const { user } = await store.upsertGitHubUserSession({
       githubUserId: String(githubUser.id),
       login: githubUser.login,
       email: githubUser.email,
@@ -163,13 +164,11 @@ export function registerGitHubRoutes(
       accessTokenExpiresIn: tokenResponse.expiresIn,
       refreshTokenExpiresIn: tokenResponse.refreshTokenExpiresIn
     });
+    const webSession = await store.createWebSession(requestBaseUrl(request), user.id);
     const redirectUrl = new URL(state.returnTo || `${githubConfig.webBaseUrl || requestBaseUrl(request)}/auth/complete`);
-    redirectUrl.hash = new URLSearchParams({
-      access_token: session.accessToken,
-      refresh_token: session.refreshToken,
-      api_base_url: requestBaseUrl(request),
-      user_id: user.id
-    }).toString();
+    void reply.header("Set-Cookie", createWebSessionCookie(request, webSession.sessionToken, {
+      maxAgeSeconds: 30 * 24 * 60 * 60
+    }));
     reply.redirect(redirectUrl.toString());
   });
 

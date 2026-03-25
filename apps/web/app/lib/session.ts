@@ -88,7 +88,6 @@ export async function apiFetch(path: string, init: RequestInit & { auth?: boolea
     init: requestInit,
     auth,
     discoverApiBaseUrl,
-    fetchImpl: (input, request) => fetch(input, request),
-    accessToken: window.localStorage.getItem("nibras.accessToken")
+    fetchImpl: (input, request) => fetch(input, request)
   });
 }

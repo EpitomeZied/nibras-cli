@@ -24,16 +24,10 @@ export default function DashboardPage() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const accessToken = window.localStorage.getItem("nibras.accessToken");
-    if (!accessToken) {
-      setError("No web session found. Start from the home page and sign in with GitHub.");
-      return;
-    }
-
     void (async () => {
       try {
         const [meResponse, installResponse] = await Promise.all([
-          apiFetch("/v1/me", { auth: true }),
+          apiFetch("/v1/web/session", { auth: true }),
           apiFetch("/v1/github/install-url", { auth: true })
         ]);
         const mePayload = await meResponse.json() as MePayload;

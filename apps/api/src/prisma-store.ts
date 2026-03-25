@@ -12,6 +12,7 @@ import {
   TrackingSubmissionType
 } from "@prisma/client";
 import { generateRepositoryFromTemplate, GitHubAppConfig } from "@nibras/github";
+import { encrypt as encryptValue, decrypt as decryptValue } from "@nibras/core";
 import {
   ActivityRecord,
   AppStore,
@@ -35,7 +36,9 @@ import {
   TrackingDashboardStats,
   TrackingResourceRecord,
   TrackingRubricItemRecord,
-  UserRecord
+  UserRecord,
+  VerificationLogRecord,
+  WebSessionRecord
 } from "./store";
 
 function defaultTask(): string {
@@ -248,6 +251,30 @@ function toGithubDeliveryRecord(record: {
     commitSha: record.commitSha,
     payload: (record.payloadJson as Record<string, unknown> | null) || {},
     receivedAt: record.receivedAt.toISOString()
+  };
+}
+
+function toVerificationLogRecord(run: {
+  id: string;
+  submissionAttemptId: string;
+  attempt: number;
+  status: SubmissionStatus;
+  log: string;
+  startedAt: Date | null;
+  finishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): VerificationLogRecord {
+  return {
+    id: run.id,
+    submissionId: run.submissionAttemptId,
+    attempt: run.attempt,
+    status: run.status as VerificationLogRecord["status"],
+    log: run.log,
+    startedAt: run.startedAt ? run.startedAt.toISOString() : null,
+    finishedAt: run.finishedAt ? run.finishedAt.toISOString() : null,
+    createdAt: run.createdAt.toISOString(),
+    updatedAt: run.updatedAt.toISOString()
   };
 }
 
@@ -651,13 +678,21 @@ export class PrismaStore implements AppStore {
       }
     });
 
+    // Encrypt tokens at rest when NIBRAS_ENCRYPTION_KEY is set.
+    // Falls back to plaintext in dev so local flow works without the key.
+    const maybeEncrypt = (value: string | undefined | null): string | null => {
+      if (!value) return null;
+      if (!process.env.NIBRAS_ENCRYPTION_KEY) return value;
+      try { return encryptValue(value); } catch { return value; }
+    };
+
     await this.prisma.githubAccount.upsert({
       where: { userId: user.id },
       update: {
         githubUserId: args.githubUserId,
         login: args.login,
-        userAccessToken: args.accessToken,
-        userRefreshToken: args.refreshToken || null,
+        userAccessToken: maybeEncrypt(args.accessToken),
+        userRefreshToken: maybeEncrypt(args.refreshToken),
         userAccessTokenExpiresAt: args.accessTokenExpiresIn
           ? new Date(Date.now() + args.accessTokenExpiresIn * 1000)
           : null,
@@ -669,8 +704,8 @@ export class PrismaStore implements AppStore {
         userId: user.id,
         githubUserId: args.githubUserId,
         login: args.login,
-        userAccessToken: args.accessToken,
-        userRefreshToken: args.refreshToken || null,
+        userAccessToken: maybeEncrypt(args.accessToken),
+        userRefreshToken: maybeEncrypt(args.refreshToken),
         userAccessTokenExpiresAt: args.accessTokenExpiresIn
           ? new Date(Date.now() + args.accessTokenExpiresIn * 1000)
           : null,
@@ -685,6 +720,18 @@ export class PrismaStore implements AppStore {
       where: { id: user.id },
       include: { githubAccount: true }
     });
+
+    // Audit: record sign-in event
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "user.signed_in",
+        targetType: "User",
+        targetId: user.id,
+        payload: { login: args.login } as Prisma.InputJsonValue
+      }
+    }).catch(() => { /* non-fatal */ });
+
     return {
       user: toUserRecord(hydrated),
       session
@@ -702,10 +749,15 @@ export class PrismaStore implements AppStore {
     if (!account) {
       return null;
     }
+    // Decrypt token if encryption key is configured; fall back to stored value
+    const maybeDecrypt = (value: string | null): string | null => {
+      if (!value || !process.env.NIBRAS_ENCRYPTION_KEY) return value;
+      try { return decryptValue(value); } catch { return value; }
+    };
     return {
       login: account.login,
       installationId: account.installationId,
-      userAccessToken: account.userAccessToken
+      userAccessToken: maybeDecrypt(account.userAccessToken)
     };
   }
 
@@ -722,6 +774,18 @@ export class PrismaStore implements AppStore {
       where: { id: userId },
       include: { githubAccount: true }
     });
+
+    // Audit: record installation link event
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: "installation.linked",
+        targetType: "GithubAccount",
+        targetId: userId,
+        payload: { installationId } as Prisma.InputJsonValue
+      }
+    }).catch(() => { /* non-fatal */ });
+
     return toUserRecord(user);
   }
 
@@ -758,6 +822,9 @@ export class PrismaStore implements AppStore {
     if (!submission) {
       return;
     }
+    const attempt = await this.prisma.verificationRun.count({
+      where: { submissionAttemptId: submission.id }
+    });
     await this.prisma.submissionAttempt.update({
       where: { id: submission.id },
       data: {
@@ -780,8 +847,10 @@ export class PrismaStore implements AppStore {
     await this.prisma.verificationRun.create({
       data: {
         submissionAttemptId: submission.id,
+        attempt,
         status: SubmissionStatus.running,
-        log: `Webhook push received for ${payload.ref}`
+        log: `Webhook push received for ${payload.ref}`,
+        startedAt: new Date()
       }
     });
   }
@@ -905,6 +974,49 @@ export class PrismaStore implements AppStore {
     await this.seed(apiBaseUrl);
     await this.prisma.cliSession.updateMany({
       where: { accessToken, revokedAt: null },
+      data: { revokedAt: new Date() }
+    });
+  }
+
+  async createWebSession(apiBaseUrl: string, userId: string): Promise<WebSessionRecord> {
+    await this.seed(apiBaseUrl);
+    const created = await this.prisma.webSession.create({
+      data: {
+        userId,
+        sessionToken: `web_${randomUUID()}`,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      }
+    });
+    return {
+      sessionToken: created.sessionToken,
+      userId: created.userId,
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString(),
+      expiresAt: created.expiresAt.toISOString(),
+      revokedAt: created.revokedAt ? created.revokedAt.toISOString() : null
+    };
+  }
+
+  async getUserByWebSession(apiBaseUrl: string, sessionToken: string): Promise<UserRecord | null> {
+    await this.seed(apiBaseUrl);
+    const session = await this.prisma.webSession.findUnique({
+      where: { sessionToken },
+      include: {
+        user: {
+          include: { githubAccount: true }
+        }
+      }
+    });
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= Date.now()) {
+      return null;
+    }
+    return toUserRecord(session.user);
+  }
+
+  async deleteWebSession(apiBaseUrl: string, sessionToken: string): Promise<void> {
+    await this.seed(apiBaseUrl);
+    await this.prisma.webSession.updateMany({
+      where: { sessionToken, revokedAt: null },
       data: { revokedAt: new Date() }
     });
   }
@@ -1062,69 +1174,178 @@ export class PrismaStore implements AppStore {
     if (existing) {
       return toSubmissionRecord(existing);
     }
-    const created = await this.prisma.submissionAttempt.create({
-      data: {
-        userId: payload.userId,
-        projectId: project.id,
-        projectReleaseId: project.releases[0].id,
-        userProjectRepoId: repo.id,
-        milestoneId: null,
-        commitSha: payload.commitSha,
-        repoUrl: payload.repoUrl,
-        branch: payload.branch,
-        status: SubmissionStatus.queued,
-        summary: "Submission queued for verification.",
-        submissionType: TrackingSubmissionType.github,
-        submissionValue: payload.repoUrl,
-        submittedAt: new Date()
-      },
-      include: { project: true }
-    });
-    // Create both a VerificationRun (log record) and a VerificationJob (queue record)
-    await Promise.all([
-      this.prisma.verificationRun.create({
-        data: {
-          submissionAttemptId: created.id,
-          status: SubmissionStatus.queued,
-          log: "Queued"
-        }
-      }),
-      this.prisma.verificationJob.create({
-        data: {
-          submissionAttemptId: created.id,
-          status: SubmissionStatus.queued
-        }
-      })
-    ]);
-    return toSubmissionRecord(created);
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const submission = await tx.submissionAttempt.create({
+          data: {
+            userId: payload.userId,
+            projectId: project.id,
+            projectReleaseId: project.releases[0].id,
+            userProjectRepoId: repo.id,
+            milestoneId: null,
+            commitSha: payload.commitSha,
+            repoUrl: payload.repoUrl,
+            branch: payload.branch,
+            status: SubmissionStatus.queued,
+            summary: "Submission queued for verification.",
+            submissionType: TrackingSubmissionType.github,
+            submissionValue: payload.repoUrl,
+            submittedAt: new Date()
+          },
+          include: { project: true }
+        });
+        await tx.verificationRun.create({
+          data: {
+            submissionAttemptId: submission.id,
+            attempt: 0,
+            status: SubmissionStatus.queued,
+            log: "Queued"
+          }
+        });
+        await tx.verificationJob.create({
+          data: {
+            submissionAttemptId: submission.id,
+            status: SubmissionStatus.queued
+          }
+        });
+        return submission;
+      });
+      return toSubmissionRecord(created);
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+        throw error;
+      }
+      const duplicate = await this.prisma.submissionAttempt.findFirst({
+        where: {
+          userId: payload.userId,
+          projectId: project.id,
+          commitSha: payload.commitSha
+        },
+        include: { project: true }
+      });
+      if (!duplicate) {
+        throw error;
+      }
+      return toSubmissionRecord(duplicate);
+    }
   }
 
-  async updateLocalTestResult(apiBaseUrl: string, submissionId: string, exitCode: number, summary: string): Promise<SubmissionRecord | null> {
+  async updateLocalTestResult(
+    apiBaseUrl: string,
+    submissionId: string,
+    requesterUserId: string,
+    exitCode: number,
+    summary: string
+  ): Promise<SubmissionRecord | null> {
     await this.seed(apiBaseUrl);
-    const updated = await this.prisma.submissionAttempt.update({
-      where: { id: submissionId },
+    const updated = await this.prisma.submissionAttempt.updateMany({
+      where: { id: submissionId, userId: requesterUserId },
       data: {
         localTestExitCode: exitCode,
         summary
-      },
-      include: { project: true }
-    }).catch(() => null);
-    if (!updated) {
+      }
+    });
+    if (updated.count === 0) {
       return null;
     }
-    return toSubmissionRecord(updated);
+    return this.getSubmission(apiBaseUrl, submissionId, requesterUserId);
   }
 
-  async getSubmission(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null> {
+  async getSubmission(apiBaseUrl: string, submissionId: string, requesterUserId: string): Promise<SubmissionRecord | null> {
     await this.seed(apiBaseUrl);
-    const submission = await this.prisma.submissionAttempt.findUnique({
-      where: { id: submissionId },
+    const submission = await this.prisma.submissionAttempt.findFirst({
+      where: { id: submissionId, userId: requesterUserId },
       include: { project: true }
     });
     if (!submission) {
       return null;
     }
     return toSubmissionRecord(submission);
+  }
+
+  async getSubmissionForAdmin(apiBaseUrl: string, submissionId: string): Promise<SubmissionRecord | null> {
+    await this.seed(apiBaseUrl);
+    const submission = await this.prisma.submissionAttempt.findUnique({
+      where: { id: submissionId },
+      include: { project: true }
+    });
+    return submission ? toSubmissionRecord(submission) : null;
+  }
+
+  async overrideSubmissionStatus(
+    apiBaseUrl: string,
+    submissionId: string,
+    status: SubmissionRecord["status"],
+    summary: string,
+    actorUserId: string
+  ): Promise<SubmissionRecord | null> {
+    await this.seed(apiBaseUrl);
+    const existing = await this.prisma.submissionAttempt.findUnique({
+      where: { id: submissionId },
+      include: { project: true }
+    });
+    if (!existing) {
+      return null;
+    }
+    const nextAttempt = await this.prisma.verificationRun.count({
+      where: { submissionAttemptId: submissionId }
+    });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const submission = await tx.submissionAttempt.update({
+        where: { id: submissionId },
+        data: {
+          status: status as SubmissionStatus,
+          summary
+        },
+        include: { project: true }
+      });
+      await tx.verificationJob.updateMany({
+        where: { submissionAttemptId: submissionId },
+        data: {
+          status: status as SubmissionStatus,
+          finishedAt: new Date(),
+          claimedAt: null
+        }
+      });
+      await tx.verificationRun.create({
+        data: {
+          submissionAttemptId: submissionId,
+          attempt: nextAttempt,
+          status: status as SubmissionStatus,
+          log: `Manual override by ${actorUserId}: ${summary}`,
+          startedAt: new Date(),
+          finishedAt: new Date()
+        }
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: actorUserId,
+          courseId: existing.project.courseId,
+          projectId: existing.projectId,
+          milestoneId: existing.milestoneId,
+          submissionAttemptId: submissionId,
+          action: "submission.overridden",
+          targetType: "submission",
+          targetId: submissionId,
+          payload: {
+            previousStatus: existing.status,
+            nextStatus: status,
+            summary
+          } as Prisma.InputJsonValue
+        }
+      });
+      return submission;
+    });
+    return toSubmissionRecord(updated);
+  }
+
+  async listSubmissionVerificationLogs(apiBaseUrl: string, submissionId: string): Promise<VerificationLogRecord[]> {
+    await this.seed(apiBaseUrl);
+    const runs = await this.prisma.verificationRun.findMany({
+      where: { submissionAttemptId: submissionId },
+      orderBy: [{ attempt: "desc" }, { createdAt: "desc" }]
+    });
+    return runs.map(toVerificationLogRecord);
   }
 
   async listCourseMemberships(apiBaseUrl: string, userId: string): Promise<CourseMembershipRecord[]> {

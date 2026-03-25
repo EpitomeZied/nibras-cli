@@ -10,7 +10,6 @@ function validateEnv(): void {
   }
   const required = [
     "DATABASE_URL",
-    "NIBRAS_SESSION_SECRET",
     "NIBRAS_ENCRYPTION_KEY",
     "GITHUB_APP_ID",
     "GITHUB_WEBHOOK_SECRET"
@@ -41,4 +40,3 @@ main().catch((err) => {
   console.error(err && err.stack ? err.stack : String(err));
   process.exitCode = 1;
 });
-

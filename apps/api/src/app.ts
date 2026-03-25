@@ -52,10 +52,7 @@ function createDefaultStore(): AppStore {
 export function buildApp(store: AppStore = createDefaultStore()): FastifyInstance {
   const app = Fastify({
     logger: {
-      level: process.env.LOG_LEVEL || "info",
-      transport: process.env.NODE_ENV !== "production"
-        ? { target: "pino-pretty", options: { colorize: true } }
-        : undefined
+      level: process.env.LOG_LEVEL || "info"
     },
     genReqId: () => `req_${Math.random().toString(36).slice(2, 10)}`
   });
@@ -69,6 +66,7 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
   });
 
   void app.register(cors, {
+    credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["authorization", "content-type", "x-request-id"],
     exposedHeaders: ["x-request-id"],
@@ -106,6 +104,55 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     return reply.send({ ok: true });
   });
 
+  // ── Prometheus-compatible metrics ─────────────────────────────────────────
+  const requestCounts: Record<string, number> = {};
+  app.addHook("onResponse", async (request, reply) => {
+    const key = `${request.method}_${reply.statusCode}`;
+    requestCounts[key] = (requestCounts[key] || 0) + 1;
+  });
+
+  app.get("/metrics", async (_request, reply) => {
+    const lines: string[] = [
+      "# HELP nibras_http_requests_total Total HTTP requests by method and status",
+      "# TYPE nibras_http_requests_total counter"
+    ];
+    for (const [key, count] of Object.entries(requestCounts)) {
+      const [method, status] = key.split("_");
+      lines.push(`nibras_http_requests_total{method="${method}",status="${status}"} ${count}`);
+    }
+
+    if (process.env.DATABASE_URL) {
+      try {
+        const prisma = new PrismaClient();
+        const [queueDepth, passedCount, failedCount, reviewCount] = await Promise.all([
+          prisma.verificationJob.count({ where: { status: "queued" } }),
+          prisma.verificationJob.count({ where: { status: "passed" } }),
+          prisma.verificationJob.count({ where: { status: "failed" } }),
+          prisma.verificationJob.count({ where: { status: "needs_review" } })
+        ]);
+        await prisma.$disconnect();
+        lines.push(
+          "",
+          "# HELP nibras_verification_queue_depth Number of queued verification jobs",
+          "# TYPE nibras_verification_queue_depth gauge",
+          `nibras_verification_queue_depth ${queueDepth}`,
+          "",
+          "# HELP nibras_verification_total Completed verifications by status",
+          "# TYPE nibras_verification_total counter",
+          `nibras_verification_total{status="passed"} ${passedCount}`,
+          `nibras_verification_total{status="failed"} ${failedCount}`,
+          `nibras_verification_total{status="needs_review"} ${reviewCount}`
+        );
+      } catch {
+        lines.push("# ERROR: could not query DB for verification metrics");
+      }
+    }
+
+    return reply
+      .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+      .send(lines.join("\n") + "\n");
+  });
+
   app.addHook("onClose", async () => {
     if (store.close) {
       await store.close();
@@ -119,4 +166,3 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
 
   return app;
 }
-

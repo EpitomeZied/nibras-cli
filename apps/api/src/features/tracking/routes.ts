@@ -250,7 +250,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!submission) {
       reply.code(404).send({ error: "Unknown submission." });
       return;
@@ -267,7 +267,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const existing = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const existing = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!existing) {
       reply.code(404).send({ error: "Unknown submission." });
       return;
@@ -286,7 +286,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!submission) {
       reply.code(404).send({ error: "Unknown submission." });
       return;
@@ -308,7 +308,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!submission) {
       reply.code(404).send({ error: "Unknown submission." });
       return;
@@ -400,7 +400,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { submissionId: string };
-    const submission = await store.getSubmission(requestBaseUrl(request), params.submissionId);
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
     if (!submission) {
       reply.code(404).send({ error: "Unknown submission." });
       return;
