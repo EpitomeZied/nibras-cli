@@ -1,58 +1,30 @@
 :root {
-  --page-bg: #f8fafc;
-  --page-bg-alt: #eef2ff;
-  --surface: #ffffff;
-  --surface-strong: #f8fafc;
-  --surface-muted: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --text-soft: #94a3b8;
-  --primary: #2563eb;
-  --primary-strong: #1d4ed8;
-  --primary-soft: rgba(37, 99, 235, 0.12);
-  --success: #15803d;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 14px 30px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-  --radius-sm: 10px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
-  /* Aliases used by instructor/admin module CSS */
-  --accent: var(--primary);
-  --bg: var(--page-bg);
-  --background: var(--page-bg);
-  --error: var(--danger);
-}
-
-[data-theme="dark"] {
-  --page-bg: #0f172a;
-  --page-bg-alt: #111827;
-  --surface: #111c30;
-  --surface-strong: #172338;
-  --surface-muted: #1e293b;
-  --border: #334155;
-  --border-strong: #475569;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-soft: #64748b;
+  --page-bg: #080c14;
+  --page-bg-alt: #0c1220;
+  --surface: #0f1929;
+  --surface-strong: #141f33;
+  --surface-muted: #1a2640;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: #f1f5f9;
+  --text-muted: #7c92b0;
+  --text-soft: #4a6080;
   --primary: #3b82f6;
   --primary-strong: #60a5fa;
-  --primary-soft: rgba(59, 130, 246, 0.18);
-  --success: #4ade80;
-  --warning: #f59e0b;
+  --primary-soft: rgba(59, 130, 246, 0.15);
+  --success: #34d399;
+  --warning: #fbbf24;
   --danger: #f87171;
-  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.28);
-  --shadow-md: 0 14px 30px rgba(2, 6, 23, 0.3);
-  /* Aliases */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
   --accent: var(--primary);
   --bg: var(--page-bg);
   --background: var(--page-bg);
   --error: var(--danger);
-  --shadow-lg: 0 24px 60px rgba(2, 6, 23, 0.42);
 }
 
 * {
@@ -68,12 +40,11 @@ body {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 28%),
-    linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg-alt) 100%);
+    radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+    var(--page-bg);
   color: var(--text);
   font-family: "Inter", "Segoe UI", sans-serif;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -113,10 +84,10 @@ main {
 }
 
 .surfaceCard {
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .pageHero {
@@ -208,10 +179,10 @@ main {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px 32px 20px;
+  padding: 20px 32px;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  backdrop-filter: blur(12px);
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -317,7 +288,7 @@ main {
   gap: 24px;
   padding: 28px 20px;
   border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: var(--surface);
 }
 
 .brandBlock {
