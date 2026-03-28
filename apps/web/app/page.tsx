@@ -51,12 +51,13 @@ export default function HomePage() {
       {/* Hero */}
       <div className={styles.hero}>
         <h1 className={styles.headline}>
-          The smartest way<br />to run your course.
+          <span className={styles.headlineBright}>Run Your Course</span>
+          <br />
+          <span className={styles.headlineMuted}>The Smart Way.</span>
         </h1>
 
         <p className={styles.sub}>
-          Connect GitHub, provision repos, track milestones, and review
-          submissions — all from one hosted dashboard built for educators.
+          The platform that helps you teach, track, and grow.
         </p>
       </div>
 

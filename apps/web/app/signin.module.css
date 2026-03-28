@@ -161,39 +161,29 @@
 
 .headline {
   margin: 0;
-  font-size: clamp(3rem, 7vw, 5.5rem);
-  font-weight: 800;
-  line-height: 1.06;
-  letter-spacing: -0.045em;
-  background: linear-gradient(
-    160deg,
-    #ffffff 0%,
-    #e0e7ff 20%,
-    #a5b4fc 45%,
-    #ffffff 60%,
-    #c7d2fe 80%,
-    #818cf8 100%
-  );
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 6s ease-in-out infinite alternate;
-  filter: drop-shadow(0 0 32px rgba(129, 140, 248, 0.35));
+  font-size: clamp(3rem, 7.5vw, 6rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
 }
 
-@keyframes shimmer {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+.headlineBright {
+  display: block;
+  color: #ffffff;
+  text-shadow: 0 0 40px rgba(96, 165, 250, 0.4);
+}
+
+.headlineMuted {
+  display: block;
+  color: rgba(96, 130, 200, 0.45);
 }
 
 .sub {
   margin: 0;
-  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  font-size: clamp(0.95rem, 1.6vw, 1.05rem);
   line-height: 1.75;
-  color: rgba(196, 204, 255, 0.75);
-  max-width: 50ch;
-  text-shadow: 0 0 24px rgba(129, 140, 248, 0.2);
+  color: rgba(148, 163, 184, 0.7);
+  max-width: 44ch;
 }
 
 /* ── Sign-in card ───────────────────────────────────────────────────────────── */
