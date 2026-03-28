@@ -14,6 +14,11 @@ export default function NibrasLogo({
   className?: string;
   priority?: boolean;
 }) {
+  const imageStyle = {
+    width: `${width}px`,
+    height: "auto"
+  } as const;
+
   if (variant === "surface") {
     return (
       <span className={`${styles.logoWrap} ${className}`}>
@@ -23,8 +28,9 @@ export default function NibrasLogo({
           width={143}
           height={43}
           priority={priority}
+          suppressHydrationWarning
           className={`${styles.image} ${styles.variantSurface}`}
-          style={{ width, height: "auto" }}
+          style={imageStyle}
         />
       </span>
     );
@@ -39,8 +45,9 @@ export default function NibrasLogo({
           width={160}
           height={48}
           priority={priority}
+          suppressHydrationWarning
           className={`${styles.image} ${styles.variantInverse}`}
-          style={{ width, height: "auto" }}
+          style={imageStyle}
         />
       </span>
     );
@@ -54,8 +61,9 @@ export default function NibrasLogo({
         width={143}
         height={43}
         priority={priority}
+        suppressHydrationWarning
         className={`${styles.image} ${styles.themeLight}`}
-        style={{ width, height: "auto" }}
+        style={imageStyle}
       />
       <Image
         src="/branding/logo-dark.png"
@@ -63,8 +71,9 @@ export default function NibrasLogo({
         width={160}
         height={48}
         priority={priority}
+        suppressHydrationWarning
         className={`${styles.image} ${styles.themeDark}`}
-        style={{ width, height: "auto" }}
+        style={imageStyle}
       />
     </span>
   );
