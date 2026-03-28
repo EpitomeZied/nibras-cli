@@ -15,8 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               (function() {
                 try {
-                  var stored = window.localStorage.getItem("nibras.theme");
-                  document.documentElement.setAttribute("data-theme", stored || "light");
+                  document.documentElement.setAttribute("data-theme", "dark");
                 } catch (error) {
                   document.documentElement.setAttribute("data-theme", "light");
                 }

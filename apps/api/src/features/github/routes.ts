@@ -221,14 +221,16 @@ export function registerGitHubRoutes(
   app.get("/v1/github/install-url", async (request, reply) => {
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
-    if (!githubConfig || !(store instanceof PrismaStore)) {
+    if (!githubConfig) {
       reply.code(503).send({ error: "GitHub App is not configured." });
       return;
     }
-    const signedState = createSignedState(githubConfig.clientSecret, {
-      userId: auth.user.id,
-      returnTo: `${githubConfig.webBaseUrl || requestBaseUrl(request)}/dashboard`
-    }, { ttlSeconds: 1800 });
+    const signedState = store instanceof PrismaStore
+      ? createSignedState(githubConfig.clientSecret, {
+          userId: auth.user.id,
+          returnTo: `${githubConfig.webBaseUrl || requestBaseUrl(request)}/dashboard`
+        }, { ttlSeconds: 1800 })
+      : "";
     return GitHubInstallUrlResponseSchema.parse({
       installUrl: buildGitHubInstallUrl(githubConfig, signedState)
     });

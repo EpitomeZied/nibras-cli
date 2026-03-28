@@ -1,66 +1,149 @@
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+
 .hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
+  padding: 32px 36px;
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+    linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--primary) 40%, var(--primary-strong) 60%, transparent 100%);
+  opacity: 0.7;
 }
 
 .heroCopy {
   max-width: 42rem;
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
-.heroCopy p {
-  max-width: 38rem;
+.heroCopy h1 {
+  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.3;
+  margin: 0;
 }
 
 .heroActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
-.stateCard,
-.panel,
-.statCard {
-  padding: 22px;
+/* ── State card ───────────────────────────────────────────────────────────── */
+
+.stateCard {
+  padding: 24px;
+  border-radius: var(--radius-md);
 }
+
+/* ── Stats grid ───────────────────────────────────────────────────────────── */
 
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 
 .statCard {
+  position: relative;
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.statCard::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.statCard:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1), var(--shadow-md);
+}
+
+.statCard:hover::after {
+  opacity: 1;
 }
 
 .statLabel {
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .statCard strong {
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
 }
+
+.statCard p {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Main grid ────────────────────────────────────────────────────────────── */
 
 .mainGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.95fr);
+  gap: 14px;
 }
 
 .leftColumn,
 .rightColumn {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   align-content: start;
+}
+
+/* ── Panels ───────────────────────────────────────────────────────────────── */
+
+.panel {
+  padding: 24px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .panelHead {
@@ -68,57 +151,82 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .panelHead h2 {
-  margin: 0 0 6px;
-  font-size: 1.1rem;
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
+
+.panelHead p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Activity list ────────────────────────────────────────────────────────── */
 
 .activityList,
 .progressList,
 .projectList,
 .deadlineList {
   display: grid;
-  gap: 14px;
-}
-
-.activityItem,
-.projectItem {
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--surface-strong);
-  border: 1px solid var(--border);
+  gap: 10px;
 }
 
 .activityItem {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.activityItem strong,
-.deadlineItem strong,
-.projectItem strong,
-.progressHead strong {
+.activityItem:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.activityItem strong {
   display: block;
-  margin-bottom: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
 }
 
-.activityItem span,
-.activityItem time,
-.deadlineItem span,
-.deadlineItem time,
-.projectMeta span {
+.activityItem span {
+  font-size: 12px;
   color: var(--text-muted);
-  font-size: 13px;
+  text-transform: capitalize;
 }
+
+.activityItem time {
+  font-size: 12px;
+  color: var(--text-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Progress ─────────────────────────────────────────────────────────────── */
 
 .progressItem {
   display: grid;
   gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
 }
 
 .progressHead {
@@ -127,41 +235,134 @@
   gap: 12px;
 }
 
+.progressHead strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.progressHead span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-strong);
+}
+
 .progressTrack {
-  overflow: hidden;
-  height: 8px;
+  height: 6px;
   border-radius: 999px;
   background: var(--surface-muted);
+  overflow: hidden;
 }
 
 .progressFill {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--primary), #38bdf8);
+  background: linear-gradient(90deg, var(--primary), var(--primary-strong));
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
-.projectTop,
+/* ── Projects ─────────────────────────────────────────────────────────────── */
+
+.projectItem {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+
+.projectItem:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.projectTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.projectTop strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.projectTop span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
 .projectMeta {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
 
+.projectMeta span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Deadlines ────────────────────────────────────────────────────────────── */
+
 .deadlineItem {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.deadlineItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .deadlineBullet {
-  width: 10px;
-  height: 10px;
-  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
   border-radius: 50%;
   background: var(--primary);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+  justify-self: center;
 }
+
+.deadlineItem strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.deadlineItem span,
+.deadlineItem time {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.deadlineItem time {
+  margin-top: 2px;
+  color: var(--primary-strong);
+  font-weight: 600;
+}
+
+/* ── GitHub status panel ──────────────────────────────────────────────────── */
 
 .statusPanel {
   display: grid;
@@ -170,14 +371,25 @@
 
 .statusPanel dl {
   display: grid;
-  gap: 12px;
+  gap: 0;
   margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .statusPanel dl div {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+
+.statusPanel dl div:last-child {
+  border-bottom: none;
 }
 
 .statusPanel dt {
@@ -186,14 +398,17 @@
 
 .statusPanel dd {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .statusActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
 
 @media (max-width: 1200px) {
   .statsGrid {
@@ -206,17 +421,25 @@
 }
 
 @media (max-width: 720px) {
-  .hero,
-  .activityItem,
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .projectTop,
   .projectMeta,
-  .statusPanel dl div,
   .statusActions {
-    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: flex-start;
   }
+}
 
+@media (max-width: 480px) {
   .statsGrid {
     grid-template-columns: 1fr;
   }

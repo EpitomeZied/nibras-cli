@@ -1775,12 +1775,15 @@ export class PrismaStore implements AppStore {
     payload: { title: string; description: string; order: number; dueAt: string | null; isFinal: boolean }
   ): Promise<MilestoneRecord> {
     await this.seed(apiBaseUrl);
+    const existing = await this.prisma.milestone.findMany({ where: { projectId }, select: { order: true } });
+    const maxOrder = existing.length > 0 ? Math.max(...existing.map((m) => m.order)) : -1;
+    const order = payload.order > maxOrder ? payload.order : maxOrder + 1;
     const created = await this.prisma.milestone.create({
       data: {
         projectId,
         title: payload.title,
         description: payload.description,
-        order: payload.order,
+        order,
         dueAt: payload.dueAt ? new Date(payload.dueAt) : null,
         isFinal: payload.isFinal
       }

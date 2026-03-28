@@ -1,48 +1,30 @@
 :root {
-  --page-bg: #f8fafc;
-  --page-bg-alt: #eef2ff;
-  --surface: #ffffff;
-  --surface-strong: #f8fafc;
-  --surface-muted: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --text-soft: #94a3b8;
-  --primary: #2563eb;
-  --primary-strong: #1d4ed8;
-  --primary-soft: rgba(37, 99, 235, 0.12);
-  --success: #15803d;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 14px 30px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
-  --radius-sm: 10px;
-  --radius-md: 18px;
-  --radius-lg: 28px;
-}
-
-[data-theme="dark"] {
-  --page-bg: #0f172a;
-  --page-bg-alt: #111827;
-  --surface: #111c30;
-  --surface-strong: #172338;
-  --surface-muted: #1e293b;
-  --border: #334155;
-  --border-strong: #475569;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-soft: #64748b;
+  --page-bg: #080c14;
+  --page-bg-alt: #0c1220;
+  --surface: #0f1929;
+  --surface-strong: #141f33;
+  --surface-muted: #1a2640;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: #f1f5f9;
+  --text-muted: #7c92b0;
+  --text-soft: #4a6080;
   --primary: #3b82f6;
   --primary-strong: #60a5fa;
-  --primary-soft: rgba(59, 130, 246, 0.18);
-  --success: #4ade80;
-  --warning: #f59e0b;
+  --primary-soft: rgba(59, 130, 246, 0.15);
+  --success: #34d399;
+  --warning: #fbbf24;
   --danger: #f87171;
-  --shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.28);
-  --shadow-md: 0 14px 30px rgba(2, 6, 23, 0.3);
-  --shadow-lg: 0 24px 60px rgba(2, 6, 23, 0.42);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --accent: var(--primary);
+  --bg: var(--page-bg);
+  --background: var(--page-bg);
+  --error: var(--danger);
 }
 
 * {
@@ -58,12 +40,11 @@ body {
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 28%),
-    linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg-alt) 100%);
+    radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+    var(--page-bg);
   color: var(--text);
   font-family: "Inter", "Segoe UI", sans-serif;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a {
@@ -103,10 +84,10 @@ main {
 }
 
 .surfaceCard {
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .pageHero {
@@ -198,10 +179,10 @@ main {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 24px 32px 20px;
+  padding: 20px 32px;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  backdrop-filter: blur(12px);
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -297,23 +278,28 @@ main {
 
 .profileCircle,
 .avatarCircle {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  font-size: 14px;
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 28px 20px;
+  gap: 20px;
+  padding: 24px 16px;
   border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: var(--surface);
+  overflow-y: auto;
 }
 
 .brandBlock {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .brandTitle {
@@ -322,107 +308,189 @@ main {
 }
 
 .brandSubtitle {
-  margin: 10px 0 0;
-  color: var(--text-muted);
-  font-size: 13px;
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sidebarNav {
   display: grid;
-  gap: 10px;
+  gap: 2px;
 }
 
 .navLink {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  display: flex;
+  align-items: center;
   gap: 12px;
-  align-items: start;
-  padding: 14px;
-  border-radius: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 1px solid transparent;
+  text-decoration: none;
   color: var(--text-muted);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .navLink strong {
   display: block;
-  color: var(--text);
-  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
 }
 
 .navLink small {
   display: block;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: var(--text-soft);
   line-height: 1.4;
+  text-decoration: none;
 }
 
-.navLink:hover,
+.navLink:hover {
+  background: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.navLink:hover strong {
+  color: var(--text);
+}
+
 .navLinkActive {
   background: var(--primary-soft);
-  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-color: rgba(59, 130, 246, 0.18);
+}
+
+.navLinkActive strong {
+  color: var(--primary-strong) !important;
+}
+
+.navLinkActive small {
+  color: rgba(96, 165, 250, 0.65);
 }
 
 .navIcon {
   display: inline-grid;
   place-items: center;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: 9px;
+  background: var(--surface-muted);
   border: 1px solid var(--border);
-  color: var(--primary);
+  color: var(--text-soft);
+  font-size: 15px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.navLinkActive .navIcon {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--primary-strong);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
 }
 
 .sidebarStatusCard {
-  padding: 18px;
-  border-radius: 18px;
-  background: var(--surface);
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface-strong);
   border: 1px solid var(--border);
 }
 
 .statusList {
   list-style: none;
   padding: 0;
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   display: grid;
-  gap: 12px;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .statusList li {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  font-size: 14px;
+  font-size: 13px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.statusList li:last-child {
+  border-bottom: none;
+}
+
+.statusList li span {
+  color: var(--text-muted);
+}
+
+.statusList li strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .sidebarFooter {
   margin-top: auto;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .sidebarProfile {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  padding: 14px;
-  border-radius: 16px;
-  background: var(--surface);
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-strong);
   border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.sidebarProfile > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebarProfile strong {
+  display: block;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarProfile span:not(.avatarCircle) {
+  display: block;
+  font-size: 11px;
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logoutLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  border-radius: 12px;
+  min-height: 40px;
+  border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .logoutLink:hover {
   background: var(--surface-strong);
+  color: var(--text-muted);
 }
 
 .stack {
