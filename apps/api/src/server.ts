@@ -1,4 +1,13 @@
+import * as Sentry from "@sentry/node";
 import { buildApp } from "./app";
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || "development",
+    tracesSampleRate: 0.2
+  });
+}
 
 /**
  * Validate that all required environment variables are present

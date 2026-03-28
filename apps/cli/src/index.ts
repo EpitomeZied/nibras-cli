@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
@@ -192,7 +193,8 @@ async function commandLogin(args: string[], context: CommandContext): Promise<vo
         apiBaseUrl,
         activeUserId: polled.user.id,
         accessToken: polled.accessToken,
-        refreshToken: polled.refreshToken
+        refreshToken: polled.refreshToken,
+        tokenCreatedAt: new Date().toISOString()
       });
       // eslint-disable-next-line no-console
       console.log(`${colorize(context, "success", "Authenticated")} as ${polled.user.username} (${polled.user.githubLogin})`);

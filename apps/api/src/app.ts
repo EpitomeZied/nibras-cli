@@ -1,5 +1,7 @@
 import Fastify, { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
+import * as Sentry from "@sentry/node";
 import rawBodyPlugin from "fastify-raw-body";
 import { PrismaClient } from "@prisma/client";
 import { loadGitHubAppConfig } from "@nibras/github";
@@ -63,6 +65,17 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
   // Propagate Request-Id to response for tracing
   app.addHook("onSend", async (request, reply) => {
     void reply.header("X-Request-Id", request.id);
+  });
+
+  const globalRateMax = process.env.RATE_LIMIT_MAX ? parseInt(process.env.RATE_LIMIT_MAX, 10) : 100;
+  void app.register(rateLimit, {
+    global: true,
+    max: globalRateMax,
+    timeWindow: "1 minute",
+    errorResponseBuilder: (_request, context) => ({
+      error: `Too many requests. Retry after ${Math.ceil(context.ttl / 1000)} seconds.`,
+      statusCode: 429
+    })
   });
 
   void app.register(cors, {
@@ -151,6 +164,20 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     return reply
       .header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
       .send(lines.join("\n") + "\n");
+  });
+
+  // Capture unhandled errors in Sentry when DSN is configured
+  app.setErrorHandler(async (error: { statusCode?: number; message?: string }, request, reply) => {
+    if (process.env.SENTRY_DSN) {
+      Sentry.withScope((scope) => {
+        scope.setTag("requestId", request.id);
+        scope.setTag("method", request.method);
+        scope.setTag("url", request.url);
+        Sentry.captureException(error);
+      });
+    }
+    const statusCode = error.statusCode || 500;
+    void reply.status(statusCode).send({ error: error.message || "Internal server error." });
   });
 
   app.addHook("onClose", async () => {

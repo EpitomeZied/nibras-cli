@@ -152,6 +152,28 @@ export const InstructorDashboardResponseSchema = z.object({
   activity: z.array(TrackingActivityEventSchema)
 });
 
+export const AddCourseMemberRequestSchema = z.object({
+  githubLogin: z.string().min(1),
+  role: TrackingMembershipRoleSchema
+});
+
+export const CourseMemberSchema = z.object({
+  id: z.string().min(1),
+  courseId: z.string().min(1),
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  githubLogin: z.string().min(1),
+  role: TrackingMembershipRoleSchema,
+  createdAt: z.string().datetime()
+});
+
+export const CreateTrackingCourseRequestSchema = z.object({
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  title: z.string().min(1),
+  termLabel: z.string().min(1),
+  courseCode: z.string().min(1)
+});
+
 export const CreateTrackingProjectRequestSchema = z.object({
   courseId: z.string().min(1),
   slug: z.string().min(1),
@@ -198,6 +220,22 @@ export const CreateReviewRequestSchema = z.object({
 export const ReviewQueueResponseSchema = z.object({
   submissions: z.array(TrackingSubmissionSchema)
 });
+
+export const CourseInvitePreviewSchema = z.object({
+  code: z.string().min(1),
+  courseTitle: z.string().min(1),
+  courseCode: z.string().min(1),
+  termLabel: z.string().min(1),
+  role: TrackingMembershipRoleSchema,
+  expiresAt: z.string().datetime().nullable()
+});
+
+export const CreateCourseInviteResponseSchema = z.object({
+  code: z.string().min(1),
+  inviteUrl: z.string().min(1)
+});
+
+export type CourseInvitePreview = z.infer<typeof CourseInvitePreviewSchema>;
 
 export type TrackingCourseSummary = z.infer<typeof TrackingCourseSummarySchema>;
 export type TrackingMembership = z.infer<typeof TrackingMembershipSchema>;

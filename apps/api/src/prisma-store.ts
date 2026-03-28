@@ -638,11 +638,13 @@ export class PrismaStore implements AppStore {
   }
 
   async createSessionForUser(userId: string): Promise<SessionRecord> {
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
     const created = await this.prisma.cliSession.create({
       data: {
         userId,
         accessToken: `access_${randomUUID()}`,
-        refreshToken: `refresh_${randomUUID()}`
+        refreshToken: `refresh_${randomUUID()}`,
+        expiresAt
       }
     });
     return {
@@ -967,7 +969,42 @@ export class PrismaStore implements AppStore {
     if (!session || session.revokedAt) {
       return null;
     }
+    if (session.expiresAt && session.expiresAt < new Date()) {
+      return null;
+    }
     return toUserRecord(session.user);
+  }
+
+  async refreshCliSession(apiBaseUrl: string, refreshToken: string): Promise<SessionRecord | null> {
+    await this.seed(apiBaseUrl);
+    const session = await this.prisma.cliSession.findUnique({
+      where: { refreshToken }
+    });
+    if (!session || session.revokedAt) {
+      return null;
+    }
+    // Revoke old session and issue a new one atomically
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const [, created] = await this.prisma.$transaction([
+      this.prisma.cliSession.update({
+        where: { id: session.id },
+        data: { revokedAt: new Date() }
+      }),
+      this.prisma.cliSession.create({
+        data: {
+          userId: session.userId,
+          accessToken: `access_${randomUUID()}`,
+          refreshToken: `refresh_${randomUUID()}`,
+          expiresAt
+        }
+      })
+    ]);
+    return {
+      accessToken: created.accessToken,
+      refreshToken: created.refreshToken,
+      userId: created.userId,
+      createdAt: created.createdAt.toISOString()
+    };
   }
 
   async deleteSession(apiBaseUrl: string, accessToken: string): Promise<void> {
@@ -1372,6 +1409,208 @@ export class PrismaStore implements AppStore {
       orderBy: { createdAt: "desc" }
     });
     return memberships.map((entry) => toCourseRecord(entry.course));
+  }
+
+  async createTrackingCourse(
+    apiBaseUrl: string,
+    userId: string,
+    payload: { slug: string; title: string; termLabel: string; courseCode: string }
+  ): Promise<CourseRecord> {
+    await this.seed(apiBaseUrl);
+    const course = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.course.create({
+        data: {
+          slug: payload.slug,
+          title: payload.title,
+          termLabel: payload.termLabel,
+          courseCode: payload.courseCode,
+          isActive: true
+        }
+      });
+      // Automatically enroll the creator as instructor
+      await tx.courseMembership.create({
+        data: {
+          courseId: created.id,
+          userId,
+          role: CourseRole.instructor
+        }
+      });
+      return created;
+    });
+    return toCourseRecord(course);
+  }
+
+  async listCourseMembersForInstructor(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<Array<CourseMembershipRecord & { username: string; githubLogin: string }>> {
+    await this.seed(apiBaseUrl);
+    const memberships = await this.prisma.courseMembership.findMany({
+      where: { courseId },
+      include: { user: { include: { githubAccount: true } } },
+      orderBy: { createdAt: "asc" }
+    });
+    return memberships.map((m) => ({
+      id: m.id,
+      courseId: m.courseId,
+      userId: m.userId,
+      role: m.role as CourseMembershipRecord["role"],
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
+      username: m.user.username,
+      githubLogin: m.user.githubAccount?.login || m.user.username
+    }));
+  }
+
+  async addCourseMember(
+    apiBaseUrl: string,
+    courseId: string,
+    githubLogin: string,
+    role: CourseMembershipRecord["role"]
+  ): Promise<CourseMembershipRecord & { username: string; githubLogin: string }> {
+    await this.seed(apiBaseUrl);
+    const account = await this.prisma.githubAccount.findFirst({
+      where: { login: githubLogin },
+      include: { user: true }
+    });
+    if (!account) {
+      throw Object.assign(new Error(`No user found with GitHub login "${githubLogin}".`), { statusCode: 404 });
+    }
+    const existing = await this.prisma.courseMembership.findFirst({
+      where: { courseId, userId: account.userId }
+    });
+    if (existing) {
+      throw Object.assign(new Error("User is already a member of this course."), { statusCode: 409 });
+    }
+    const membership = await this.prisma.courseMembership.create({
+      data: { courseId, userId: account.userId, role: role as CourseRole }
+    });
+    return {
+      id: membership.id,
+      courseId: membership.courseId,
+      userId: membership.userId,
+      role: membership.role as CourseMembershipRecord["role"],
+      createdAt: membership.createdAt.toISOString(),
+      updatedAt: membership.updatedAt.toISOString(),
+      username: account.user.username,
+      githubLogin: account.login
+    };
+  }
+
+  async removeCourseMember(apiBaseUrl: string, courseId: string, userId: string): Promise<void> {
+    await this.seed(apiBaseUrl);
+    await this.prisma.courseMembership.deleteMany({ where: { courseId, userId } });
+  }
+
+  async createCourseInvite(
+    apiBaseUrl: string,
+    courseId: string,
+    role: CourseMembershipRecord["role"],
+    opts?: { maxUses?: number; expiresAt?: string | null }
+  ): Promise<import("./store").CourseInviteRecord> {
+    await this.seed(apiBaseUrl);
+    const code = Math.random().toString(36).slice(2, 10).toUpperCase();
+    const invite = await this.prisma.courseInvite.create({
+      data: {
+        courseId,
+        code,
+        role: role as CourseRole,
+        maxUses: opts?.maxUses ?? 0,
+        expiresAt: opts?.expiresAt ? new Date(opts.expiresAt) : null
+      }
+    });
+    return {
+      id: invite.id,
+      courseId: invite.courseId,
+      code: invite.code,
+      role: invite.role as CourseMembershipRecord["role"],
+      maxUses: invite.maxUses,
+      useCount: invite.useCount,
+      expiresAt: invite.expiresAt?.toISOString() ?? null,
+      createdAt: invite.createdAt.toISOString(),
+      updatedAt: invite.updatedAt.toISOString()
+    };
+  }
+
+  async getCourseInviteByCode(
+    apiBaseUrl: string,
+    code: string
+  ): Promise<(import("./store").CourseInviteRecord & { course: CourseRecord }) | null> {
+    await this.seed(apiBaseUrl);
+    const invite = await this.prisma.courseInvite.findUnique({
+      where: { code },
+      include: { course: true }
+    });
+    if (!invite) return null;
+    return {
+      id: invite.id,
+      courseId: invite.courseId,
+      code: invite.code,
+      role: invite.role as CourseMembershipRecord["role"],
+      maxUses: invite.maxUses,
+      useCount: invite.useCount,
+      expiresAt: invite.expiresAt?.toISOString() ?? null,
+      createdAt: invite.createdAt.toISOString(),
+      updatedAt: invite.updatedAt.toISOString(),
+      course: {
+        id: invite.course.id,
+        slug: invite.course.slug,
+        title: invite.course.title,
+        termLabel: invite.course.termLabel,
+        courseCode: invite.course.courseCode,
+        isActive: invite.course.isActive,
+        createdAt: invite.course.createdAt.toISOString(),
+        updatedAt: invite.course.updatedAt.toISOString()
+      }
+    };
+  }
+
+  async redeemCourseInvite(
+    apiBaseUrl: string,
+    code: string,
+    userId: string
+  ): Promise<CourseMembershipRecord> {
+    await this.seed(apiBaseUrl);
+    const invite = await this.prisma.courseInvite.findUnique({ where: { code } });
+    if (!invite) {
+      throw Object.assign(new Error("Invalid or expired invite code."), { statusCode: 404 });
+    }
+    if (invite.expiresAt && invite.expiresAt < new Date()) {
+      throw Object.assign(new Error("This invite link has expired."), { statusCode: 410 });
+    }
+    if (invite.maxUses > 0 && invite.useCount >= invite.maxUses) {
+      throw Object.assign(new Error("This invite link has reached its maximum uses."), { statusCode: 410 });
+    }
+    const existing = await this.prisma.courseMembership.findFirst({
+      where: { courseId: invite.courseId, userId }
+    });
+    if (existing) {
+      return {
+        id: existing.id,
+        courseId: existing.courseId,
+        userId: existing.userId,
+        role: existing.role as CourseMembershipRecord["role"],
+        createdAt: existing.createdAt.toISOString(),
+        updatedAt: existing.updatedAt.toISOString()
+      };
+    }
+    const [membership] = await this.prisma.$transaction([
+      this.prisma.courseMembership.create({
+        data: { courseId: invite.courseId, userId, role: invite.role }
+      }),
+      this.prisma.courseInvite.update({
+        where: { id: invite.id },
+        data: { useCount: { increment: 1 } }
+      })
+    ]);
+    return {
+      id: membership.id,
+      courseId: membership.courseId,
+      userId: membership.userId,
+      role: membership.role as CourseMembershipRecord["role"],
+      createdAt: membership.createdAt.toISOString(),
+      updatedAt: membership.updatedAt.toISOString()
+    };
   }
 
   async listTrackingProjects(apiBaseUrl: string, courseId: string): Promise<ProjectRecord[]> {

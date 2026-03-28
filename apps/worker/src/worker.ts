@@ -1,7 +1,15 @@
 import { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
-import { spawnSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
+import * as Sentry from "@sentry/node";
+import { runSandboxed } from "./sandbox";
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || "development",
+    tracesSampleRate: 0.1
+  });
+}
 
 const POLL_INTERVAL_MS = parseInt(process.env.WORKER_POLL_INTERVAL_MS || "2000", 10);
 const HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || "9090", 10);
@@ -117,9 +125,7 @@ async function runVerification(
     };
   }
 
-  // Otherwise run the test command against the repo URL.
-  // For now this is a placeholder shell exec; in a real deploy this would
-  // clone the repo into a sandbox and execute the command there.
+  // Run the test command in an isolated sandbox (ulimit + optional network namespace).
   const cloneUrl = attempt.userProjectRepo.cloneUrl;
   if (!cloneUrl) {
     return {
@@ -128,32 +134,7 @@ async function runVerification(
     };
   }
 
-  const verificationId = randomUUID();
-  const workDir = `/tmp/nibras-verify-${verificationId}`;
-  const cloneResult = spawnSync("git", ["clone", "--depth", "1", "--branch", attempt.branch, cloneUrl, workDir], {
-    encoding: "utf8",
-    timeout: 60_000
-  });
-  if (cloneResult.status !== 0) {
-    return {
-      exitCode: cloneResult.status ?? 1,
-      log: `git clone failed:\n${cloneResult.stderr}`
-    };
-  }
-
-  const testParts = testCommand.split(" ");
-  const testResult = spawnSync(testParts[0], testParts.slice(1), {
-    cwd: workDir,
-    encoding: "utf8",
-    timeout: 120_000
-  });
-
-  spawnSync("rm", ["-rf", workDir]);
-
-  return {
-    exitCode: testResult.status ?? 1,
-    log: [testResult.stdout, testResult.stderr].filter(Boolean).join("\n")
-  };
+  return runSandboxed(cloneUrl, attempt.branch, testCommand);
 }
 
 async function finalizeJob(
@@ -261,14 +242,25 @@ async function tick(prisma: PrismaClient): Promise<void> {
   }
   log("info", "Claimed job", { jobId: job.id, submissionAttemptId: job.submissionAttemptId });
 
+  const transaction = process.env.SENTRY_DSN
+    ? Sentry.startInactiveSpan({ name: "verification-job", op: "worker.job" })
+    : null;
+
   try {
     const { exitCode, log: verificationLog } = await runVerification(job.submissionAttemptId, prisma);
     await finalizeJob(job.id, job.submissionAttemptId, job.attempt, exitCode, verificationLog, prisma);
     log("info", "Job completed", { jobId: job.id, exitCode });
+    transaction?.setStatus({ code: 1, message: "ok" });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log("error", "Job failed", { jobId: job.id, error: message });
+    if (process.env.SENTRY_DSN) {
+      Sentry.captureException(err, { tags: { jobId: job.id } });
+    }
+    transaction?.setStatus({ code: 2, message: "internal_error" });
     await failJob(job.id, job.submissionAttemptId, job.attempt, job.maxAttempts, message, prisma);
+  } finally {
+    transaction?.end();
   }
 }
 

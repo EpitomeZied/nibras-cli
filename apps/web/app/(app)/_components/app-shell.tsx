@@ -13,11 +13,14 @@ type ShellSessionPayload = {
     githubLogin: string;
     githubLinked: boolean;
     githubAppInstalled: boolean;
+    systemRole?: string;
   };
 };
 
+export type ShellUser = ShellSessionPayload["user"];
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<ShellSessionPayload["user"] | null>(null);
+  const [session, setSession] = useState<ShellUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

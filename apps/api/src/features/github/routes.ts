@@ -72,7 +72,7 @@ export function registerGitHubRoutes(
     webBaseUrl: githubConfig?.webBaseUrl
   }));
 
-  app.post("/v1/device/start", async (request) => {
+  app.post("/v1/device/start", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (request) => {
     if (githubConfig && store instanceof PrismaStore) {
       const device = await startGitHubDeviceFlow(githubConfig);
       return DeviceStartResponseSchema.parse({
@@ -111,7 +111,7 @@ export function registerGitHubRoutes(
     reply.type("text/html").send("<h1>Nibras device approved</h1><p>You can return to the CLI.</p>");
   });
 
-  app.post("/v1/device/poll", async (request, reply) => {
+  app.post("/v1/device/poll", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (request, reply) => {
     const body = request.body as { deviceCode?: string };
     if (!body?.deviceCode) {
       reply.code(400).send({ error: "deviceCode is required." });
@@ -279,7 +279,7 @@ export function registerGitHubRoutes(
     });
   });
 
-  app.post("/v1/github/webhooks", async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post("/v1/github/webhooks", { config: { rateLimit: { max: 50, timeWindow: "1 minute" } } }, async (request: FastifyRequest, reply: FastifyReply) => {
     if (!githubConfig) {
       reply.code(503).send({ error: "GitHub App is not configured." });
       return;

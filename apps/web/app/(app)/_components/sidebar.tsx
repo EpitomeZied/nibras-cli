@@ -11,6 +11,7 @@ type ShellSessionUser = {
   githubLogin: string;
   githubLinked: boolean;
   githubAppInstalled: boolean;
+  systemRole?: string;
 };
 
 function initials(value: string): string {
@@ -26,6 +27,8 @@ function initials(value: string): string {
 function navGlyph(label: string): string {
   if (label === "Dashboard") return "◫";
   if (label === "Projects") return "▣";
+  if (label === "Instructor") return "⊞";
+  if (label === "Admin") return "⬡";
   return "•";
 }
 
@@ -49,22 +52,24 @@ export default function Sidebar({
       </div>
 
       <nav className="sidebarNav" aria-label="Primary">
-        {appNavItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`navLink ${isActive ? "navLinkActive" : ""}`}
-            >
-              <span className="navIcon" aria-hidden="true">{navGlyph(item.label)}</span>
-              <span>
-                <strong>{item.label}</strong>
-                <small>{item.description}</small>
-              </span>
-            </Link>
-          );
-        })}
+        {appNavItems
+          .filter((item) => item.label !== "Admin" || user?.systemRole === "admin")
+          .map((item) => {
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`navLink ${isActive ? "navLinkActive" : ""}`}
+              >
+                <span className="navIcon" aria-hidden="true">{navGlyph(item.label)}</span>
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.description}</small>
+                </span>
+              </Link>
+            );
+          })}
       </nav>
 
       <div className="sidebarStatusCard">

@@ -1,15 +1,27 @@
 {
   "name": "@nibras/cli",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "commonjs",
-  "main": "dist/index.js",
+  "main": "bundle/index.js",
+  "bin": {
+    "nibras": "bundle/index.js"
+  },
+  "files": [
+    "bundle"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && ncc build dist/index.js -o bundle --no-source-map-register"
   },
   "dependencies": {
     "@nibras/contracts": "file:../../packages/contracts",
     "@nibras/core": "file:../../packages/core",
     "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.4"
   }
 }

@@ -14,6 +14,16 @@ export const appNavItems: AppNavItem[] = [
     href: "/projects",
     label: "Projects",
     description: "Manage submissions, progress, and reviews."
+  },
+  {
+    href: "/instructor",
+    label: "Instructor",
+    description: "Manage courses, projects, and review submissions."
+  },
+  {
+    href: "/admin",
+    label: "Admin",
+    description: "System-wide submissions, projects, and oversight."
   }
 ];
 
@@ -25,6 +35,14 @@ export const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/projects": {
     title: "Projects",
     subtitle: "Review milestones, submissions, and grading details."
+  },
+  "/instructor": {
+    title: "Instructor",
+    subtitle: "Manage courses, projects, and review student submissions."
+  },
+  "/admin": {
+    title: "Admin",
+    subtitle: "System-wide oversight of submissions, projects, and activity."
   },
   "/install/complete": {
     title: "GitHub App",

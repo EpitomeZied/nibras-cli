@@ -91,7 +91,21 @@ model Course {
   updatedAt   DateTime           @updatedAt
   memberships CourseMembership[]
   projects    Project[]
+  invites     CourseInvite[]
   auditLogs   AuditLog[]
+}
+
+model CourseInvite {
+  id        String      @id @default(cuid())
+  courseId  String
+  code      String      @unique
+  role      CourseRole  @default(student)
+  maxUses   Int         @default(0)
+  useCount  Int         @default(0)
+  expiresAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  course    Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model CourseMembership {
@@ -137,14 +151,15 @@ model DeviceCode {
 }
 
 model CliSession {
-  id            String   @id @default(cuid())
-  accessToken   String   @unique
-  refreshToken  String   @unique
+  id            String    @id @default(cuid())
+  accessToken   String    @unique
+  refreshToken  String    @unique
   userId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   revokedAt     DateTime?
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model WebSession {

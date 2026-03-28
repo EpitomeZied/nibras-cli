@@ -209,10 +209,23 @@ export type InstructorDashboardRecord = {
   activity: ActivityRecord[];
 };
 
+export type CourseInviteRecord = {
+  id: string;
+  courseId: string;
+  code: string;
+  role: MembershipRole;
+  maxUses: number;
+  useCount: number;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoreData = {
   users: UserRecord[];
   courses: CourseRecord[];
   courseMemberships: CourseMembershipRecord[];
+  courseInvites: CourseInviteRecord[];
   deviceCodes: DeviceCodeRecord[];
   sessions: SessionRecord[];
   webSessions: WebSessionRecord[];
@@ -230,6 +243,7 @@ export interface AppStore {
   authorizeDeviceCode(apiBaseUrl: string, userCode: string): Promise<DeviceCodeRecord | null>;
   pollDeviceCode(apiBaseUrl: string, deviceCode: string): Promise<{ record: DeviceCodeRecord | null; session: SessionRecord | null }>;
   getUserByToken(apiBaseUrl: string, accessToken: string): Promise<UserRecord | null>;
+  refreshCliSession(apiBaseUrl: string, refreshToken: string): Promise<SessionRecord | null>;
   deleteSession(apiBaseUrl: string, accessToken: string): Promise<void>;
   createWebSession(apiBaseUrl: string, userId: string): Promise<WebSessionRecord>;
   getUserByWebSession(apiBaseUrl: string, sessionToken: string): Promise<UserRecord | null>;
@@ -259,6 +273,13 @@ export interface AppStore {
   listSubmissionVerificationLogs(apiBaseUrl: string, submissionId: string): Promise<VerificationLogRecord[]>;
   listCourseMemberships(apiBaseUrl: string, userId: string): Promise<CourseMembershipRecord[]>;
   listTrackingCourses(apiBaseUrl: string, userId: string): Promise<CourseRecord[]>;
+  createTrackingCourse(apiBaseUrl: string, userId: string, payload: { slug: string; title: string; termLabel: string; courseCode: string }): Promise<CourseRecord>;
+  listCourseMembersForInstructor(apiBaseUrl: string, courseId: string): Promise<Array<CourseMembershipRecord & { username: string; githubLogin: string }>>;
+  addCourseMember(apiBaseUrl: string, courseId: string, githubLogin: string, role: MembershipRole): Promise<CourseMembershipRecord & { username: string; githubLogin: string }>;
+  removeCourseMember(apiBaseUrl: string, courseId: string, userId: string): Promise<void>;
+  createCourseInvite(apiBaseUrl: string, courseId: string, role: MembershipRole, opts?: { maxUses?: number; expiresAt?: string | null }): Promise<CourseInviteRecord>;
+  getCourseInviteByCode(apiBaseUrl: string, code: string): Promise<(CourseInviteRecord & { course: CourseRecord }) | null>;
+  redeemCourseInvite(apiBaseUrl: string, code: string, userId: string): Promise<CourseMembershipRecord>;
   listTrackingProjects(apiBaseUrl: string, courseId: string): Promise<ProjectRecord[]>;
   getTrackingProjectById(apiBaseUrl: string, projectId: string): Promise<ProjectRecord | null>;
   createTrackingProject(
@@ -601,6 +622,7 @@ function seedData(apiBaseUrl: string): StoreData {
     ],
     reviews: [],
     githubDeliveries: [],
+    courseInvites: [],
     activity: [
       makeActivityRecord({
         actorUserId: instructorId,
@@ -725,6 +747,24 @@ export class FileStore implements AppStore {
       return null;
     }
     return data.users.find((entry) => entry.id === session.userId) || null;
+  }
+
+  async refreshCliSession(apiBaseUrl: string, refreshToken: string): Promise<SessionRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const session = data.sessions.find((entry) => entry.refreshToken === refreshToken);
+    if (!session) {
+      return null;
+    }
+    data.sessions = data.sessions.filter((entry) => entry.refreshToken !== refreshToken);
+    const next: SessionRecord = {
+      accessToken: `access_${randomUUID()}`,
+      refreshToken: `refresh_${randomUUID()}`,
+      userId: session.userId,
+      createdAt: nowIso()
+    };
+    data.sessions.push(next);
+    this.write(data);
+    return next;
   }
 
   async deleteSession(apiBaseUrl: string, accessToken: string): Promise<void> {
@@ -951,6 +991,165 @@ export class FileStore implements AppStore {
         .map((entry) => entry.courseId)
     );
     return data.courses.filter((entry) => entry.isActive && allowedCourseIds.has(entry.id));
+  }
+
+  async listCourseMembersForInstructor(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<Array<CourseMembershipRecord & { username: string; githubLogin: string }>> {
+    const data = this.read(apiBaseUrl);
+    return data.courseMemberships
+      .filter((m) => m.courseId === courseId)
+      .map((m) => {
+        const user = data.users.find((u) => u.id === m.userId);
+        return {
+          ...m,
+          username: user?.username || m.userId,
+          githubLogin: user?.githubLogin || m.userId
+        };
+      });
+  }
+
+  async addCourseMember(
+    apiBaseUrl: string,
+    courseId: string,
+    githubLogin: string,
+    role: MembershipRole
+  ): Promise<CourseMembershipRecord & { username: string; githubLogin: string }> {
+    const data = this.read(apiBaseUrl);
+    const user = data.users.find((u) => u.githubLogin === githubLogin);
+    if (!user) {
+      throw Object.assign(new Error(`No user found with GitHub login "${githubLogin}".`), { statusCode: 404 });
+    }
+    const existing = data.courseMemberships.find((m) => m.courseId === courseId && m.userId === user.id);
+    if (existing) {
+      throw Object.assign(new Error("User is already a member of this course."), { statusCode: 409 });
+    }
+    const membership: CourseMembershipRecord = {
+      id: randomUUID(),
+      courseId,
+      userId: user.id,
+      role,
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    };
+    data.courseMemberships.push(membership);
+    this.write(data);
+    return { ...membership, username: user.username, githubLogin: user.githubLogin };
+  }
+
+  async removeCourseMember(apiBaseUrl: string, courseId: string, userId: string): Promise<void> {
+    const data = this.read(apiBaseUrl);
+    data.courseMemberships = data.courseMemberships.filter(
+      (m) => !(m.courseId === courseId && m.userId === userId)
+    );
+    this.write(data);
+  }
+
+  async createCourseInvite(
+    apiBaseUrl: string,
+    courseId: string,
+    role: MembershipRole,
+    opts?: { maxUses?: number; expiresAt?: string | null }
+  ): Promise<CourseInviteRecord> {
+    const data = this.read(apiBaseUrl);
+    if (!data.courseInvites) data.courseInvites = [];
+    const code = Math.random().toString(36).slice(2, 10).toUpperCase();
+    const invite: CourseInviteRecord = {
+      id: randomUUID(),
+      courseId,
+      code,
+      role,
+      maxUses: opts?.maxUses ?? 0,
+      useCount: 0,
+      expiresAt: opts?.expiresAt ?? null,
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    };
+    data.courseInvites.push(invite);
+    this.write(data);
+    return invite;
+  }
+
+  async getCourseInviteByCode(
+    apiBaseUrl: string,
+    code: string
+  ): Promise<(CourseInviteRecord & { course: CourseRecord }) | null> {
+    const data = this.read(apiBaseUrl);
+    if (!data.courseInvites) return null;
+    const invite = data.courseInvites.find((inv) => inv.code === code);
+    if (!invite) return null;
+    const course = data.courses.find((c) => c.id === invite.courseId);
+    if (!course) return null;
+    return { ...invite, course };
+  }
+
+  async redeemCourseInvite(
+    apiBaseUrl: string,
+    code: string,
+    userId: string
+  ): Promise<CourseMembershipRecord> {
+    const data = this.read(apiBaseUrl);
+    if (!data.courseInvites) data.courseInvites = [];
+    const invite = data.courseInvites.find((inv) => inv.code === code);
+    if (!invite) {
+      throw Object.assign(new Error("Invalid or expired invite code."), { statusCode: 404 });
+    }
+    if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
+      throw Object.assign(new Error("This invite link has expired."), { statusCode: 410 });
+    }
+    if (invite.maxUses > 0 && invite.useCount >= invite.maxUses) {
+      throw Object.assign(new Error("This invite link has reached its maximum uses."), { statusCode: 410 });
+    }
+    const existing = data.courseMemberships.find(
+      (m) => m.courseId === invite.courseId && m.userId === userId
+    );
+    if (existing) {
+      return existing;
+    }
+    const membership: CourseMembershipRecord = {
+      id: randomUUID(),
+      courseId: invite.courseId,
+      userId,
+      role: invite.role,
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    };
+    data.courseMemberships.push(membership);
+    invite.useCount += 1;
+    invite.updatedAt = nowIso();
+    this.write(data);
+    return membership;
+  }
+
+  async createTrackingCourse(
+    apiBaseUrl: string,
+    userId: string,
+    payload: { slug: string; title: string; termLabel: string; courseCode: string }
+  ): Promise<CourseRecord> {
+    const data = this.read(apiBaseUrl);
+    const course: CourseRecord = {
+      id: randomUUID(),
+      slug: payload.slug,
+      title: payload.title,
+      termLabel: payload.termLabel,
+      courseCode: payload.courseCode,
+      isActive: true,
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    };
+    const membership: CourseMembershipRecord = {
+      id: randomUUID(),
+      courseId: course.id,
+      userId,
+      role: "instructor",
+      createdAt: nowIso(),
+      updatedAt: nowIso()
+    };
+    data.courses.push(course);
+    data.courseMemberships.push(membership);
+    this.write(data);
+    return course;
   }
 
   async listTrackingProjects(apiBaseUrl: string, courseId: string): Promise<ProjectRecord[]> {

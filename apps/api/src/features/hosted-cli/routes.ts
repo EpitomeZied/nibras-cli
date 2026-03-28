@@ -7,7 +7,9 @@ import {
   ProjectTaskResponseSchema,
   SubmissionPrepareRequestSchema,
   SubmissionPrepareResponseSchema,
-  SubmissionStatusResponseSchema
+  SubmissionStatusResponseSchema,
+  TokenRefreshRequestSchema,
+  TokenRefreshResponseSchema
 } from "@nibras/contracts";
 import { GitHubAppConfig } from "@nibras/github";
 import { PrismaStore } from "../../prisma-store";
@@ -33,6 +35,19 @@ export function registerHostedCliRoutes(
       auth: token ? (user ? "valid" : "invalid") : "missing",
       github: user?.githubLinked ? "linked" : "missing",
       githubApp: user?.githubAppInstalled ? "installed" : "missing"
+    });
+  });
+
+  app.post("/v1/auth/refresh", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (request, reply) => {
+    const payload = TokenRefreshRequestSchema.parse(request.body);
+    const session = await store.refreshCliSession(requestBaseUrl(request), payload.refreshToken);
+    if (!session) {
+      reply.code(401).send({ error: "Invalid or expired refresh token." });
+      return;
+    }
+    return TokenRefreshResponseSchema.parse({
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken
     });
   });
 

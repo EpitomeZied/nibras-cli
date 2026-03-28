@@ -27,6 +27,7 @@ export const CliConfigSchema = z.object({
   activeUserId: z.string().optional(),
   accessToken: z.string().optional(),
   refreshToken: z.string().optional(),
+  tokenCreatedAt: z.string().datetime().optional(),
   defaultOrg: z.string().optional(),
   telemetryOptIn: z.boolean().optional()
 });
@@ -122,6 +123,15 @@ export const PingResponseSchema = z.object({
   auth: z.enum(["valid", "missing", "invalid"]),
   github: z.enum(["linked", "missing"]),
   githubApp: z.enum(["installed", "missing"])
+});
+
+export const TokenRefreshRequestSchema = z.object({
+  refreshToken: z.string().min(1)
+});
+
+export const TokenRefreshResponseSchema = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1)
 });
 
 export const GitHubInstallUrlResponseSchema = z.object({
