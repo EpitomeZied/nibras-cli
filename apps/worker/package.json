@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@nibras/contracts": "*",
+    "@nibras/grading": "*",
     "@prisma/client": "^6.5.0",
     "@sentry/node": "^10.46.0"
   },

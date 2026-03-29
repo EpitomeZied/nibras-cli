@@ -102,6 +102,13 @@ export const TrackingSubmissionSchema = z.object({
   localTestExitCode: z.number().int().nullable()
 });
 
+export const AiCriterionScoreSchema = z.object({
+  id: z.string().min(1),
+  points: z.number(),
+  earned: z.number(),
+  justification: z.string()
+});
+
 export const TrackingReviewSchema = z.object({
   id: z.string().min(1),
   submissionId: z.string().min(1),
@@ -112,7 +119,15 @@ export const TrackingReviewSchema = z.object({
   rubric: z.array(TrackingRubricItemSchema),
   reviewedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime()
+  updatedAt: z.string().datetime(),
+  // AI grading fields — null when AI has not run
+  aiConfidence: z.number().nullable(),
+  aiNeedsReview: z.boolean().nullable(),
+  aiReasoningSummary: z.string().nullable(),
+  aiCriterionScores: z.array(AiCriterionScoreSchema).nullable(),
+  aiEvidenceQuotes: z.array(z.string()).nullable(),
+  aiModel: z.string().nullable(),
+  aiGradedAt: z.string().datetime().nullable()
 });
 
 export const TrackingActivityEventSchema = z.object({
@@ -243,6 +258,7 @@ export type TrackingProjectSummary = z.infer<typeof TrackingProjectSummarySchema
 export type TrackingProjectDetail = z.infer<typeof TrackingProjectDetailSchema>;
 export type TrackingMilestone = z.infer<typeof TrackingMilestoneSchema>;
 export type TrackingSubmission = z.infer<typeof TrackingSubmissionSchema>;
+export type AiCriterionScore = z.infer<typeof AiCriterionScoreSchema>;
 export type TrackingReview = z.infer<typeof TrackingReviewSchema>;
 export type TrackingActivityEvent = z.infer<typeof TrackingActivityEventSchema>;
 export type StudentProjectsDashboardResponse = z.infer<typeof StudentProjectsDashboardResponseSchema>;

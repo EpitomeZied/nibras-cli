@@ -1,7 +1,15 @@
+import { execFile } from "node:child_process";
+import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { createServer } from "node:http";
 import * as Sentry from "@sentry/node";
+import { gradeSemanticAnswer, type AiConfig, type GradingQuestion, type AiGradeResult } from "@nibras/grading";
 import { runSandboxed } from "./sandbox";
+
+const execFileAsync = promisify(execFile);
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -137,45 +145,217 @@ async function runVerification(
   return runSandboxed(cloneUrl, attempt.branch, testCommand);
 }
 
+type AiRunResult = {
+  gradeResult: AiGradeResult;
+  model: string;
+  gradedAt: Date;
+  reviewRequired: boolean;
+};
+
+function loadAiConfig(): AiConfig | null {
+  const apiKey = process.env.NIBRAS_AI_API_KEY;
+  if (!apiKey) return null;
+  const model = process.env.NIBRAS_AI_MODEL;
+  if (!model) return null;
+  return {
+    apiKey,
+    model,
+    baseUrl: process.env.NIBRAS_AI_BASE_URL,
+    timeoutMs: process.env.NIBRAS_AI_TIMEOUT_MS ? Number(process.env.NIBRAS_AI_TIMEOUT_MS) : undefined,
+    maxRetries: process.env.NIBRAS_AI_MAX_RETRIES ? Number(process.env.NIBRAS_AI_MAX_RETRIES) : undefined,
+    minConfidence: process.env.NIBRAS_AI_MIN_CONFIDENCE ? Number(process.env.NIBRAS_AI_MIN_CONFIDENCE) : undefined
+  };
+}
+
+async function runAiGrading(
+  submissionAttemptId: string,
+  prisma: PrismaClient
+): Promise<AiRunResult | null> {
+  const aiConfig = loadAiConfig();
+  if (!aiConfig) return null;
+
+  const attempt = await prisma.submissionAttempt.findUniqueOrThrow({
+    where: { id: submissionAttemptId },
+    include: {
+      project: {
+        include: { releases: { orderBy: { createdAt: "desc" }, take: 1 } }
+      },
+      userProjectRepo: true
+    }
+  });
+
+  type ManifestJson = {
+    projectKey?: string;
+    grading?: {
+      questions: Array<{
+        id: string;
+        mode: string;
+        prompt?: string;
+        points: number;
+        answerFile: string;
+        rubric?: Array<{ id: string; description: string; points: number }>;
+        examples?: Array<{ label: string; answer: string }>;
+        minConfidence?: number;
+      }>;
+    };
+  };
+
+  const manifest = attempt.project.releases[0]?.manifestJson as ManifestJson | null;
+  const gradingConfig = manifest?.grading;
+  if (!gradingConfig) return null;
+
+  const semanticQuestions = gradingConfig.questions.filter(
+    (q) => q.mode === "semantic" && Array.isArray(q.rubric) && q.rubric.length > 0
+  );
+  if (semanticQuestions.length === 0) return null;
+
+  const cloneUrl = attempt.userProjectRepo.cloneUrl;
+  if (!cloneUrl) return null;
+
+  const tmpDir = await mkdtemp(join(tmpdir(), "nibras-ai-"));
+  try {
+    await execFileAsync("git", ["clone", "--depth=1", "--branch", attempt.branch, cloneUrl, tmpDir], {
+      timeout: 60_000
+    });
+
+    const projectKey = manifest?.projectKey ?? attempt.project.slug;
+    const minConfidence = aiConfig.minConfidence ?? 0.8;
+
+    let totalEarned = 0;
+    let anyNeedsReview = false;
+    const allCriterionScores: AiGradeResult["criterionScores"] = [];
+    const allEvidenceQuotes: string[] = [];
+    let lastResult: AiGradeResult | null = null;
+
+    for (const q of semanticQuestions) {
+      const answerPath = join(tmpDir, q.answerFile);
+      let answerText: string;
+      try {
+        answerText = await readFile(answerPath, "utf8");
+      } catch {
+        log("warn", "AI grading: answer file not found", { answerFile: q.answerFile, questionId: q.id });
+        continue;
+      }
+
+      const question: GradingQuestion = {
+        id: q.id,
+        prompt: q.prompt ?? q.id,
+        points: q.points,
+        rubric: q.rubric ?? [],
+        examples: q.examples,
+        minConfidence: q.minConfidence
+      };
+
+      try {
+        const result = await gradeSemanticAnswer({
+          aiConfig,
+          subject: "Programming",
+          project: projectKey,
+          question,
+          answerText
+        });
+
+        totalEarned += result.score;
+        allCriterionScores.push(...result.criterionScores);
+        allEvidenceQuotes.push(...result.evidenceQuotes);
+        if (result.needsReview || result.confidence < (q.minConfidence ?? minConfidence)) {
+          anyNeedsReview = true;
+        }
+        lastResult = result;
+      } catch (err) {
+        log("warn", "AI grading failed for question", {
+          questionId: q.id,
+          error: err instanceof Error ? err.message : String(err)
+        });
+        anyNeedsReview = true;
+      }
+    }
+
+    if (!lastResult) return null;
+
+    const aggregated: AiGradeResult = {
+      score: totalEarned,
+      confidence: lastResult.confidence,
+      needsReview: anyNeedsReview,
+      criterionScores: allCriterionScores,
+      reasoningSummary: lastResult.reasoningSummary,
+      evidenceQuotes: allEvidenceQuotes
+    };
+
+    return {
+      gradeResult: aggregated,
+      model: aiConfig.model,
+      gradedAt: new Date(),
+      reviewRequired: anyNeedsReview
+    };
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
 async function finalizeJob(
   jobId: string,
   submissionAttemptId: string,
   attempt: number,
   exitCode: number,
   verificationLog: string,
+  aiResult: AiRunResult | null,
   prisma: PrismaClient
 ): Promise<void> {
-  const finalStatus = exitCode === 0 ? SubmissionStatus.passed : SubmissionStatus.failed;
-  const summary =
-    exitCode === 0 ? "Verification passed." : "Verification failed.";
+  const verificationPassed = exitCode === 0;
+  const finalStatus = !verificationPassed
+    ? SubmissionStatus.failed
+    : aiResult?.reviewRequired
+      ? SubmissionStatus.needs_review
+      : SubmissionStatus.passed;
 
-  await prisma.$transaction([
-    prisma.verificationJob.update({
+  const summary = !verificationPassed
+    ? "Verification failed."
+    : aiResult?.reviewRequired
+      ? "Verification passed — AI flagged for human review."
+      : "Verification passed.";
+
+  await prisma.$transaction(async (tx) => {
+    await tx.verificationJob.update({
       where: { id: jobId },
-      data: {
-        status: finalStatus,
-        claimedAt: null,
-        finishedAt: new Date()
-      }
-    }),
-    prisma.verificationRun.update({
-      where: {
-        submissionAttemptId_attempt: {
-          submissionAttemptId,
-          attempt
-        }
-      },
-      data: {
-        status: finalStatus,
-        log: verificationLog,
-        finishedAt: new Date()
-      }
-    }),
-    prisma.submissionAttempt.update({
+      data: { status: finalStatus, claimedAt: null, finishedAt: new Date() }
+    });
+    await tx.verificationRun.update({
+      where: { submissionAttemptId_attempt: { submissionAttemptId, attempt } },
+      data: { status: finalStatus, log: verificationLog, finishedAt: new Date() }
+    });
+    await tx.submissionAttempt.update({
       where: { id: submissionAttemptId },
       data: { status: finalStatus, summary }
-    })
-  ]);
+    });
+
+    // Create a draft review with AI results when AI grading ran
+    if (verificationPassed && aiResult) {
+      const r = aiResult.gradeResult;
+      // Use a system user id (first admin or fallback to the submission's user)
+      const submission = await tx.submissionAttempt.findUniqueOrThrow({
+        where: { id: submissionAttemptId },
+        select: { userId: true }
+      });
+      await tx.review.create({
+        data: {
+          submissionAttemptId,
+          reviewerUserId: submission.userId,
+          status: "pending",
+          score: r.score,
+          feedback: r.reasoningSummary,
+          rubricJson: [],
+          aiConfidence: r.confidence,
+          aiNeedsReview: r.needsReview,
+          aiReasoningSummary: r.reasoningSummary,
+          aiCriterionScores: r.criterionScores,
+          aiEvidenceQuotes: r.evidenceQuotes,
+          aiModel: aiResult.model,
+          aiGradedAt: aiResult.gradedAt
+        }
+      });
+    }
+  });
 }
 
 async function failJob(
@@ -248,8 +428,19 @@ async function tick(prisma: PrismaClient): Promise<void> {
 
   try {
     const { exitCode, log: verificationLog } = await runVerification(job.submissionAttemptId, prisma);
-    await finalizeJob(job.id, job.submissionAttemptId, job.attempt, exitCode, verificationLog, prisma);
-    log("info", "Job completed", { jobId: job.id, exitCode });
+    let aiResult: AiRunResult | null = null;
+    if (exitCode === 0) {
+      try {
+        aiResult = await runAiGrading(job.submissionAttemptId, prisma);
+      } catch (err) {
+        log("warn", "AI grading error (non-fatal)", {
+          jobId: job.id,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }
+    await finalizeJob(job.id, job.submissionAttemptId, job.attempt, exitCode, verificationLog, aiResult, prisma);
+    log("info", "Job completed", { jobId: job.id, exitCode, aiRan: aiResult !== null });
     transaction?.setStatus({ code: 1, message: "ok" });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

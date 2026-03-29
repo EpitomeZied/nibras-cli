@@ -215,6 +215,13 @@ function toReviewRecord(review: {
   reviewedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  aiConfidence?: number | null;
+  aiNeedsReview?: boolean | null;
+  aiReasoningSummary?: string | null;
+  aiCriterionScores?: unknown;
+  aiEvidenceQuotes?: unknown;
+  aiModel?: string | null;
+  aiGradedAt?: Date | null;
 }): ReviewRecord {
   return {
     id: review.id,
@@ -226,7 +233,18 @@ function toReviewRecord(review: {
     rubric: Array.isArray(review.rubricJson) ? review.rubricJson as TrackingRubricItemRecord[] : [],
     reviewedAt: review.reviewedAt ? review.reviewedAt.toISOString() : null,
     createdAt: review.createdAt.toISOString(),
-    updatedAt: review.updatedAt.toISOString()
+    updatedAt: review.updatedAt.toISOString(),
+    aiConfidence: review.aiConfidence ?? null,
+    aiNeedsReview: review.aiNeedsReview ?? null,
+    aiReasoningSummary: review.aiReasoningSummary ?? null,
+    aiCriterionScores: Array.isArray(review.aiCriterionScores)
+      ? review.aiCriterionScores as ReviewRecord["aiCriterionScores"]
+      : null,
+    aiEvidenceQuotes: Array.isArray(review.aiEvidenceQuotes)
+      ? review.aiEvidenceQuotes as string[]
+      : null,
+    aiModel: review.aiModel ?? null,
+    aiGradedAt: review.aiGradedAt ? review.aiGradedAt.toISOString() : null
   };
 }
 

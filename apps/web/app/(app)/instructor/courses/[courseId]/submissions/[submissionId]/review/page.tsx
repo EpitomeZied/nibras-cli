@@ -26,16 +26,51 @@ type Project = {
   rubric: RubricItem[];
 };
 
+type AiCriterionScore = {
+  id: string;
+  points: number;
+  earned: number;
+  justification: string;
+};
+
 type Review = {
   status: string;
   score: number | null;
   feedback: string;
   rubric: RubricItem[];
+  aiConfidence: number | null;
+  aiNeedsReview: boolean | null;
+  aiReasoningSummary: string | null;
+  aiCriterionScores: AiCriterionScore[] | null;
+  aiEvidenceQuotes: string[] | null;
+  aiModel: string | null;
+  aiGradedAt: string | null;
 };
 
 type RubricScore = { criterion: string; maxScore: number; score: number };
 
 const REVIEW_STATUSES = ["approved", "changes_requested", "graded"] as const;
+
+function ConfidenceBadge({ value }: { value: number }) {
+  const pct = Math.round(value * 100);
+  const color = value >= 0.8 ? "#34d399" : value >= 0.6 ? "#fbbf24" : "#f87171";
+  return (
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 5,
+      padding: "3px 10px",
+      borderRadius: 999,
+      fontSize: 12,
+      fontWeight: 700,
+      background: `${color}18`,
+      color,
+      border: `1px solid ${color}40`
+    }}>
+      {pct}% confidence
+    </span>
+  );
+}
 
 export default function SubmissionReviewPage({
   params
@@ -45,6 +80,7 @@ export default function SubmissionReviewPage({
   const { courseId, submissionId } = use(params);
   const router = useRouter();
   const [submission, setSubmission] = useState<Submission | null>(null);
+  const [reviewData, setReviewData] = useState<Review | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,13 +115,20 @@ export default function SubmissionReviewPage({
         }
 
         if (reviewRes.ok) {
-          const reviewData = await reviewRes.json() as Review;
-          setReviewStatus(reviewData.status);
-          setScore(reviewData.score !== null ? String(reviewData.score) : "");
-          setFeedback(reviewData.feedback || "");
-          if (reviewData.rubric.length > 0) {
+          const rd = await reviewRes.json() as Review;
+          setReviewData(rd);
+          setReviewStatus(rd.status);
+          // Pre-fill score from AI result if no manual score yet
+          const initialScore = rd.score !== null
+            ? String(rd.score)
+            : rd.aiCriterionScores
+              ? String(rd.aiCriterionScores.reduce((s, c) => s + c.earned, 0))
+              : "";
+          setScore(initialScore);
+          setFeedback(rd.feedback || "");
+          if (rd.rubric.length > 0) {
             setRubricScores(
-              reviewData.rubric.map((item) => ({
+              rd.rubric.map((item) => ({
                 criterion: item.criterion,
                 maxScore: item.maxScore,
                 score: item.maxScore
@@ -146,6 +189,8 @@ export default function SubmissionReviewPage({
     return styles.statusDraft;
   }
 
+  const hasAi = reviewData?.aiConfidence !== null && reviewData?.aiConfidence !== undefined;
+
   if (loading) {
     return (
       <div className={styles.page}>
@@ -176,8 +221,8 @@ export default function SubmissionReviewPage({
       </div>
 
       <div className={styles.detailGrid}>
-        {/* Left: submission summary */}
-        <div>
+        {/* Left column: submission summary + AI panel */}
+        <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <h2>Submission</h2>
@@ -222,6 +267,120 @@ export default function SubmissionReviewPage({
               </tbody>
             </table>
           </div>
+
+          {/* ── AI Analysis Panel ── */}
+          {hasAi && reviewData && (
+            <div className={styles.panel} style={{ borderColor: "rgba(99,102,241,0.3)" }}>
+              <div className={styles.panelHeader}>
+                <h2 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, opacity: 0.6 }}>✦</span> AI Analysis
+                </h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {reviewData.aiConfidence !== null && (
+                    <ConfidenceBadge value={reviewData.aiConfidence} />
+                  )}
+                  {reviewData.aiModel && (
+                    <span style={{ fontSize: 11, color: "var(--text-soft)" }}>{reviewData.aiModel}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Needs-review warning */}
+              {reviewData.aiNeedsReview && (
+                <div style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: "rgba(251,191,36,0.08)",
+                  border: "1px solid rgba(251,191,36,0.25)",
+                  color: "#fbbf24",
+                  fontSize: 13,
+                  marginBottom: 16,
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "flex-start"
+                }}>
+                  <span>⚠</span>
+                  <span>AI flagged this submission for human review — the answer may be ambiguous or off-rubric.</span>
+                </div>
+              )}
+
+              {/* Reasoning summary */}
+              {reviewData.aiReasoningSummary && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Reasoning</p>
+                  <blockquote style={{
+                    margin: 0,
+                    padding: "10px 14px",
+                    borderLeft: "3px solid rgba(99,102,241,0.5)",
+                    background: "rgba(99,102,241,0.06)",
+                    borderRadius: "0 8px 8px 0",
+                    fontSize: 13,
+                    color: "var(--text-muted)",
+                    lineHeight: 1.6
+                  }}>
+                    {reviewData.aiReasoningSummary}
+                  </blockquote>
+                </div>
+              )}
+
+              {/* Criterion breakdown */}
+              {reviewData.aiCriterionScores && reviewData.aiCriterionScores.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Criterion Breakdown</p>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {reviewData.aiCriterionScores.map((c) => (
+                      <div key={c.id} style={{
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "var(--surface-strong)",
+                        border: "1px solid var(--border)",
+                        display: "grid",
+                        gap: 4
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{c.id}</span>
+                          <span style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: c.earned >= c.points * 0.7 ? "#34d399" : c.earned > 0 ? "#fbbf24" : "#f87171"
+                          }}>
+                            {c.earned} / {c.points}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                          {c.justification}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Evidence quotes */}
+              {reviewData.aiEvidenceQuotes && reviewData.aiEvidenceQuotes.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Evidence Quotes</p>
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {reviewData.aiEvidenceQuotes.map((q, i) => (
+                      <blockquote key={i} style={{
+                        margin: 0,
+                        padding: "8px 12px",
+                        borderLeft: "2px solid rgba(59,130,246,0.4)",
+                        background: "rgba(59,130,246,0.05)",
+                        borderRadius: "0 6px 6px 0",
+                        fontSize: 12,
+                        color: "var(--text-soft)",
+                        fontStyle: "italic",
+                        lineHeight: 1.5
+                      }}>
+                        &ldquo;{q}&rdquo;
+                      </blockquote>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: review form */}
@@ -229,6 +388,11 @@ export default function SubmissionReviewPage({
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
               <h2>Review</h2>
+              {hasAi && (
+                <span style={{ fontSize: 11, color: "var(--text-soft)", padding: "3px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--surface-strong)" }}>
+                  Pre-filled by AI
+                </span>
+              )}
             </div>
             <form onSubmit={(e) => void handleSubmit(e)}>
               <div className={styles.formGroup} style={{ marginBottom: 16 }}>

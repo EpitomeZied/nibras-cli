@@ -1,9 +1,9 @@
 :root {
-  --page-bg: #080c14;
-  --page-bg-alt: #0c1220;
-  --surface: #0f1929;
-  --surface-strong: #141f33;
-  --surface-muted: #1a2640;
+  --page-bg: #0b0f1a;
+  --page-bg-alt: #0e1320;
+  --surface: #111827;
+  --surface-strong: #161e2e;
+  --surface-muted: #1c2538;
   --border: rgba(255, 255, 255, 0.07);
   --border-strong: rgba(255, 255, 255, 0.13);
   --text: #f1f5f9;
@@ -15,9 +15,9 @@
   --success: #34d399;
   --warning: #fbbf24;
   --danger: #f87171;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
@@ -25,6 +25,7 @@
   --bg: var(--page-bg);
   --background: var(--page-bg);
   --error: var(--danger);
+  --sidebar-bg: #0a0e1a;
 }
 
 * {
@@ -176,16 +177,17 @@ main {
 
 .topHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px 32px;
+  padding: 12px 28px;
   border-bottom: 1px solid var(--border);
-  background: rgba(8, 12, 20, 0.85);
+  background: rgba(10, 14, 26, 0.9);
   backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 5;
+  min-height: 52px;
 }
 
 .pageTitleRow {
@@ -287,18 +289,18 @@ main {
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 24px 16px;
+  gap: 16px;
+  padding: 20px 14px;
   border-right: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--sidebar-bg, #0a0e1a);
   overflow-y: auto;
 }
 
 .brandBlock {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px 16px;
+  gap: 10px;
+  padding: 4px 4px 14px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -323,8 +325,8 @@ main {
 .navLink {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 9px 10px;
   border-radius: 10px;
   border: 1px solid transparent;
   text-decoration: none;
@@ -341,17 +343,8 @@ main {
   transition: color 0.15s;
 }
 
-.navLink small {
-  display: block;
-  font-size: 11px;
-  color: var(--text-soft);
-  line-height: 1.4;
-  text-decoration: none;
-}
-
 .navLink:hover {
-  background: var(--surface-strong);
-  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
 
@@ -360,37 +353,32 @@ main {
 }
 
 .navLinkActive {
-  background: var(--primary-soft);
-  border-color: rgba(59, 130, 246, 0.18);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .navLinkActive strong {
   color: var(--primary-strong) !important;
 }
 
-.navLinkActive small {
-  color: rgba(96, 165, 250, 0.65);
-}
-
 .navIcon {
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: var(--surface-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   color: var(--text-soft);
-  font-size: 15px;
+  font-size: 14px;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .navLinkActive .navIcon {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.25);
   color: var(--primary-strong);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
 }
 
 .sidebarStatusCard {

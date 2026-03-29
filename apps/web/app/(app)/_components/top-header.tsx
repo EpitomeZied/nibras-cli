@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { pageTitles } from "./nav-config";
 import ThemeToggle from "./theme-toggle";
 
 type ShellSessionUser = {
@@ -21,6 +20,13 @@ function getInitials(value: string): string {
     .join("") || trimmed.slice(0, 2).toUpperCase();
 }
 
+const BREADCRUMBS: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/projects": "Projects",
+  "/instructor": "Instructor",
+  "/admin": "Admin",
+};
+
 export default function TopHeader({
   user,
   loading
@@ -29,30 +35,24 @@ export default function TopHeader({
   loading: boolean;
 }) {
   const pathname = usePathname();
-  const pageMeta = pageTitles[pathname] || pageTitles["/dashboard"];
   const identity = user?.username || user?.githubLogin || "Nibras";
+  const breadcrumb = BREADCRUMBS[pathname] ?? "Dashboard";
 
   return (
     <header className="topHeader">
-      <div>
-        <div className="pageTitleRow">
-          <span className="sectionEyebrow">Nibras Web</span>
-          <h1>{pageMeta.title}</h1>
-        </div>
-        <p className="headerSubtitle">{pageMeta.subtitle}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 12, color: "var(--text-soft)" }}>Nibras</span>
+        <span style={{ fontSize: 12, color: "var(--text-soft)" }}>/</span>
+        <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>{breadcrumb}</span>
       </div>
 
       <div className="headerActions">
-        <div className="headerStatusChip" aria-live="polite">
-          <strong>{user?.githubLinked ? "GitHub connected" : loading ? "Checking session" : "Session active"}</strong>
-          <span>{user?.githubAppInstalled ? "App installed" : "Install pending"}</span>
-        </div>
         <ThemeToggle />
         <div className="profileChip" aria-live="polite">
           <span className="profileCircle">{loading ? "…" : getInitials(identity)}</span>
           <div>
             <strong>{loading ? "Loading" : identity}</strong>
-            <span>{user?.githubAppInstalled ? "GitHub App linked" : "Hosted web session"}</span>
+            <span>{user?.githubLinked ? "GitHub connected" : "Web session"}</span>
           </div>
         </div>
       </div>

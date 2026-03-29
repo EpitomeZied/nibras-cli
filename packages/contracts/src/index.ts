@@ -5,6 +5,29 @@ export const BuildpackSchema = z.object({
   node: z.string().min(1)
 });
 
+const GradingRubricItemSchema = z.object({
+  id: z.string().min(1),
+  description: z.string().min(1),
+  points: z.number().nonnegative()
+});
+
+const GradingExampleSchema = z.object({
+  label: z.string().min(1),
+  answer: z.string().min(1)
+});
+
+const GradingQuestionSchema = z.object({
+  id: z.string().min(1),
+  mode: z.enum(["exact", "semantic"]),
+  prompt: z.string().optional(),
+  points: z.number().nonnegative(),
+  answerFile: z.string().min(1),
+  rubric: z.array(GradingRubricItemSchema).optional(),
+  examples: z.array(GradingExampleSchema).optional(),
+  solutions: z.array(z.string().min(1)).optional(),
+  minConfidence: z.number().min(0).max(1).optional()
+});
+
 export const ProjectManifestSchema = z.object({
   projectKey: z.string().min(1),
   releaseVersion: z.string().min(1),
@@ -19,7 +42,11 @@ export const ProjectManifestSchema = z.object({
   submission: z.object({
     allowedPaths: z.array(z.string().min(1)).min(1),
     waitForVerificationSeconds: z.number().int().positive().default(120)
-  })
+  }),
+  grading: z.object({
+    questions: z.array(GradingQuestionSchema),
+    totalPoints: z.number().nonnegative()
+  }).optional()
 });
 
 export const CliConfigSchema = z.object({

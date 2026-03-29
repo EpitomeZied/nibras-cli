@@ -304,18 +304,26 @@ model Milestone {
 }
 
 model Review {
-  id                 String            @id @default(cuid())
-  submissionAttemptId String
-  reviewerUserId     String
-  status             ReviewStatus
-  score              Float?
-  feedback           String            @default("")
-  rubricJson         Json?
-  reviewedAt         DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  submissionAttempt  SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
-  reviewer           User              @relation(fields: [reviewerUserId], references: [id], onDelete: Cascade)
+  id                   String            @id @default(cuid())
+  submissionAttemptId  String
+  reviewerUserId       String
+  status               ReviewStatus
+  score                Float?
+  feedback             String            @default("")
+  rubricJson           Json?
+  reviewedAt           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  // AI grading fields (nullable — populated by worker when AI config is present)
+  aiConfidence         Float?
+  aiNeedsReview        Boolean?
+  aiReasoningSummary   String?
+  aiCriterionScores    Json?
+  aiEvidenceQuotes     Json?
+  aiModel              String?
+  aiGradedAt           DateTime?
+  submissionAttempt    SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
+  reviewer             User              @relation(fields: [reviewerUserId], references: [id], onDelete: Cascade)
 }
 
 model GithubDelivery {

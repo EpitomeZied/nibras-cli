@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import NibrasLogo from "./_components/nibras-logo";
 import { discoverApiBaseUrl } from "./lib/session";
 import styles from "./signin.module.css";
@@ -43,17 +44,18 @@ export default function HomePage() {
 
       {/* Top nav */}
       <nav className={styles.nav}>
-        <div className={styles.navLogo}>
-          <NibrasLogo variant="inverse" width={110} priority />
+        <div className={styles.navLogo} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Image src="/branding/nibras-icon.svg" alt="Nibras" width={28} height={28} priority />
+          <span style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Nibras</span>
         </div>
       </nav>
 
       {/* Hero */}
       <div className={styles.hero}>
         <h1 className={styles.headline}>
-          <span className={styles.headlineBright}>Run Your Course</span>
+          <span className={styles.headlineBright}>Ship. Learn. Dominate.</span>
           <br />
-          <span className={styles.headlineMuted}>The Smart Way.</span>
+          <span className={styles.headlineMuted}>No excuses. Just results.</span>
         </h1>
 
         <p className={styles.sub}>

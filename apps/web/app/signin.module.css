@@ -161,10 +161,11 @@
 
 .headline {
   margin: 0;
-  font-size: clamp(3rem, 7.5vw, 6rem);
+  font-size: clamp(2rem, 5.5vw, 5.5rem);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.05em;
+  white-space: nowrap;
 }
 
 .headlineBright {

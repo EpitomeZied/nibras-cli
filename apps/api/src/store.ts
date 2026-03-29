@@ -135,6 +135,13 @@ export type SubmissionRecord = {
   localTestExitCode: number | null;
 };
 
+export type AiCriterionScoreRecord = {
+  id: string;
+  points: number;
+  earned: number;
+  justification: string;
+};
+
 export type ReviewRecord = {
   id: string;
   submissionId: string;
@@ -146,6 +153,14 @@ export type ReviewRecord = {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // AI grading fields
+  aiConfidence: number | null;
+  aiNeedsReview: boolean | null;
+  aiReasoningSummary: string | null;
+  aiCriterionScores: AiCriterionScoreRecord[] | null;
+  aiEvidenceQuotes: string[] | null;
+  aiModel: string | null;
+  aiGradedAt: string | null;
 };
 
 export type VerificationLogRecord = {
@@ -1500,7 +1515,14 @@ export class FileStore implements AppStore {
       rubric: payload.rubric,
       reviewedAt: nowIso(),
       createdAt: nowIso(),
-      updatedAt: nowIso()
+      updatedAt: nowIso(),
+      aiConfidence: null,
+      aiNeedsReview: null,
+      aiReasoningSummary: null,
+      aiCriterionScores: null,
+      aiEvidenceQuotes: null,
+      aiModel: null,
+      aiGradedAt: null
     };
     submission.status = payload.status === "changes_requested"
       ? "failed"
