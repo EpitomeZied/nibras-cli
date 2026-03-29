@@ -27,6 +27,8 @@ Supported workflows include:
 - device login with `praxis login`, `logout`, and `whoami`
 - tracked submissions, verification status transitions, and admin overrides
 - strict private grading, semantic grading, manual score fallback, and optional `check50`
+- AI grading with confidence scores, criterion breakdowns, and reasoning summaries (optional, requires `PRAXIS_AI_API_KEY`)
+- instructor dashboard: course management, project/milestone setup, submission review queue
 - GitHub OAuth, GitHub App install linking, and signed webhook handling
 
 Project tracking docs:
@@ -46,15 +48,17 @@ Project tracking docs:
 
 ## Install
 
+The published CLI package:
+
+```bash
+npm install -g @praxis/cli
+```
+
+Or install from source (legacy CLI entry point):
+
 ```bash
 npm ci
 npm install -g .
-```
-
-Development usage:
-
-```bash
-npm start -- cs161 test exam1
 ```
 
 ## Build And Verification
@@ -189,11 +193,18 @@ For the full live end-to-end validation flow, use `TEST_SCENARIO.md`.
 10. Verify webhook signing.
     This repo validates `X-Hub-Signature-256` using `GITHUB_WEBHOOK_SECRET`.
 
-## Quick Start
+## AI Grading
 
-Review the repo config, then run the core CS161 flow:
+When `PRAXIS_AI_API_KEY` and `PRAXIS_AI_MODEL` are set, the worker
+automatically grades semantic questions after a successful verification run.
+Results pre-fill the instructor review form with confidence scores, criterion
+breakdowns, reasoning summaries, and evidence quotes.
 
-```bash
-sed -n '1,220p' .praxis.json
-praxis cs161 task exam1
-```
+Relevant env vars (see `.env.example` for defaults):
+
+- `PRAXIS_AI_API_KEY` — required to enable AI grading
+- `PRAXIS_AI_MODEL` — model name (default: `gpt-4o-mini`)
+- `PRAXIS_AI_BASE_URL` — override for Azure, Ollama, or other OpenAI-compatible providers
+- `PRAXIS_AI_MIN_CONFIDENCE` — submissions below this threshold are flagged for human review (default: `0.8`)
+
+Omit `PRAXIS_AI_API_KEY` to disable AI grading entirely with no other changes required.
