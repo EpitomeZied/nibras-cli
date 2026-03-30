@@ -17,9 +17,8 @@ For the canonical manual validation path, use `TEST_SCENARIO.md`.
 
 ## At A Glance
 
-The active product surface is the `apps/` and `packages/` monorepo. The `xx/`
-directory is legacy reference material and is not part of the active
-implementation.
+The active product surface is the `apps/` and `packages/` monorepo. The `src/`
+directory is the legacy CLI and is kept for backwards compatibility.
 
 Supported workflows include:
 
@@ -28,8 +27,9 @@ Supported workflows include:
 - tracked submissions, verification status transitions, and admin overrides
 - strict private grading, semantic grading, manual score fallback, and optional `check50`
 - AI grading with confidence scores, criterion breakdowns, and reasoning summaries (optional, requires `PRAXIS_AI_API_KEY`)
-- instructor dashboard: course management, project/milestone setup, submission review queue
-- GitHub OAuth, GitHub App install linking, and signed webhook handling
+- instructor dashboard: course management, project/milestone setup, submission review queue, grade CSV export
+- GitHub OAuth, GitHub App install linking, signed webhook handling, and commit status checks on student repos
+- transactional email notifications for students and instructors via Resend (optional, requires `RESEND_API_KEY`)
 
 Project tracking docs:
 
@@ -172,6 +172,7 @@ For the full live end-to-end validation flow, use `TEST_SCENARIO.md`.
    Repository permissions:
    `Contents`: Read and write
    `Metadata`: Read-only
+   `Commit statuses`: Read and write
 
 5. Subscribe to the events the backend handles.
    Enable `Push`.
@@ -192,6 +193,57 @@ For the full live end-to-end validation flow, use `TEST_SCENARIO.md`.
 
 10. Verify webhook signing.
     This repo validates `X-Hub-Signature-256` using `GITHUB_WEBHOOK_SECRET`.
+
+## Email Notifications
+
+When `RESEND_API_KEY` is set, the system sends transactional emails via [Resend](https://resend.com).
+
+Emails sent automatically:
+
+| Trigger | Recipient |
+|---|---|
+| Submission verified (passed / failed / needs review) | Student |
+| Submission flagged for human review | All course instructors and TAs |
+| Instructor submits a review | Student |
+
+Relevant env vars:
+
+- `RESEND_API_KEY` — get a free key at resend.com
+- `PRAXIS_EMAIL_FROM` — sender address, must be a verified domain in your Resend account (e.g. `Praxis <noreply@yourdomain.com>`)
+
+Omit `RESEND_API_KEY` to disable email entirely with no other changes required.
+
+## Commit Status Checks
+
+After every submission is verified, the worker posts a GitHub commit status to
+the student's repo. Students see a ✅, ❌, or 🔄 badge directly on their commit
+and can click through to their Praxis submission page.
+
+| Praxis status | GitHub badge | Label |
+|---|---|---|
+| `passed` | ✅ green | All tests passed |
+| `failed` | ❌ red | Tests failed |
+| `needs_review` | 🔄 pending | Tests passed — awaiting instructor review |
+
+Requires the GitHub App to have **Commit statuses: Read and write** permission
+(see GitHub App Checklist) and the student to have completed the app installation
+flow so their `installationId` is recorded. If either is missing the check is
+skipped silently.
+
+`PRAXIS_WEB_BASE_URL` must be set for the status badge to link back to the
+submission page.
+
+## Grade Export
+
+Instructors can download a CSV of all grades for a course:
+
+```
+GET /v1/tracking/courses/:courseId/grades.csv
+```
+
+The CSV contains one row per student with columns for each milestone across all
+projects in the course. Cell values are the review score when one exists, or the
+submission status otherwise.
 
 ## AI Grading
 

@@ -7,6 +7,16 @@ import { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { createServer } from "node:http";
 import * as Sentry from "@sentry/node";
 import { gradeSemanticAnswer, type AiConfig, type GradingQuestion, type AiGradeResult } from "@praxis/grading";
+import {
+  loadGitHubAppConfig,
+  createInstallationAccessToken,
+  postCommitStatus,
+  type CommitStatusState
+} from "@praxis/github";
+import {
+  sendSubmissionStatusEmail,
+  sendReviewReadyEmail
+} from "./email";
 import { runSandboxed } from "./sandbox";
 
 const execFileAsync = promisify(execFile);
@@ -293,6 +303,64 @@ async function runAiGrading(
   }
 }
 
+async function postJobCommitStatus(
+  submissionAttemptId: string,
+  finalStatus: SubmissionStatus,
+  prisma: PrismaClient
+): Promise<void> {
+  const ghConfig = loadGitHubAppConfig();
+  if (!ghConfig) return;
+
+  const attempt = await prisma.submissionAttempt.findUnique({
+    where: { id: submissionAttemptId },
+    select: {
+      commitSha: true,
+      userProjectRepo: { select: { owner: true, name: true } },
+      user: { select: { githubAccount: { select: { installationId: true } } } }
+    }
+  });
+
+  const installationId = attempt?.user.githubAccount?.installationId;
+  if (!attempt || !installationId) return;
+
+  const stateMap: Record<SubmissionStatus, CommitStatusState> = {
+    passed: "success",
+    failed: "failure",
+    needs_review: "pending",
+    queued: "pending",
+    running: "pending"
+  };
+  const descriptionMap: Record<SubmissionStatus, string> = {
+    passed: "All tests passed",
+    failed: "Tests failed",
+    needs_review: "Tests passed — awaiting instructor review",
+    queued: "Queued for verification",
+    running: "Verification running"
+  };
+
+  const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+  const targetUrl = webBaseUrl ? `${webBaseUrl}/submissions/${submissionAttemptId}` : undefined;
+
+  try {
+    const token = await createInstallationAccessToken(ghConfig, installationId);
+    await postCommitStatus(
+      ghConfig,
+      token,
+      attempt.userProjectRepo.owner,
+      attempt.userProjectRepo.name,
+      attempt.commitSha,
+      stateMap[finalStatus],
+      { description: descriptionMap[finalStatus], targetUrl, context: "praxis/verification" }
+    );
+  } catch (err) {
+    // Non-fatal: log and continue — a failed status post must not break the submission record
+    log("warn", "Failed to post GitHub commit status", {
+      submissionAttemptId,
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
 async function finalizeJob(
   jobId: string,
   submissionAttemptId: string,
@@ -356,6 +424,78 @@ async function finalizeJob(
       });
     }
   });
+
+  await postJobCommitStatus(submissionAttemptId, finalStatus, prisma);
+  await sendSubmissionEmails(submissionAttemptId, finalStatus, prisma);
+}
+
+async function sendSubmissionEmails(
+  submissionAttemptId: string,
+  finalStatus: SubmissionStatus,
+  prisma: PrismaClient
+): Promise<void> {
+  if (finalStatus === SubmissionStatus.queued || finalStatus === SubmissionStatus.running) return;
+
+  const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+  const submissionUrl = webBaseUrl ? `${webBaseUrl}/submissions/${submissionAttemptId}` : "";
+
+  try {
+    const attempt = await prisma.submissionAttempt.findUnique({
+      where: { id: submissionAttemptId },
+      select: {
+        user: { select: { email: true, username: true } },
+        project: {
+          select: {
+            name: true,
+            course: {
+              select: {
+                memberships: {
+                  where: { role: { in: ["instructor", "ta"] } },
+                  select: { user: { select: { email: true, username: true } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    if (!attempt) return;
+
+    const studentEmail = attempt.user.email;
+    const studentName = attempt.user.username;
+    const projectName = attempt.project.name;
+
+    // Notify student
+    await sendSubmissionStatusEmail({
+      studentEmail,
+      studentName,
+      projectName,
+      status: finalStatus as "passed" | "failed" | "needs_review",
+      submissionUrl
+    });
+
+    // Notify instructors when human review is required
+    if (finalStatus === SubmissionStatus.needs_review) {
+      const reviewQueueUrl = webBaseUrl ? `${webBaseUrl}/review-queue` : "";
+      const instructors = attempt.project.course?.memberships ?? [];
+      await Promise.allSettled(
+        instructors.map((m) =>
+          sendReviewReadyEmail({
+            instructorEmail: m.user.email,
+            instructorName: m.user.username,
+            studentName,
+            projectName,
+            reviewQueueUrl
+          })
+        )
+      );
+    }
+  } catch (err) {
+    log("warn", "Failed to send submission emails", {
+      submissionAttemptId,
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
 }
 
 async function failJob(

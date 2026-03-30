@@ -20,6 +20,7 @@ import {
 } from "@praxis/contracts";
 import { requireUser } from "../../lib/auth";
 import { requestBaseUrl } from "../../lib/request-base-url";
+import { sendReviewSubmittedEmail } from "../../lib/email";
 import { AppStore } from "../../store";
 import { presentInstructorDashboard, presentMilestone, presentProject, presentStudentDashboard } from "./presenters/dashboard";
 import { canManageCourse, canManageProject, canViewCourse, canViewSubmission, hasAnyInstructorAccess } from "./policies/access";
@@ -385,6 +386,23 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     }
     const payload = CreateReviewRequestSchema.parse(request.body);
     const review = await store.createTrackingReview(requestBaseUrl(request), auth.user.id, params.submissionId, payload);
+
+    // Non-blocking: notify student of review result
+    const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+    store.getSubmissionStudentEmail(requestBaseUrl(request), params.submissionId)
+      .then((info) => {
+        if (!info) return;
+        return sendReviewSubmittedEmail({
+          studentEmail: info.email,
+          studentName: info.username,
+          projectName: project.title,
+          reviewStatus: payload.status,
+          feedback: payload.feedback,
+          submissionUrl: webBaseUrl ? `${webBaseUrl}/submissions/${params.submissionId}` : ""
+        });
+      })
+      .catch(() => { /* non-fatal */ });
+
     reply.code(201);
     return TrackingReviewSchema.parse(review);
   });
@@ -513,6 +531,79 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
       const e = err as { statusCode?: number; message?: string };
       reply.code(e.statusCode || 400).send({ error: e.message || "Failed to join course." });
     }
+  });
+
+  // ── Grade export ─────────────────────────────────────────────────────────
+  app.get("/v1/tracking/courses/:courseId/grades.csv", async (request, reply) => {
+    const auth = await requireUser(request, reply, store);
+    if (!auth) return;
+    const params = request.params as { courseId: string };
+    if (!canManageCourse(auth, params.courseId)) {
+      reply.code(403).send({ error: "Forbidden." });
+      return;
+    }
+    const base = requestBaseUrl(request);
+
+    const [members, projects] = await Promise.all([
+      store.listCourseMembersForInstructor(base, params.courseId),
+      store.listTrackingProjects(base, params.courseId)
+    ]);
+    const students = members.filter((m) => m.role === "student");
+
+    // Flatten: project → milestones
+    const projectMilestones = await Promise.all(
+      projects.map(async (p) => ({ project: p, milestones: await store.listTrackingMilestones(base, p.id) }))
+    );
+    const allMilestones = projectMilestones.flatMap((pm) =>
+      pm.milestones.map((m) => ({ ...m, projectName: pm.project.title }))
+    );
+
+    if (allMilestones.length === 0) {
+      reply.header("content-type", "text/csv; charset=utf-8");
+      return reply.send("github_login,no milestones defined\n");
+    }
+
+    // Header row
+    const milestoneHeaders = allMilestones.map((m) => `"${m.projectName} — ${m.title} (score)"`);
+    const rows: string[] = [`github_login,username,${milestoneHeaders.join(",")}`];
+
+    // All submissions per milestone, keyed by userId
+    const submissionsByMilestone = await Promise.all(
+      allMilestones.map(async (m) => {
+        const subs = await store.listTrackingMilestoneSubmissions(base, m.id);
+        // latest per user
+        const byUser: Record<string, typeof subs[0]> = {};
+        for (const s of subs.sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
+          byUser[s.userId] ??= s;
+        }
+        return byUser;
+      })
+    );
+
+    // Review scores per submission (batch — one query per needed submission)
+    const reviewCache: Record<string, number | null> = {};
+    const getScore = async (submissionId: string): Promise<number | null> => {
+      if (submissionId in reviewCache) return reviewCache[submissionId];
+      const review = await store.getTrackingReview(base, submissionId);
+      reviewCache[submissionId] = review?.score ?? null;
+      return reviewCache[submissionId];
+    };
+
+    for (const student of students) {
+      const scores = await Promise.all(
+        submissionsByMilestone.map(async (byUser) => {
+          const sub = byUser[student.userId];
+          if (!sub) return "";
+          const score = await getScore(sub.id);
+          return score !== null ? String(score) : sub.status;
+        })
+      );
+      rows.push(`${student.githubLogin},${student.username},${scores.join(",")}`);
+    }
+
+    reply.header("content-type", "text/csv; charset=utf-8");
+    reply.header("content-disposition", `attachment; filename="grades-${params.courseId}.csv"`);
+    return reply.send(rows.join("\n") + "\n");
   });
 
   app.get("/v1/tracking/submissions/:submissionId/commits", async (request, reply) => {

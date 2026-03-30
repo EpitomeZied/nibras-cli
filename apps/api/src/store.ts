@@ -375,6 +375,7 @@ export interface AppStore {
     payload: { status: ReviewStatus; score: number | null; feedback: string; rubric: TrackingRubricItemRecord[] }
   ): Promise<ReviewRecord>;
   getTrackingReview(apiBaseUrl: string, submissionId: string): Promise<ReviewRecord | null>;
+  getSubmissionStudentEmail(apiBaseUrl: string, submissionId: string): Promise<{ email: string; username: string } | null>;
   listTrackingReviewQueue(
     apiBaseUrl: string,
     filters?: { courseId?: string; projectId?: string; status?: SubmissionWorkflowStatus }
@@ -1550,6 +1551,14 @@ export class FileStore implements AppStore {
     return data.reviews
       .filter((entry) => entry.submissionId === submissionId)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null;
+  }
+
+  async getSubmissionStudentEmail(apiBaseUrl: string, submissionId: string): Promise<{ email: string; username: string } | null> {
+    const data = this.read(apiBaseUrl);
+    const submission = data.submissions.find((entry) => entry.id === submissionId);
+    if (!submission) return null;
+    const user = data.users.find((entry) => entry.id === submission.userId);
+    return user ? { email: user.email, username: user.username } : null;
   }
 
   async listTrackingReviewQueue(

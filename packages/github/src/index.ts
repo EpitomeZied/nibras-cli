@@ -340,6 +340,33 @@ export function verifySignedState(secret: string, signedState: string): Record<s
   }
 }
 
+export type CommitStatusState = "pending" | "success" | "failure" | "error";
+
+export async function postCommitStatus(
+  config: GitHubAppConfig,
+  installationToken: string,
+  owner: string,
+  repo: string,
+  sha: string,
+  state: CommitStatusState,
+  options: { description?: string; targetUrl?: string; context?: string } = {}
+): Promise<void> {
+  await githubRequest<unknown>(
+    `https://api.github.com/repos/${owner}/${repo}/statuses/${sha}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        state,
+        description: options.description,
+        target_url: options.targetUrl,
+        context: options.context ?? "praxis/verification"
+      })
+    },
+    installationToken,
+    config.apiVersion
+  );
+}
+
 export function verifyWebhookSignature(secret: string, body: Buffer, signatureHeader: string | undefined): boolean {
   if (!signatureHeader || !signatureHeader.startsWith("sha256=")) {
     return false;

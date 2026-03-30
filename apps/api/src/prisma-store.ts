@@ -819,6 +819,14 @@ export class PrismaStore implements AppStore {
     repositoryUrl?: string;
     rawPayload?: Record<string, unknown>;
   }): Promise<void> {
+    // Deduplicate: GitHub retries deliveries on failure, skip if already processed
+    if (payload.deliveryId) {
+      const existing = await this.prisma.githubDelivery.findUnique({
+        where: { deliveryId: payload.deliveryId }
+      });
+      if (existing) return;
+    }
+
     const repoPath = `/${payload.owner}/${payload.repoName}`;
     const branch = branchNameFromRef(payload.ref);
     const submission = await this.prisma.submissionAttempt.findFirst({
@@ -2064,6 +2072,14 @@ export class PrismaStore implements AppStore {
       orderBy: { createdAt: "desc" }
     });
     return review ? toReviewRecord(review) : null;
+  }
+
+  async getSubmissionStudentEmail(_apiBaseUrl: string, submissionId: string): Promise<{ email: string; username: string } | null> {
+    const attempt = await this.prisma.submissionAttempt.findUnique({
+      where: { id: submissionId },
+      select: { user: { select: { email: true, username: true } } }
+    });
+    return attempt ? attempt.user : null;
   }
 
   async listTrackingReviewQueue(

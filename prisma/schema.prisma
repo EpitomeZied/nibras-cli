@@ -338,7 +338,7 @@ model GithubDelivery {
   receivedAt          DateTime          @default(now())
   submissionAttempt   SubmissionAttempt @relation(fields: [submissionAttemptId], references: [id], onDelete: Cascade)
 
-  @@index([deliveryId])
+  @@unique([deliveryId])
 }
 
 model VerificationRun {

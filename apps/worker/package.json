@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@praxis/contracts": "*",
+    "@praxis/github": "*",
     "@praxis/grading": "*",
     "@prisma/client": "^6.5.0",
     "@sentry/node": "^10.46.0"
