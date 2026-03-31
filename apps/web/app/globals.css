@@ -534,6 +534,46 @@ main {
   border: 0;
 }
 
+/* ── Hamburger button (hidden on desktop) ──────────────────────────────── */
+.hamburgerBtn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.hamburgerBar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text-muted);
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+
+.hamburgerBtn:hover .hamburgerBar {
+  background: var(--text);
+}
+
+.sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.55);
+}
+
 @media (max-width: 1100px) {
   .sidebar {
     border-right: 0;
@@ -554,6 +594,33 @@ main {
 
   .headerSearch {
     width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hamburgerBtn {
+    display: flex;
+  }
+
+  .sidebarOverlay {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 256px;
+    height: 100vh;
+    z-index: 100;
+    transition: left 0.25s ease;
+    border-right: 1px solid var(--border);
+    border-bottom: 0;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebarMobileOpen {
+    left: 0;
   }
 }
 

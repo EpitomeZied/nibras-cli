@@ -1,9 +1,14 @@
 {
   "name": "@nibras/cli",
   "version": "0.1.0",
+  "description": "Official CLI for Nibras — submit projects, track milestones, and manage courses from your terminal.",
   "private": false,
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nibras-platform/nibras-cli"
   },
   "type": "commonjs",
   "main": "bundle/index.js",

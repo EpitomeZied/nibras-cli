@@ -24,6 +24,7 @@ export default function CourseSubmissionsPage({ params }: { params: Promise<{ co
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [retrying, setRetrying] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -48,6 +49,29 @@ export default function CourseSubmissionsPage({ params }: { params: Promise<{ co
     if (status === "passed") return styles.statusPublished;
     if (status === "failed") return styles.statusArchived;
     return styles.statusDraft;
+  }
+
+  async function handleRetry(submissionId: string) {
+    setRetrying(submissionId);
+    try {
+      const res = await apiFetch(`/v1/admin/submissions/${submissionId}/retry`, {
+        auth: true,
+        method: "POST"
+      });
+      if (!res.ok) {
+        const body = await res.json() as { error?: string };
+        setError(body.error || "Failed to re-queue submission.");
+        return;
+      }
+      // Optimistically update the status in the list
+      setSubmissions((prev) =>
+        prev.map((sub) => sub.id === submissionId ? { ...sub, status: "queued" } : sub)
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to re-queue submission.");
+    } finally {
+      setRetrying(null);
+    }
   }
 
   return (
@@ -92,6 +116,7 @@ export default function CourseSubmissionsPage({ params }: { params: Promise<{ co
                   <th>Status</th>
                   <th>Type</th>
                   <th>Submitted</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,6 +145,17 @@ export default function CourseSubmissionsPage({ params }: { params: Promise<{ co
                         hour: "2-digit",
                         minute: "2-digit"
                       })}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        disabled={retrying === sub.id}
+                        onClick={() => void handleRetry(sub.id)}
+                        style={{ padding: "4px 10px", fontSize: "12px" }}
+                      >
+                        {retrying === sub.id ? "Re-queuing…" : "Re-run"}
+                      </button>
                     </td>
                   </tr>
                 ))}

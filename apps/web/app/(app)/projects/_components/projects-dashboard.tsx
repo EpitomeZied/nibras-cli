@@ -42,7 +42,10 @@ export default function ProjectsDashboard({ initialCourseId = null }: { initialC
           : payload.activeProjectId || payload.projects[0]?.id || ""
       ));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const raw = err instanceof Error ? err.message : String(err);
+      // Avoid exposing raw JSON blobs — show a friendly message instead
+      const looksLikeJson = raw.trimStart().startsWith("{") || raw.trimStart().startsWith("[");
+      setError(looksLikeJson ? "Failed to load project data. Please try again." : raw);
     } finally {
       setLoading(false);
     }
@@ -95,7 +98,9 @@ export default function ProjectsDashboard({ initialCourseId = null }: { initialC
       setNotes("");
       await loadDashboard(dashboard?.course?.id || null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const raw = err instanceof Error ? err.message : String(err);
+      const looksLikeJson = raw.trimStart().startsWith("{") || raw.trimStart().startsWith("[");
+      setError(looksLikeJson ? "Submission failed. Please try again." : raw);
     } finally {
       setSubmitting(false);
     }

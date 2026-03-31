@@ -97,6 +97,34 @@ export function registerAdminRoutes(app: FastifyInstance, store: AppStore): void
   });
 
   /**
+   * POST /v1/admin/submissions/:submissionId/retry
+   * Re-queue a submission for verification. Admin only.
+   */
+  app.post("/v1/admin/submissions/:submissionId/retry", async (request, reply) => {
+    const auth = await requireUser(request, reply, store);
+    if (!requireAdmin(auth, reply)) return;
+
+    const params = request.params as { submissionId: string };
+    const submission = await store.getSubmissionForAdmin(requestBaseUrl(request), params.submissionId);
+    if (!submission) {
+      return reply.code(404).send({ error: "Unknown submission." });
+    }
+
+    const updated = await store.overrideSubmissionStatus(
+      requestBaseUrl(request),
+      params.submissionId,
+      "queued",
+      "Manually re-queued by admin.",
+      auth!.user.id
+    );
+    if (!updated) {
+      return reply.code(404).send({ error: "Unknown submission." });
+    }
+
+    return { ok: true, submissionId: params.submissionId, status: "queued" };
+  });
+
+  /**
    * GET /v1/admin/projects
    * List all projects across all courses. Admin only.
    */

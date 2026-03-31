@@ -90,6 +90,16 @@ export function registerHostedCliRoutes(
     return { ok: true };
   });
 
+  // DELETE /v1/web/session — alternative logout verb used by the web dashboard
+  app.delete("/v1/web/session", async (request, reply) => {
+    const sessionToken = getWebSessionToken(request);
+    if (sessionToken) {
+      await store.deleteWebSession(requestBaseUrl(request), sessionToken);
+    }
+    void reply.header("Set-Cookie", clearWebSessionCookie(request));
+    return { ok: true };
+  });
+
   app.get("/v1/projects/:projectKey/manifest", async (request, reply) => {
     const params = request.params as { projectKey: string };
     const project = await store.getProject(requestBaseUrl(request), params.projectKey);

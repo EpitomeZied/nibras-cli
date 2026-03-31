@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import NibrasLogo from "./_components/nibras-logo";
 import { discoverApiBaseUrl } from "./lib/session";
 import styles from "./signin.module.css";
@@ -44,22 +43,44 @@ export default function HomePage() {
 
       {/* Top nav */}
       <nav className={styles.nav}>
-        <div className={styles.navLogo} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Image src="/branding/nibras-icon.svg" alt="Nibras" width={28} height={28} priority />
-          <span style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Nibras</span>
-        </div>
+        <NibrasLogo variant="inverse" width={110} />
+        <span className={styles.navBadge}>v1.0</span>
       </nav>
 
       {/* Hero */}
       <div className={styles.hero}>
+        {/* Big logo mark in hero */}
+        <div className={styles.heroMark}>
+          <svg width="72" height="72" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect x="1" y="1" width="34" height="34" rx="9" fill="rgba(99,102,241,0.15)" stroke="rgba(99,102,241,0.6)" strokeWidth="1.2"/>
+            <path d="M10 26V10l16 16V10" stroke="url(#hg)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)"/>
+          </svg>
+        </div>
+
+        <div className={styles.heroBadge}>
+          <span className={styles.badgeDot} />
+          Platform v1.0 · Now Live
+        </div>
+
         <h1 className={styles.headline}>
-          <span className={styles.headlineBright}>Ship. Learn. Dominate.</span>
+          <span className={styles.headlineBright}>The grading platform</span>
           <br />
-          <span className={styles.headlineMuted}>No excuses. Just results.</span>
+          <span className={styles.headlineGrad}>built for real courses.</span>
         </h1>
 
         <p className={styles.sub}>
-          The platform that helps you teach, track, and grow.
+          GitHub-backed submissions, AI-assisted grading, and a student portal
+          that keeps everyone on track.
         </p>
       </div>
 
@@ -67,7 +88,7 @@ export default function HomePage() {
       <div className={styles.cardWrap}>
         <div className={styles.formCard}>
           <div className={styles.formIntro}>
-            <h2>Welcome back</h2>
+            <NibrasLogo variant="inverse" width={100} />
             <p>Sign in with GitHub to access your dashboard, projects, and course activity.</p>
           </div>
 
@@ -88,7 +109,6 @@ export default function HomePage() {
           </div>
 
           <p className={styles.formHint}>
-            By continuing you agree to connect your GitHub account to Nibras.
             Your repositories are only accessed with your explicit permission.
           </p>
         </div>
@@ -98,23 +118,23 @@ export default function HomePage() {
       <div className={styles.featureGrid}>
         <div className={styles.featureCard}>
           <span className={styles.featureIcon}>◫</span>
-          <strong>Dashboard</strong>
-          <p>Track account, projects, and milestones at a glance.</p>
+          <strong>Live Dashboard</strong>
+          <p>Track projects and milestones at a glance.</p>
         </div>
         <div className={styles.featureCard}>
           <span className={styles.featureIcon}>▣</span>
           <strong>GitHub-backed</strong>
-          <p>Provision repos, link installs, and track submissions.</p>
+          <p>Commit-linked submissions with status checks.</p>
         </div>
         <div className={styles.featureCard}>
           <span className={styles.featureIcon}>⊞</span>
           <strong>Instructor tools</strong>
-          <p>Manage courses, milestones, and grade with rubrics.</p>
+          <p>Courses, milestones, rubrics and grade export.</p>
         </div>
         <div className={styles.featureCard}>
           <span className={styles.featureIcon}>⬡</span>
-          <strong>Student portal</strong>
-          <p>Join via invite and track progress every step.</p>
+          <strong>AI grading</strong>
+          <p>Semantic scoring with human override.</p>
         </div>
       </div>
     </main>

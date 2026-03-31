@@ -87,6 +87,17 @@
   align-items: center;
 }
 
+.navBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(165, 180, 252, 0.85);
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0.04em;
+}
+
 .navLinks {
   display: flex;
   align-items: center;
@@ -123,12 +134,12 @@
   width: 100%;
 }
 
-.heroLogo {
-  margin-bottom: 8px;
-  filter: drop-shadow(0 0 24px rgba(129, 140, 248, 0.5));
+.heroMark {
+  filter: drop-shadow(0 0 28px rgba(99, 102, 241, 0.55));
+  margin-bottom: 4px;
 }
 
-.badge {
+.heroBadge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -177,6 +188,14 @@
 .headlineMuted {
   display: block;
   color: rgba(96, 130, 200, 0.45);
+}
+
+.headlineGrad {
+  display: block;
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .sub {

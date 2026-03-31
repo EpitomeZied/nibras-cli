@@ -213,7 +213,7 @@ export function registerGitHubRoutes(
       githubConfig.webBaseUrl
     );
     void reply.header("Set-Cookie", createWebSessionCookie(request, webSession.sessionToken, {
-      maxAgeSeconds: 30 * 24 * 60 * 60
+      maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days = 604800 seconds
     }));
     reply.redirect(redirectUrl);
   });

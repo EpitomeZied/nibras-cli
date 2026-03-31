@@ -479,7 +479,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     return presentInstructorDashboard(await store.getCourseTrackingDashboard(requestBaseUrl(request), auth.user.id, params.courseId));
   });
 
-  app.post("/v1/tracking/courses/:courseId/invites", async (request, reply) => {
+  app.post("/v1/tracking/courses/:courseId/invites", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (request, reply) => {
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { courseId: string };
@@ -519,7 +519,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     };
   });
 
-  app.post("/v1/tracking/invites/:code/join", async (request, reply) => {
+  app.post("/v1/tracking/invites/:code/join", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (request, reply) => {
     const auth = await requireUser(request, reply, store);
     if (!auth) return;
     const params = request.params as { code: string };

@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { apiFetch } from "../../lib/session";
 import { appNavItems } from "./nav-config";
 
 type ShellSessionUser = {
@@ -60,10 +62,44 @@ export default function Sidebar({
   loading: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const displayName = user?.username || user?.githubLogin || "Nibras User";
 
+  async function handleLogout() {
+    try {
+      await apiFetch("/v1/web/session", { auth: true, method: "DELETE" });
+    } catch {
+      // ignore — cookie will expire naturally
+    }
+    router.push("/");
+  }
+
   return (
-    <aside className="sidebar">
+    <>
+      {/* Hamburger toggle — visible only on mobile */}
+      <button
+        type="button"
+        className="hamburgerBtn"
+        aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen((prev) => !prev)}
+      >
+        <span className="hamburgerBar" />
+        <span className="hamburgerBar" />
+        <span className="hamburgerBar" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="sidebarOverlay"
+          aria-hidden="true"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+    <aside className={`sidebar${mobileOpen ? " sidebarMobileOpen" : ""}`}>
       {/* Brand */}
       <div className="brandBlock">
         <Image
@@ -128,8 +164,11 @@ export default function Sidebar({
             <span>{user?.email || "GitHub-linked account"}</span>
           </div>
         </div>
-        <Link className="logoutLink" href="/">Sign out</Link>
+        <button type="button" className="logoutLink" onClick={() => void handleLogout()}>
+          Sign out
+        </button>
       </div>
     </aside>
+    </>
   );
 }
