@@ -1,0 +1,46 @@
+.logoWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.image {
+  width: auto;
+  height: auto;
+  display: block;
+}
+
+.themeLight,
+.themeDark {
+  display: none;
+}
+
+.variantSurface,
+.variantInverse {
+  display: block;
+}
+
+.variantSurface {
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.04));
+}
+
+.variantInverse {
+  filter: drop-shadow(0 6px 18px rgba(2, 6, 23, 0.18));
+}
+
+:global([data-theme="light"]) .themeLight {
+  display: block;
+}
+
+:global([data-theme="light"]) .themeDark {
+  display: none;
+}
+
+:global([data-theme="dark"]) .themeLight {
+  display: none;
+}
+
+:global([data-theme="dark"]) .themeDark {
+  display: block;
+}

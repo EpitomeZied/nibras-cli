@@ -65,6 +65,29 @@ export const TrackingProjectSummarySchema = z.object({
   }))
 });
 
+export const AiCriterionScoreSchema = z.object({
+  id: z.string().min(1),
+  points: z.number(),
+  earned: z.number(),
+  justification: z.string()
+});
+
+export const MilestoneReviewSummarySchema = z.object({
+  status: TrackingReviewStatusSchema,
+  score: z.number().nullable(),
+  feedback: z.string().default(""),
+  criterionScores: z.array(AiCriterionScoreSchema).nullable(),
+  evidenceQuotes: z.array(z.string()).nullable()
+});
+
+export const MilestoneSubmissionSummarySchema = z.object({
+  id: z.string().min(1),
+  status: TrackingSubmissionStatusSchema,
+  commitSha: z.string(),
+  branch: z.string(),
+  createdAt: z.string().datetime()
+});
+
 export const TrackingMilestoneSchema = z.object({
   id: z.string().min(1),
   projectId: z.string().min(1),
@@ -75,7 +98,9 @@ export const TrackingMilestoneSchema = z.object({
   dueDateLabel: z.string().min(1),
   status: z.string().min(1),
   statusLabel: z.string().min(1),
-  isFinal: z.boolean()
+  isFinal: z.boolean(),
+  latestReview: MilestoneReviewSummarySchema.nullable().default(null),
+  submissionHistory: z.array(MilestoneSubmissionSummarySchema).default([])
 });
 
 export const TrackingProjectDetailSchema = TrackingProjectSummarySchema.extend({
@@ -100,13 +125,6 @@ export const TrackingSubmissionSchema = z.object({
   updatedAt: z.string().datetime(),
   submittedAt: z.string().datetime().nullable(),
   localTestExitCode: z.number().int().nullable()
-});
-
-export const AiCriterionScoreSchema = z.object({
-  id: z.string().min(1),
-  points: z.number(),
-  earned: z.number(),
-  justification: z.string()
 });
 
 export const TrackingReviewSchema = z.object({
@@ -257,6 +275,8 @@ export type TrackingMembership = z.infer<typeof TrackingMembershipSchema>;
 export type TrackingProjectSummary = z.infer<typeof TrackingProjectSummarySchema>;
 export type TrackingProjectDetail = z.infer<typeof TrackingProjectDetailSchema>;
 export type TrackingMilestone = z.infer<typeof TrackingMilestoneSchema>;
+export type MilestoneReviewSummary = z.infer<typeof MilestoneReviewSummarySchema>;
+export type MilestoneSubmissionSummary = z.infer<typeof MilestoneSubmissionSummarySchema>;
 export type TrackingSubmission = z.infer<typeof TrackingSubmissionSchema>;
 export type AiCriterionScore = z.infer<typeof AiCriterionScoreSchema>;
 export type TrackingReview = z.infer<typeof TrackingReviewSchema>;

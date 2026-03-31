@@ -169,6 +169,106 @@
   font-size: 14px;
 }
 
+/* ── Feedback panel ──────────────────────────────────────── */
+.feedbackPanel {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.feedbackScore {
+  color: var(--text-muted);
+}
+
+.feedbackScore strong {
+  color: var(--text);
+}
+
+.feedbackQuote {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--primary);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.criterionList {
+  display: grid;
+  gap: 8px;
+}
+
+.criterionRow {
+  display: grid;
+  gap: 4px;
+}
+
+.criterionHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.criterionJustification {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ── Changes requested banner ────────────────────────────── */
+.changesRequestedBanner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--border));
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Submission history ──────────────────────────────────── */
+.historyToggle {
+  display: grid;
+  gap: 8px;
+}
+
+.historyToggleBtn {
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.historyList {
+  display: grid;
+  gap: 6px;
+}
+
+.historyEntry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.historyCommit {
+  font-family: monospace;
+  color: var(--primary);
+  font-size: 12px;
+}
+
 .finalSubmission,
 .progressPanel,
 .breakdown,

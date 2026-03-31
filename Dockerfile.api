@@ -1,0 +1,49 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+RUN apk add --no-cache openssl
+
+# ── Install dependencies ──────────────────────────────────────────────────────
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/core/package.json ./packages/core/
+COPY packages/github/package.json ./packages/github/
+COPY prisma ./prisma
+RUN npm ci --workspace=@praxis/api --workspace=@praxis/contracts --workspace=@praxis/core --workspace=@praxis/github --include-workspace-root
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+FROM deps AS build
+COPY packages/contracts ./packages/contracts
+COPY packages/core ./packages/core
+COPY packages/github ./packages/github
+COPY apps/api ./apps/api
+COPY tsconfig.base.json ./
+RUN npm run db:generate
+RUN npm run build -w @praxis/contracts
+RUN npm run build -w @praxis/core
+RUN npm run build -w @praxis/github
+RUN npm run build -w @praxis/api
+
+# ── Production image ──────────────────────────────────────────────────────────
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
+COPY --from=build /app/packages/core/dist ./packages/core/dist
+COPY --from=build /app/packages/core/package.json ./packages/core/
+COPY --from=build /app/packages/github/dist ./packages/github/dist
+COPY --from=build /app/packages/github/package.json ./packages/github/
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/
+COPY --from=build /app/prisma ./prisma
+COPY package.json ./
+
+EXPOSE 4848
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s \
+  CMD wget -qO- http://127.0.0.1:4848/healthz || exit 1
+
+CMD ["sh", "-c", "npx prisma migrate deploy && node apps/api/dist/server.js"]

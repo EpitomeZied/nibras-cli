@@ -38,6 +38,7 @@ let shuttingDown = false;
 type ClaimedJob = {
   id: string;
   submissionAttemptId: string;
+  traceId: string;
   attempt: number;
   maxAttempts: number;
 };
@@ -81,7 +82,7 @@ async function claimJob(
           "finishedAt" = NULL,
           "updatedAt" = NOW()
         WHERE id IN (SELECT id FROM candidate)
-        RETURNING id, "submissionAttemptId", attempt, "maxAttempts"
+        RETURNING id, "submissionAttemptId", "traceId", attempt, "maxAttempts"
       )
       SELECT * FROM claimed
     `);
@@ -560,7 +561,7 @@ async function tick(prisma: PrismaClient): Promise<void> {
   if (!job) {
     return;
   }
-  log("info", "Claimed job", { jobId: job.id, submissionAttemptId: job.submissionAttemptId });
+  log("info", "Claimed job", { jobId: job.id, traceId: job.traceId, submissionAttemptId: job.submissionAttemptId });
 
   const transaction = process.env.SENTRY_DSN
     ? Sentry.startInactiveSpan({ name: "verification-job", op: "worker.job" })
@@ -574,19 +575,19 @@ async function tick(prisma: PrismaClient): Promise<void> {
         aiResult = await runAiGrading(job.submissionAttemptId, prisma);
       } catch (err) {
         log("warn", "AI grading error (non-fatal)", {
-          jobId: job.id,
+          jobId: job.id, traceId: job.traceId,
           error: err instanceof Error ? err.message : String(err)
         });
       }
     }
     await finalizeJob(job.id, job.submissionAttemptId, job.attempt, exitCode, verificationLog, aiResult, prisma);
-    log("info", "Job completed", { jobId: job.id, exitCode, aiRan: aiResult !== null });
+    log("info", "Job completed", { jobId: job.id, traceId: job.traceId, exitCode, aiRan: aiResult !== null });
     transaction?.setStatus({ code: 1, message: "ok" });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log("error", "Job failed", { jobId: job.id, error: message });
+    log("error", "Job failed", { jobId: job.id, traceId: job.traceId, error: message });
     if (process.env.SENTRY_DSN) {
-      Sentry.captureException(err, { tags: { jobId: job.id } });
+      Sentry.captureException(err, { tags: { jobId: job.id, traceId: job.traceId } });
     }
     transaction?.setStatus({ code: 2, message: "internal_error" });
     await failJob(job.id, job.submissionAttemptId, job.attempt, job.maxAttempts, message, prisma);

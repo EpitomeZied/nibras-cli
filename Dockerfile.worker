@@ -1,0 +1,49 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+RUN apk add --no-cache git openssl
+
+# ── Install dependencies ──────────────────────────────────────────────────────
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY apps/worker/package.json ./apps/worker/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/grading/package.json ./packages/grading/
+COPY packages/github/package.json ./packages/github/
+COPY prisma ./prisma
+RUN npm ci --workspace=@praxis/worker --workspace=@praxis/contracts --workspace=@praxis/grading --workspace=@praxis/github --include-workspace-root
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+FROM deps AS build
+COPY packages/contracts ./packages/contracts
+COPY packages/grading ./packages/grading
+COPY packages/github ./packages/github
+COPY apps/worker ./apps/worker
+COPY tsconfig.base.json ./
+RUN npm run db:generate
+RUN npm run build -w @praxis/contracts
+RUN npm run build -w @praxis/grading
+RUN npm run build -w @praxis/github
+RUN npm run build -w @praxis/worker
+
+# ── Production image ──────────────────────────────────────────────────────────
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=build /app/packages/contracts/package.json ./packages/contracts/
+COPY --from=build /app/packages/grading/dist ./packages/grading/dist
+COPY --from=build /app/packages/grading/package.json ./packages/grading/
+COPY --from=build /app/packages/github/dist ./packages/github/dist
+COPY --from=build /app/packages/github/package.json ./packages/github/
+COPY --from=build /app/apps/worker/dist ./apps/worker/dist
+COPY --from=build /app/apps/worker/package.json ./apps/worker/
+COPY --from=build /app/prisma ./prisma
+COPY package.json ./
+
+EXPOSE 9090
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s \
+  CMD wget -qO- http://127.0.0.1:9090/healthz || exit 1
+
+CMD ["node", "apps/worker/dist/worker.js"]

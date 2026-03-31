@@ -359,6 +359,7 @@ model VerificationRun {
 model VerificationJob {
   id                  String            @id @default(cuid())
   submissionAttemptId String            @unique
+  traceId             String            @default(cuid())
   status              SubmissionStatus  @default(queued)
   attempt             Int               @default(0)
   maxAttempts         Int               @default(3)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { StudentProjectsDashboardResponse, TrackingMilestone, TrackingProjectSummary } from "@praxis/contracts";
+import type { MilestoneSubmissionSummary, StudentProjectsDashboardResponse, TrackingMilestone, TrackingProjectSummary } from "@praxis/contracts";
 import { apiFetch, discoverApiBaseUrl } from "../../../lib/session";
 import styles from "./projects.module.css";
 
@@ -24,6 +24,7 @@ export default function ProjectsDashboard({ initialCourseId = null }: { initialC
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [apiBaseUrl, setApiBaseUrl] = useState("");
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   async function loadDashboard(courseId?: string | null) {
     setLoading(true);
@@ -201,6 +202,44 @@ export default function ProjectsDashboard({ initialCourseId = null }: { initialC
                         </div>
                         <p className="bodyMuted">{milestone.description}</p>
                         <span className={styles.dueDate}>{milestone.dueDateLabel}</span>
+
+                        {/* ── Instructor feedback panel ── */}
+                        {milestone.latestReview ? (
+                          <div className={styles.feedbackPanel}>
+                            {milestone.latestReview.score !== null ? (
+                              <div className={styles.feedbackScore}>
+                                Score: <strong>{milestone.latestReview.score}</strong>
+                              </div>
+                            ) : null}
+                            {milestone.latestReview.feedback ? (
+                              <blockquote className={styles.feedbackQuote}>
+                                {milestone.latestReview.feedback}
+                              </blockquote>
+                            ) : null}
+                            {milestone.latestReview.criterionScores?.length ? (
+                              <div className={styles.criterionList}>
+                                {milestone.latestReview.criterionScores.map((c) => (
+                                  <div key={c.id} className={styles.criterionRow}>
+                                    <div className={styles.criterionHeader}>
+                                      <span>{c.id}</span>
+                                      <strong>{c.earned}/{c.points} pts</strong>
+                                    </div>
+                                    <p className={styles.criterionJustification}>{c.justification}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+
+                        {/* ── Re-submission guidance ── */}
+                        {milestone.status === "submitted" && milestone.latestReview?.status === "changes_requested" ? (
+                          <div className={styles.changesRequestedBanner}>
+                            Changes requested — review the feedback above and resubmit.
+                          </div>
+                        ) : null}
+
+                        {/* ── Submit / resubmit button ── */}
                         {milestone.status !== "approved" && milestone.status !== "graded" ? (
                           <button
                             type="button"
@@ -212,8 +251,35 @@ export default function ProjectsDashboard({ initialCourseId = null }: { initialC
                               setNotes("");
                             }}
                           >
-                            Submit
+                            {milestone.submissionHistory.length > 0 ? "Resubmit" : "Submit"}
                           </button>
+                        ) : null}
+
+                        {/* ── Submission history ── */}
+                        {milestone.submissionHistory.length > 0 ? (
+                          <div className={styles.historyToggle}>
+                            <button
+                              type="button"
+                              className={styles.historyToggleBtn}
+                              onClick={() => setExpandedHistoryId(expandedHistoryId === milestone.id ? null : milestone.id)}
+                            >
+                              {expandedHistoryId === milestone.id ? "Hide" : "Show"} history ({milestone.submissionHistory.length})
+                            </button>
+                            {expandedHistoryId === milestone.id ? (
+                              <div className={styles.historyList}>
+                                {milestone.submissionHistory.map((entry: MilestoneSubmissionSummary) => (
+                                  <div key={entry.id} className={styles.historyEntry}>
+                                    <span className={`${styles.milestoneBadge} ${statusTone(entry.status === "passed" || entry.status === "needs_review" ? "approved" : entry.status)}`}>
+                                      {entry.status.replace("_", " ")}
+                                    </span>
+                                    <code className={styles.historyCommit}>{entry.commitSha.slice(0, 7)}</code>
+                                    <span className={styles.dueDate}>{entry.branch}</span>
+                                    <span className={styles.dueDate}>{new Date(entry.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
                         ) : null}
                       </div>
                     </article>

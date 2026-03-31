@@ -43,6 +43,18 @@ export function presentMilestone(
   reviews: ReviewRecord[]
 ): TrackingMilestone {
   const status = milestoneStatus(milestone.id, submissions, reviews);
+
+  const milestoneSubmissions = submissions
+    .filter((entry) => entry.milestoneId === milestone.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const latestSub = milestoneSubmissions[0] ?? null;
+  const latestReviewRecord = latestSub
+    ? reviews
+        .filter((entry) => entry.submissionId === latestSub.id)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null
+    : null;
+
   return {
     id: milestone.id,
     projectId: milestone.projectId,
@@ -53,7 +65,23 @@ export function presentMilestone(
     dueDateLabel: formatDateLabel(milestone.dueAt),
     status,
     statusLabel: statusLabel(status),
-    isFinal: milestone.isFinal
+    isFinal: milestone.isFinal,
+    latestReview: latestReviewRecord
+      ? {
+          status: latestReviewRecord.status,
+          score: latestReviewRecord.score,
+          feedback: latestReviewRecord.feedback,
+          criterionScores: latestReviewRecord.aiCriterionScores ?? null,
+          evidenceQuotes: latestReviewRecord.aiEvidenceQuotes ?? null
+        }
+      : null,
+    submissionHistory: milestoneSubmissions.map((s) => ({
+      id: s.id,
+      status: s.status as "queued" | "running" | "passed" | "failed" | "needs_review",
+      commitSha: s.commitSha,
+      branch: s.branch,
+      createdAt: s.createdAt
+    }))
   };
 }
 
