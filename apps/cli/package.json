@@ -1,5 +1,5 @@
 {
-  "name": "@praxis/cli",
+  "name": "@nibras/cli",
   "version": "0.1.0",
   "private": false,
   "publishConfig": {
@@ -8,7 +8,7 @@
   "type": "commonjs",
   "main": "bundle/index.js",
   "bin": {
-    "praxis": "bundle/index.js"
+    "nibras": "bundle/index.js"
   },
   "files": [
     "bundle"
@@ -17,8 +17,8 @@
     "build": "tsc -p tsconfig.json && ncc build dist/index.js -o bundle --no-source-map-register"
   },
   "dependencies": {
-    "@praxis/contracts": "file:../../packages/contracts",
-    "@praxis/core": "file:../../packages/core",
+    "@nibras/contracts": "file:../../packages/contracts",
+    "@nibras/core": "file:../../packages/core",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {

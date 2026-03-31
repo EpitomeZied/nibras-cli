@@ -4,7 +4,7 @@ import rateLimit from "@fastify/rate-limit";
 import * as Sentry from "@sentry/node";
 import rawBodyPlugin from "fastify-raw-body";
 import { PrismaClient } from "@prisma/client";
-import { loadGitHubAppConfig } from "@praxis/github";
+import { loadGitHubAppConfig } from "@nibras/github";
 import { PrismaStore } from "./prisma-store";
 import { AppStore, FileStore, getStorePath } from "./store";
 import { registerGitHubRoutes } from "./features/github/routes";
@@ -24,12 +24,12 @@ function normalizeOrigin(value: string | undefined): string | null {
 }
 
 function getAllowedCorsOrigins(): string[] {
-  const configuredOrigins = process.env.PRAXIS_WEB_CORS_ORIGINS;
+  const configuredOrigins = process.env.NIBRAS_WEB_CORS_ORIGINS;
   const candidates = configuredOrigins
     ? configuredOrigins.split(",")
     : [
-        process.env.PRAXIS_WEB_BASE_URL,
-        process.env.NEXT_PUBLIC_PRAXIS_WEB_BASE_URL,
+        process.env.NIBRAS_WEB_BASE_URL,
+        process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL,
         "http://127.0.0.1:3000",
         "http://localhost:3000"
       ];
@@ -126,12 +126,12 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
 
   app.get("/metrics", async (_request, reply) => {
     const lines: string[] = [
-      "# HELP praxis_http_requests_total Total HTTP requests by method and status",
-      "# TYPE praxis_http_requests_total counter"
+      "# HELP nibras_http_requests_total Total HTTP requests by method and status",
+      "# TYPE nibras_http_requests_total counter"
     ];
     for (const [key, count] of Object.entries(requestCounts)) {
       const [method, status] = key.split("_");
-      lines.push(`praxis_http_requests_total{method="${method}",status="${status}"} ${count}`);
+      lines.push(`nibras_http_requests_total{method="${method}",status="${status}"} ${count}`);
     }
 
     if (process.env.DATABASE_URL) {
@@ -146,15 +146,15 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
         await prisma.$disconnect();
         lines.push(
           "",
-          "# HELP praxis_verification_queue_depth Number of queued verification jobs",
-          "# TYPE praxis_verification_queue_depth gauge",
-          `praxis_verification_queue_depth ${queueDepth}`,
+          "# HELP nibras_verification_queue_depth Number of queued verification jobs",
+          "# TYPE nibras_verification_queue_depth gauge",
+          `nibras_verification_queue_depth ${queueDepth}`,
           "",
-          "# HELP praxis_verification_total Completed verifications by status",
-          "# TYPE praxis_verification_total counter",
-          `praxis_verification_total{status="passed"} ${passedCount}`,
-          `praxis_verification_total{status="failed"} ${failedCount}`,
-          `praxis_verification_total{status="needs_review"} ${reviewCount}`
+          "# HELP nibras_verification_total Completed verifications by status",
+          "# TYPE nibras_verification_total counter",
+          `nibras_verification_total{status="passed"} ${passedCount}`,
+          `nibras_verification_total{status="failed"} ${failedCount}`,
+          `nibras_verification_total{status="needs_review"} ${reviewCount}`
         );
       } catch {
         lines.push("# ERROR: could not query DB for verification metrics");

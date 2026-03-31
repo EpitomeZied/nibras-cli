@@ -83,7 +83,7 @@ function readFileSnippet(filePath, maxChars = 160) {
 async function setupProject({ cwd, subject, project, projectConfig, subjectConfig }) {
   const setupUrl = projectConfig.setupUrl || subjectConfig.setupUrl;
   if (!setupUrl) {
-    throw new Error("setupUrl is required. Set it in .praxis.json for this project.");
+    throw new Error("setupUrl is required. Set it in .nibras.json for this project.");
   }
   const zipName = projectConfig.setupZipName || `${subject}-${project}.zip`;
   const destDir = projectConfig.setupDir || cwd;

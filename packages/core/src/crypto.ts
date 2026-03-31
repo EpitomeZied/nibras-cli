@@ -5,13 +5,13 @@ const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 
 function getKey(): Buffer {
-  const raw = process.env.PRAXIS_ENCRYPTION_KEY;
+  const raw = process.env.NIBRAS_ENCRYPTION_KEY;
   if (!raw) {
-    throw new Error("PRAXIS_ENCRYPTION_KEY is not set.");
+    throw new Error("NIBRAS_ENCRYPTION_KEY is not set.");
   }
   const key = Buffer.from(raw, "hex");
   if (key.length !== 32) {
-    throw new Error("PRAXIS_ENCRYPTION_KEY must be a 32-byte (64 hex character) value.");
+    throw new Error("NIBRAS_ENCRYPTION_KEY must be a 32-byte (64 hex character) value.");
   }
   return key;
 }

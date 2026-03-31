@@ -1,6 +1,6 @@
 # TEST.md — Manual Testing Guide
 
-End-to-end test scenarios covering the full Praxis platform from student and instructor perspectives.
+End-to-end test scenarios covering the full Nibras platform from student and instructor perspectives.
 
 ---
 
@@ -11,8 +11,8 @@ End-to-end test scenarios covering the full Praxis platform from student and ins
 3. GitHub App installed on at least one repository (Student A's test repo)
 4. `.env` populated (see `.env.example`) — especially:
    - `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-   - `PRAXIS_AI_API_KEY` (OpenAI key), `PRAXIS_AI_MODEL=gpt-4o-mini`
-   - `RESEND_API_KEY` + `PRAXIS_EMAIL_FROM` (optional — skip email assertions if absent)
+   - `NIBRAS_AI_API_KEY` (OpenAI key), `NIBRAS_AI_MODEL=gpt-4o-mini`
+   - `RESEND_API_KEY` + `NIBRAS_EMAIL_FROM` (optional — skip email assertions if absent)
 
 ---
 
@@ -59,8 +59,8 @@ End-to-end test scenarios covering the full Praxis platform from student and ins
 
 ### 2.3 Submit via CLI
 ```bash
-# in Student A's repo directory (must have Praxis GitHub App installed)
-npx praxis submit --milestone "Initial Submission"
+# in Student A's repo directory (must have Nibras GitHub App installed)
+npx nibras submit --milestone "Initial Submission"
 ```
 Or via web modal:
 1. Click **Submit** next to the milestone
@@ -83,9 +83,9 @@ Check worker logs — you should see:
 **Expected outcomes** (depending on test results):
 | Test result | Submission status | GitHub badge |
 |---|---|---|
-| All pass | `passed` | ✅ green `Praxis / tests passed` |
-| Some fail | `failed` | ❌ red `Praxis / tests failed` |
-| Needs AI review | `needs_review` | 🟡 pending `Praxis / pending review` |
+| All pass | `passed` | ✅ green `Nibras / tests passed` |
+| Some fail | `failed` | ❌ red `Nibras / tests failed` |
+| Needs AI review | `needs_review` | 🟡 pending `Nibras / pending review` |
 
 ### 2.5 Email notification (if RESEND_API_KEY set)
 Student A's email should receive a notification with the submission result.
@@ -153,13 +153,13 @@ Alice,alice123,passed
 
 1. Go to Student A's GitHub repo → commit used in Scenario 2
 2. Click the status dot next to the commit SHA
-3. **Expected**: context name `Praxis / tests` with description matching the result
+3. **Expected**: context name `Nibras / tests` with description matching the result
 
 ---
 
 ## Known Limitations / Not Yet Tested
 
 - Team projects (deliveryMode = `team`)
-- CLI `praxis check` / `praxis grade` commands (separate from submission flow)
+- CLI `nibras check` / `nibras grade` commands (separate from submission flow)
 - Rate limiting headers (429 responses after burst)
 - Token refresh edge case when GitHub App token expires mid-job

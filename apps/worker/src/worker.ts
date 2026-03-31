@@ -6,13 +6,13 @@ import { promisify } from "node:util";
 import { Prisma, PrismaClient, SubmissionStatus } from "@prisma/client";
 import { createServer } from "node:http";
 import * as Sentry from "@sentry/node";
-import { gradeSemanticAnswer, type AiConfig, type GradingQuestion, type AiGradeResult } from "@praxis/grading";
+import { gradeSemanticAnswer, type AiConfig, type GradingQuestion, type AiGradeResult } from "@nibras/grading";
 import {
   loadGitHubAppConfig,
   createInstallationAccessToken,
   postCommitStatus,
   type CommitStatusState
-} from "@praxis/github";
+} from "@nibras/github";
 import {
   sendSubmissionStatusEmail,
   sendReviewReadyEmail
@@ -164,17 +164,17 @@ type AiRunResult = {
 };
 
 function loadAiConfig(): AiConfig | null {
-  const apiKey = process.env.PRAXIS_AI_API_KEY;
+  const apiKey = process.env.NIBRAS_AI_API_KEY;
   if (!apiKey) return null;
-  const model = process.env.PRAXIS_AI_MODEL;
+  const model = process.env.NIBRAS_AI_MODEL;
   if (!model) return null;
   return {
     apiKey,
     model,
-    baseUrl: process.env.PRAXIS_AI_BASE_URL,
-    timeoutMs: process.env.PRAXIS_AI_TIMEOUT_MS ? Number(process.env.PRAXIS_AI_TIMEOUT_MS) : undefined,
-    maxRetries: process.env.PRAXIS_AI_MAX_RETRIES ? Number(process.env.PRAXIS_AI_MAX_RETRIES) : undefined,
-    minConfidence: process.env.PRAXIS_AI_MIN_CONFIDENCE ? Number(process.env.PRAXIS_AI_MIN_CONFIDENCE) : undefined
+    baseUrl: process.env.NIBRAS_AI_BASE_URL,
+    timeoutMs: process.env.NIBRAS_AI_TIMEOUT_MS ? Number(process.env.NIBRAS_AI_TIMEOUT_MS) : undefined,
+    maxRetries: process.env.NIBRAS_AI_MAX_RETRIES ? Number(process.env.NIBRAS_AI_MAX_RETRIES) : undefined,
+    minConfidence: process.env.NIBRAS_AI_MIN_CONFIDENCE ? Number(process.env.NIBRAS_AI_MIN_CONFIDENCE) : undefined
   };
 }
 
@@ -223,7 +223,7 @@ async function runAiGrading(
   const cloneUrl = attempt.userProjectRepo.cloneUrl;
   if (!cloneUrl) return null;
 
-  const tmpDir = await mkdtemp(join(tmpdir(), "praxis-ai-"));
+  const tmpDir = await mkdtemp(join(tmpdir(), "nibras-ai-"));
   try {
     await execFileAsync("git", ["clone", "--depth=1", "--branch", attempt.branch, cloneUrl, tmpDir], {
       timeout: 60_000
@@ -339,7 +339,7 @@ async function postJobCommitStatus(
     running: "Verification running"
   };
 
-  const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+  const webBaseUrl = process.env.NIBRAS_WEB_BASE_URL;
   const targetUrl = webBaseUrl ? `${webBaseUrl}/submissions/${submissionAttemptId}` : undefined;
 
   try {
@@ -351,7 +351,7 @@ async function postJobCommitStatus(
       attempt.userProjectRepo.name,
       attempt.commitSha,
       stateMap[finalStatus],
-      { description: descriptionMap[finalStatus], targetUrl, context: "praxis/verification" }
+      { description: descriptionMap[finalStatus], targetUrl, context: "nibras/verification" }
     );
   } catch (err) {
     // Non-fatal: log and continue — a failed status post must not break the submission record
@@ -437,7 +437,7 @@ async function sendSubmissionEmails(
 ): Promise<void> {
   if (finalStatus === SubmissionStatus.queued || finalStatus === SubmissionStatus.running) return;
 
-  const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+  const webBaseUrl = process.env.NIBRAS_WEB_BASE_URL;
   const submissionUrl = webBaseUrl ? `${webBaseUrl}/submissions/${submissionAttemptId}` : "";
 
   try {

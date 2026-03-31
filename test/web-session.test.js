@@ -7,21 +7,21 @@ test("web session discovery prefers a reachable same-origin API", async () => {
   const stored = [];
 
   const apiBaseUrl = await discoverApiBaseUrlWith({
-    pageOrigin: "https://praxis.example",
+    pageOrigin: "https://nibras.example",
     storedApiBaseUrl: "https://api.example",
     configuredApiBaseUrl: "https://fallback.example",
     probe: async (candidate) => {
       attempted.push(candidate);
-      return candidate === "https://praxis.example";
+      return candidate === "https://nibras.example";
     },
     persistApiBaseUrl: async (candidate) => {
       stored.push(candidate);
     }
   });
 
-  assert.equal(apiBaseUrl, "https://praxis.example");
-  assert.deepEqual(attempted, ["https://praxis.example"]);
-  assert.deepEqual(stored, ["https://praxis.example"]);
+  assert.equal(apiBaseUrl, "https://nibras.example");
+  assert.deepEqual(attempted, ["https://nibras.example"]);
+  assert.deepEqual(stored, ["https://nibras.example"]);
 });
 
 test("web session discovery falls back to the stored local API when same-origin is unreachable", async () => {
@@ -47,7 +47,7 @@ test("web session discovery ignores loopback storage on a public HTTPS origin", 
   const attempted = [];
 
   const apiBaseUrl = await discoverApiBaseUrlWith({
-    pageOrigin: "https://praxis.example",
+    pageOrigin: "https://nibras.example",
     storedApiBaseUrl: "http://127.0.0.1:4848",
     configuredApiBaseUrl: "https://api.example",
     probe: async (candidate) => {
@@ -57,20 +57,20 @@ test("web session discovery ignores loopback storage on a public HTTPS origin", 
   });
 
   assert.equal(apiBaseUrl, "https://api.example");
-  assert.deepEqual(attempted, ["https://praxis.example", "https://api.example"]);
+  assert.deepEqual(attempted, ["https://nibras.example", "https://api.example"]);
 });
 
 test("web session discovery surfaces actionable guidance when no API base is reachable", async () => {
   const { discoverApiBaseUrlWith } = await import("../apps/web/app/lib/session-core.js");
 
   await assert.rejects(() => discoverApiBaseUrlWith({
-    pageOrigin: "https://praxis.example",
+    pageOrigin: "https://nibras.example",
     storedApiBaseUrl: "https://api.example",
     configuredApiBaseUrl: "https://fallback.example",
     probe: async () => false
   }), (error) => {
-    assert.match(error.message, /Unable to reach the Praxis API/);
-    assert.match(error.message, /https:\/\/praxis\.example, https:\/\/api\.example, https:\/\/fallback\.example/);
+    assert.match(error.message, /Unable to reach the Nibras API/);
+    assert.match(error.message, /https:\/\/nibras\.example, https:\/\/api\.example, https:\/\/fallback\.example/);
     assert.match(error.message, /npm run api:dev/);
     assert.match(error.message, /npm run proxy:dev/);
     assert.match(error.message, /update `.env` and your tunnel URL/);

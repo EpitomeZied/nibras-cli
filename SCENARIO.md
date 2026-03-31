@@ -6,7 +6,7 @@ support student submissions.
 
 ## Roles
 
-- Course operator: maintains `.praxis.json`, release content, and the submission
+- Course operator: maintains `.nibras.json`, release content, and the submission
   remote
 - Instructor or grader: authors private grading rules and reviews edge cases
 - Student: reads the task, writes answers, optionally tests locally, and
@@ -16,7 +16,7 @@ support student submissions.
 
 Key assets already present in this repo:
 
-- `.praxis.json`: CS161 project catalog and grading defaults
+- `.nibras.json`: CS161 project catalog and grading defaults
 - `CS161.md`: course task and project reference
 - `Stanford Data/cs161/Exams/...`: exam folders
 - `Stanford Data/cs161/sections/...`: section folders
@@ -44,13 +44,13 @@ CS161 currently uses `check` projects only.
 
 Important grading rules:
 
-- `gradingRoot` only tells `praxis` where to look for private `grading.json`
+- `gradingRoot` only tells `nibras` where to look for private `grading.json`
   files
 - A missing `grading.json` is only fatal when strict grading is enabled or
   `--grading` is passed explicitly
 - `requireGrading` is resolved from project, then subject, then top-level config
 - A narrower `requireGrading: false` can disable a broader `true`
-- If strict grading is off and no grading file is found, `praxis` falls back to
+- If strict grading is off and no grading file is found, `nibras` falls back to
   manual scoring from `scores.json` or `--earned/--total`
 
 This makes mixed courses possible: one project can use strict private grading
@@ -71,7 +71,7 @@ Stanford Data/cs161/sections/1
 Stanford Data/cs161/sections/8
 ```
 
-### 2. Define `.praxis.json`
+### 2. Define `.nibras.json`
 
 Current repo pattern:
 
@@ -173,7 +173,7 @@ Then configure `submitRemote` at the top level, subject level, or project level.
 Validate reachability:
 
 ```bash
-praxis ping --remote /srv/submissions/cs161.git
+nibras ping --remote /srv/submissions/cs161.git
 ```
 
 ### 5. Validate before release
@@ -181,10 +181,10 @@ praxis ping --remote /srv/submissions/cs161.git
 Recommended pre-release checks:
 
 ```bash
-praxis cs161 task exam1
-PRAXIS_GRADING_ROOT=/private/grading \
-praxis cs161 test exam1 --answers-dir sample-answers/cs161/exam1
-praxis ping --remote /srv/submissions/cs161.git
+nibras cs161 task exam1
+NIBRAS_GRADING_ROOT=/private/grading \
+nibras cs161 test exam1 --answers-dir sample-answers/cs161/exam1
+nibras ping --remote /srv/submissions/cs161.git
 ```
 
 This confirms:
@@ -201,13 +201,13 @@ This confirms:
 ```bash
 npm install
 npm install -g .
-praxis --version
+nibras --version
 ```
 
 ### 2. Read the task
 
 ```bash
-praxis cs161 task exam1
+nibras cs161 task exam1
 ```
 
 ### 3. Write answers
@@ -225,8 +225,8 @@ my-answers/exam1/q3.txt
 If private grading is available:
 
 ```bash
-PRAXIS_GRADING_ROOT=/private/grading \
-praxis cs161 test exam1 --answers-dir my-answers/exam1
+NIBRAS_GRADING_ROOT=/private/grading \
+nibras cs161 test exam1 --answers-dir my-answers/exam1
 ```
 
 Notes:
@@ -239,7 +239,7 @@ Notes:
 ### 5. Submit
 
 ```bash
-praxis cs161 submit exam1
+nibras cs161 submit exam1
 ```
 
 The CLI creates a temporary commit and pushes `submit/<submissionRef>`.
@@ -249,8 +249,8 @@ The CLI creates a temporary commit and pushes `submit/<submissionRef>`.
 Use the bundled sample answers to validate `exam1` quickly:
 
 ```bash
-PRAXIS_GRADING_ROOT=/private/grading \
-praxis cs161 test exam1 --answers-dir sample-answers/cs161/exam1
+NIBRAS_GRADING_ROOT=/private/grading \
+nibras cs161 test exam1 --answers-dir sample-answers/cs161/exam1
 ```
 
 Expected output shape:
@@ -261,7 +261,7 @@ Expected output shape:
 Use manual fallback for projects that are intentionally not strict:
 
 ```bash
-praxis cs161 test section1
+nibras cs161 test section1
 ```
 
 That path reads `scores.json` or explicit manual-score flags when no grading

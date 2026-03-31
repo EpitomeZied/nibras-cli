@@ -1,6 +1,6 @@
 import { FastifyRequest } from "fastify";
 
-const COOKIE_NAME = "praxis_web_session";
+const COOKIE_NAME = "nibras_web_session";
 
 type CookieOptions = {
   maxAgeSeconds?: number;

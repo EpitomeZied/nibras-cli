@@ -1,9 +1,9 @@
 import Image from "next/image";
-import styles from "./praxis-logo.module.css";
+import styles from "./nibras-logo.module.css";
 
 type LogoVariant = "surface" | "inverse" | "theme";
 
-export default function PraxisLogo({
+export default function NibrasLogo({
   variant = "theme",
   width,
   className = "",
@@ -24,7 +24,7 @@ export default function PraxisLogo({
       <span className={`${styles.logoWrap} ${className}`}>
         <Image
           src="/branding/logo-light.png"
-          alt="Praxis"
+          alt="Nibras"
           width={143}
           height={43}
           priority={priority}
@@ -41,7 +41,7 @@ export default function PraxisLogo({
       <span className={`${styles.logoWrap} ${className}`}>
         <Image
           src="/branding/logo-dark.png"
-          alt="Praxis"
+          alt="Nibras"
           width={160}
           height={48}
           priority={priority}
@@ -57,7 +57,7 @@ export default function PraxisLogo({
     <span className={`${styles.logoWrap} ${className}`}>
       <Image
         src="/branding/logo-light.png"
-        alt="Praxis"
+        alt="Nibras"
         width={143}
         height={43}
         priority={priority}
@@ -67,7 +67,7 @@ export default function PraxisLogo({
       />
       <Image
         src="/branding/logo-dark.png"
-        alt="Praxis"
+        alt="Nibras"
         width={160}
         height={48}
         priority={priority}

@@ -256,10 +256,10 @@ async function callOpenAiCompatibleApi(params: {
   const { aiConfig, subject, project, question, answerText, timeoutMs } = params;
 
   if (!aiConfig.apiKey) {
-    throw new Error("PRAXIS_AI_API_KEY is required for semantic grading.");
+    throw new Error("NIBRAS_AI_API_KEY is required for semantic grading.");
   }
   if (!aiConfig.model) {
-    throw new Error("PRAXIS_AI_MODEL is required for semantic grading.");
+    throw new Error("NIBRAS_AI_MODEL is required for semantic grading.");
   }
 
   const baseUrl = (aiConfig.baseUrl || "https://api.openai.com/v1").replace(/\/$/, "");

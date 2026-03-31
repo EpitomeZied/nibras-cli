@@ -1,6 +1,6 @@
 # Project Tracking
 
-The `xx` project-tracking prototype now lives inside the main Praxis monorepo as a first-class API and web feature.
+The `xx` project-tracking prototype now lives inside the main Nibras monorepo as a first-class API and web feature.
 
 ## What moved
 

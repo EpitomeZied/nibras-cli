@@ -17,7 +17,7 @@ import {
   UpdateMilestoneRequestSchema,
   UpdateTrackingProjectRequestSchema,
   UpdateTrackingSubmissionRequestSchema
-} from "@praxis/contracts";
+} from "@nibras/contracts";
 import { requireUser } from "../../lib/auth";
 import { requestBaseUrl } from "../../lib/request-base-url";
 import { sendReviewSubmittedEmail } from "../../lib/email";
@@ -388,7 +388,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     const review = await store.createTrackingReview(requestBaseUrl(request), auth.user.id, params.submissionId, payload);
 
     // Non-blocking: notify student of review result
-    const webBaseUrl = process.env.PRAXIS_WEB_BASE_URL;
+    const webBaseUrl = process.env.NIBRAS_WEB_BASE_URL;
     store.getSubmissionStudentEmail(requestBaseUrl(request), params.submissionId)
       .then((info) => {
         if (!info) return;

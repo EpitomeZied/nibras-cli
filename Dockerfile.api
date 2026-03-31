@@ -10,7 +10,7 @@ COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/core/package.json ./packages/core/
 COPY packages/github/package.json ./packages/github/
 COPY prisma ./prisma
-RUN npm ci --workspace=@praxis/api --workspace=@praxis/contracts --workspace=@praxis/core --workspace=@praxis/github --include-workspace-root
+RUN npm ci --workspace=@nibras/api --workspace=@nibras/contracts --workspace=@nibras/core --workspace=@nibras/github --include-workspace-root
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 FROM deps AS build
@@ -20,10 +20,10 @@ COPY packages/github ./packages/github
 COPY apps/api ./apps/api
 COPY tsconfig.base.json ./
 RUN npm run db:generate
-RUN npm run build -w @praxis/contracts
-RUN npm run build -w @praxis/core
-RUN npm run build -w @praxis/github
-RUN npm run build -w @praxis/api
+RUN npm run build -w @nibras/contracts
+RUN npm run build -w @nibras/core
+RUN npm run build -w @nibras/github
+RUN npm run build -w @nibras/api
 
 # ── Production image ──────────────────────────────────────────────────────────
 FROM base AS runner

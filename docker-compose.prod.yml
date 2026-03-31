@@ -4,13 +4,13 @@ services:
     restart: unless-stopped
     env_file: .env.prod
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-praxis}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-praxis}
-      POSTGRES_DB: ${POSTGRES_DB:-praxis}
+      POSTGRES_USER: ${POSTGRES_USER:-nibras}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nibras}
+      POSTGRES_DB: ${POSTGRES_DB:-nibras}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-praxis}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nibras}"]
       interval: 10s
       timeout: 5s
       retries: 5

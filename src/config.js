@@ -50,22 +50,22 @@ function readJsonIfExists(filePath) {
 }
 
 function loadConfig(cwd) {
-  const configPath = path.join(cwd, ".praxis.json");
+  const configPath = path.join(cwd, ".nibras.json");
   const fileConfig = readJsonIfExists(configPath) || {};
   const envConfig = definedEntries([
-    ["slug", readEnvOverride("PRAXIS_SLUG")],
-    ["submitRemote", readEnvOverride("PRAXIS_SUBMIT_REMOTE")],
-    ["taskUrlBase", readEnvOverride("PRAXIS_TASK_URL_BASE")],
-    ["gradingRoot", readEnvOverride("PRAXIS_GRADING_ROOT")]
+    ["slug", readEnvOverride("NIBRAS_SLUG")],
+    ["submitRemote", readEnvOverride("NIBRAS_SUBMIT_REMOTE")],
+    ["taskUrlBase", readEnvOverride("NIBRAS_TASK_URL_BASE")],
+    ["gradingRoot", readEnvOverride("NIBRAS_GRADING_ROOT")]
   ]);
   const envAiConfig = definedEntries([
-    ["provider", readEnvOverride("PRAXIS_AI_PROVIDER")],
-    ["model", readEnvOverride("PRAXIS_AI_MODEL")],
-    ["apiKey", readEnvOverride("PRAXIS_AI_API_KEY")],
-    ["baseUrl", readEnvOverride("PRAXIS_AI_BASE_URL")],
-    ["timeoutMs", readNumberEnvOverride("PRAXIS_AI_TIMEOUT_MS")],
-    ["maxRetries", readNumberEnvOverride("PRAXIS_AI_MAX_RETRIES")],
-    ["minConfidence", readNumberEnvOverride("PRAXIS_AI_MIN_CONFIDENCE")]
+    ["provider", readEnvOverride("NIBRAS_AI_PROVIDER")],
+    ["model", readEnvOverride("NIBRAS_AI_MODEL")],
+    ["apiKey", readEnvOverride("NIBRAS_AI_API_KEY")],
+    ["baseUrl", readEnvOverride("NIBRAS_AI_BASE_URL")],
+    ["timeoutMs", readNumberEnvOverride("NIBRAS_AI_TIMEOUT_MS")],
+    ["maxRetries", readNumberEnvOverride("NIBRAS_AI_MAX_RETRIES")],
+    ["minConfidence", readNumberEnvOverride("NIBRAS_AI_MIN_CONFIDENCE")]
   ]);
   return {
     ...DEFAULT_CONFIG,
@@ -84,7 +84,7 @@ function loadConfig(cwd) {
 }
 
 function writeConfig(cwd, config) {
-  const configPath = path.join(cwd, ".praxis.json");
+  const configPath = path.join(cwd, ".nibras.json");
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 

@@ -19,7 +19,7 @@ function validateEnv(): void {
   }
   const required = [
     "DATABASE_URL",
-    "PRAXIS_ENCRYPTION_KEY",
+    "NIBRAS_ENCRYPTION_KEY",
     "GITHUB_APP_ID",
     "GITHUB_WEBHOOK_SECRET"
   ];
@@ -27,7 +27,7 @@ function validateEnv(): void {
   if (missing.length > 0) {
     // eslint-disable-next-line no-console
     console.error(
-      `[praxis-api] Missing required environment variables: ${missing.join(", ")}. ` +
+      `[nibras-api] Missing required environment variables: ${missing.join(", ")}. ` +
       "Set them before starting the server."
     );
     process.exit(1);
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
   const app = buildApp();
   await app.listen({ port, host });
   // eslint-disable-next-line no-console
-  console.log(JSON.stringify({ level: "info", msg: "Praxis API started", host, port }));
+  console.log(JSON.stringify({ level: "info", msg: "Nibras API started", host, port }));
 }
 
 main().catch((err) => {

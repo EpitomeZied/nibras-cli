@@ -1,5 +1,5 @@
 {
-  "name": "@praxis/worker",
+  "name": "@nibras/worker",
   "version": "0.1.0",
   "private": true,
   "main": "dist/worker.js",
@@ -9,9 +9,9 @@
     "dev": "node dist/worker.js"
   },
   "dependencies": {
-    "@praxis/contracts": "*",
-    "@praxis/github": "*",
-    "@praxis/grading": "*",
+    "@nibras/contracts": "*",
+    "@nibras/github": "*",
+    "@nibras/grading": "*",
     "@prisma/client": "^6.5.0",
     "@sentry/node": "^10.46.0"
   },

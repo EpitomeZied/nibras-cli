@@ -25,7 +25,7 @@ async function runGit(args, cwd, errorMessage) {
 
 async function submit({ cwd, submissionRef, submitRemote, files }) {
   if (!submitRemote) {
-    throw new Error("submitRemote is required. Set it in .praxis.json or PRAXIS_SUBMIT_REMOTE.");
+    throw new Error("submitRemote is required. Set it in .nibras.json or NIBRAS_SUBMIT_REMOTE.");
   }
   if (!submissionRef) {
     throw new Error("submissionRef is required. Configure a slug or use subject/project.");
@@ -39,8 +39,8 @@ async function submit({ cwd, submissionRef, submitRemote, files }) {
   fileList.forEach((file) => copyFileIntoTemp(cwd, file, tempRoot));
 
   await runGit(["init"], tempRoot, "Failed to initialize temporary submission repository.");
-  await runGit(["config", "user.name", "praxis"], tempRoot, "Failed to configure git user.name.");
-  await runGit(["config", "user.email", "praxis@local"], tempRoot, "Failed to configure git user.email.");
+  await runGit(["config", "user.name", "nibras"], tempRoot, "Failed to configure git user.name.");
+  await runGit(["config", "user.email", "nibras@local"], tempRoot, "Failed to configure git user.email.");
   await runGit(["add", "."], tempRoot, "Failed to stage submission files.");
   await runGit(["commit", "-m", "submit"], tempRoot, "Failed to create submission commit.");
 

@@ -25,7 +25,7 @@ function getCookieValue(request: FastifyRequest, name: string): string | null {
 }
 
 export function getWebSessionToken(request: FastifyRequest): string | null {
-  return getCookieValue(request, "praxis_web_session");
+  return getCookieValue(request, "nibras_web_session");
 }
 
 export type AuthenticatedRequest = {

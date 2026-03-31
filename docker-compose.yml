@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: praxis
-      POSTGRES_USER: praxis
-      POSTGRES_PASSWORD: praxis
+      POSTGRES_DB: nibras
+      POSTGRES_USER: nibras
+      POSTGRES_PASSWORD: nibras
     ports:
       - "5432:5432"
     volumes:

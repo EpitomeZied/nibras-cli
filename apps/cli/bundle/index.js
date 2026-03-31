@@ -166,21 +166,21 @@ function printHelp(context) {
     // eslint-disable-next-line no-console
     console.log(colorize(context, "accent", banner));
     // eslint-disable-next-line no-console
-    console.log("\nCLI to interact with Praxis\n");
+    console.log("\nCLI to interact with Nibras\n");
     // eslint-disable-next-line no-console
     console.log("USAGE");
     // eslint-disable-next-line no-console
-    console.log("  $ praxis [command]\n");
+    console.log("  $ nibras [command]\n");
     // eslint-disable-next-line no-console
     console.log("EXAMPLES");
     // eslint-disable-next-line no-console
-    console.log("  $ praxis login");
+    console.log("  $ nibras login");
     // eslint-disable-next-line no-console
-    console.log("  $ praxis test");
+    console.log("  $ nibras test");
     // eslint-disable-next-line no-console
-    console.log("  $ praxis test --previous");
+    console.log("  $ nibras test --previous");
     // eslint-disable-next-line no-console
-    console.log("  $ praxis submit\n");
+    console.log("  $ nibras submit\n");
     // eslint-disable-next-line no-console
     console.log("COMMANDS");
     // eslint-disable-next-line no-console
@@ -200,7 +200,7 @@ function printHelp(context) {
     // eslint-disable-next-line no-console
     console.log("  ping:             Verify API, auth, GitHub linkage, and repo state");
     // eslint-disable-next-line no-console
-    console.log("  update-buildpack: Update Node version in .praxis/project.json");
+    console.log("  update-buildpack: Update Node version in .nibras/project.json");
     // eslint-disable-next-line no-console
     console.log("  legacy:           Run the existing subject/project CLI\n");
     // eslint-disable-next-line no-console
@@ -345,7 +345,7 @@ async function commandPing() {
 }
 async function commandTask() {
     const { projectRoot, manifest } = (0, core_1.loadProjectManifest)(process.cwd());
-    const taskPath = node_path_1.default.join(projectRoot, ".praxis", "task.md");
+    const taskPath = node_path_1.default.join(projectRoot, ".nibras", "task.md");
     if (node_fs_1.default.existsSync(taskPath)) {
         // eslint-disable-next-line no-console
         console.log(node_fs_1.default.readFileSync(taskPath, "utf8"));
@@ -388,7 +388,7 @@ async function commandSetup(args) {
     const response = contracts_1.ProjectSetupResponseSchema.parse(await (0, core_1.apiRequest)(`/v1/projects/${encodeURIComponent(projectKey)}/setup`, {
         method: "POST"
     }));
-    node_fs_1.default.mkdirSync(node_path_1.default.join(targetDir, ".praxis"), { recursive: true });
+    node_fs_1.default.mkdirSync(node_path_1.default.join(targetDir, ".nibras"), { recursive: true });
     (0, core_1.writeProjectManifest)(targetDir, response.manifest);
     (0, core_1.writeTaskText)(targetDir, response.task);
     if (!node_fs_1.default.existsSync(node_path_1.default.join(targetDir, ".git"))) {
@@ -412,7 +412,7 @@ async function commandUpdateBuildpack(args) {
 async function commandSubmit() {
     const config = (0, core_1.readCliConfig)();
     if (!config.accessToken) {
-        throw new Error("You are not logged in. Run `praxis login` first.");
+        throw new Error("You are not logged in. Run `nibras login` first.");
     }
     const me = contracts_1.MeResponseSchema.parse(await (0, core_1.apiRequest)("/v1/me"));
     const { projectRoot, manifest } = (0, core_1.loadProjectManifest)(process.cwd());
@@ -422,7 +422,7 @@ async function commandSubmit() {
     const stagedFiles = await (0, core_1.stageAllowedFiles)(projectRoot, manifest.submission.allowedPaths);
     await (0, core_1.ensureGitIdentity)(projectRoot, me.user.username, me.user.email);
     const timestamp = new Date().toISOString();
-    const commitMessage = `praxis submit: ${manifest.projectKey} ${timestamp}`;
+    const commitMessage = `nibras submit: ${manifest.projectKey} ${timestamp}`;
     const commitSha = await (0, core_1.createCommit)(projectRoot, commitMessage);
     await (0, core_1.pushBranch)(projectRoot, manifest.defaultBranch);
     const prepared = contracts_1.SubmissionPrepareResponseSchema.parse(await (0, core_1.apiRequest)("/v1/submissions/prepare", {
@@ -503,7 +503,7 @@ async function runCli(argv) {
         return;
     }
     if (normalizedArgs[0] === "legacy") {
-        await runLegacyCli(["node", "praxis", ...normalizedArgs.slice(1)]);
+        await runLegacyCli(["node", "nibras", ...normalizedArgs.slice(1)]);
         return;
     }
     if (isLegacyInvocation(normalizedArgs)) {
@@ -3265,7 +3265,7 @@ exports.GitHubInstallationCompleteResponseSchema = zod_1.z.object({
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateCourseInviteResponseSchema = exports.CourseInvitePreviewSchema = exports.ReviewQueueResponseSchema = exports.CreateReviewRequestSchema = exports.UpdateTrackingSubmissionRequestSchema = exports.CreateTrackingSubmissionRequestSchema = exports.UpdateMilestoneRequestSchema = exports.CreateMilestoneRequestSchema = exports.UpdateTrackingProjectRequestSchema = exports.CreateTrackingProjectRequestSchema = exports.CreateTrackingCourseRequestSchema = exports.CourseMemberSchema = exports.AddCourseMemberRequestSchema = exports.InstructorDashboardResponseSchema = exports.StudentProjectsDashboardResponseSchema = exports.TrackingDashboardStatsSchema = exports.TrackingActivityEventSchema = exports.TrackingReviewSchema = exports.AiCriterionScoreSchema = exports.TrackingSubmissionSchema = exports.TrackingProjectDetailSchema = exports.TrackingMilestoneSchema = exports.TrackingProjectSummarySchema = exports.TrackingMembershipSchema = exports.TrackingCourseSummarySchema = exports.TrackingRubricItemSchema = exports.TrackingResourceSchema = exports.TrackingReviewStatusSchema = exports.TrackingSubmissionStatusSchema = exports.TrackingSubmissionTypeSchema = exports.TrackingDeliveryModeSchema = exports.TrackingProjectStatusSchema = exports.TrackingMembershipRoleSchema = void 0;
+exports.CreateCourseInviteResponseSchema = exports.CourseInvitePreviewSchema = exports.ReviewQueueResponseSchema = exports.CreateReviewRequestSchema = exports.UpdateTrackingSubmissionRequestSchema = exports.CreateTrackingSubmissionRequestSchema = exports.UpdateMilestoneRequestSchema = exports.CreateMilestoneRequestSchema = exports.UpdateTrackingProjectRequestSchema = exports.CreateTrackingProjectRequestSchema = exports.CreateTrackingCourseRequestSchema = exports.CourseMemberSchema = exports.AddCourseMemberRequestSchema = exports.InstructorDashboardResponseSchema = exports.StudentProjectsDashboardResponseSchema = exports.TrackingDashboardStatsSchema = exports.TrackingActivityEventSchema = exports.TrackingReviewSchema = exports.TrackingSubmissionSchema = exports.TrackingProjectDetailSchema = exports.TrackingMilestoneSchema = exports.MilestoneSubmissionSummarySchema = exports.MilestoneReviewSummarySchema = exports.AiCriterionScoreSchema = exports.TrackingProjectSummarySchema = exports.TrackingMembershipSchema = exports.TrackingCourseSummarySchema = exports.TrackingRubricItemSchema = exports.TrackingResourceSchema = exports.TrackingReviewStatusSchema = exports.TrackingSubmissionStatusSchema = exports.TrackingSubmissionTypeSchema = exports.TrackingDeliveryModeSchema = exports.TrackingProjectStatusSchema = exports.TrackingMembershipRoleSchema = void 0;
 const zod_1 = __nccwpck_require__(704);
 exports.TrackingMembershipRoleSchema = zod_1.z.enum(["student", "instructor", "ta"]);
 exports.TrackingProjectStatusSchema = zod_1.z.enum(["draft", "published", "archived"]);
@@ -3326,6 +3326,26 @@ exports.TrackingProjectSummarySchema = zod_1.z.object({
         color: zod_1.z.string().min(1)
     }))
 });
+exports.AiCriterionScoreSchema = zod_1.z.object({
+    id: zod_1.z.string().min(1),
+    points: zod_1.z.number(),
+    earned: zod_1.z.number(),
+    justification: zod_1.z.string()
+});
+exports.MilestoneReviewSummarySchema = zod_1.z.object({
+    status: exports.TrackingReviewStatusSchema,
+    score: zod_1.z.number().nullable(),
+    feedback: zod_1.z.string().default(""),
+    criterionScores: zod_1.z.array(exports.AiCriterionScoreSchema).nullable(),
+    evidenceQuotes: zod_1.z.array(zod_1.z.string()).nullable()
+});
+exports.MilestoneSubmissionSummarySchema = zod_1.z.object({
+    id: zod_1.z.string().min(1),
+    status: exports.TrackingSubmissionStatusSchema,
+    commitSha: zod_1.z.string(),
+    branch: zod_1.z.string(),
+    createdAt: zod_1.z.string().datetime()
+});
 exports.TrackingMilestoneSchema = zod_1.z.object({
     id: zod_1.z.string().min(1),
     projectId: zod_1.z.string().min(1),
@@ -3336,7 +3356,9 @@ exports.TrackingMilestoneSchema = zod_1.z.object({
     dueDateLabel: zod_1.z.string().min(1),
     status: zod_1.z.string().min(1),
     statusLabel: zod_1.z.string().min(1),
-    isFinal: zod_1.z.boolean()
+    isFinal: zod_1.z.boolean(),
+    latestReview: exports.MilestoneReviewSummarySchema.nullable().default(null),
+    submissionHistory: zod_1.z.array(exports.MilestoneSubmissionSummarySchema).default([])
 });
 exports.TrackingProjectDetailSchema = exports.TrackingProjectSummarySchema.extend({
     milestones: zod_1.z.array(exports.TrackingMilestoneSchema)
@@ -3359,12 +3381,6 @@ exports.TrackingSubmissionSchema = zod_1.z.object({
     updatedAt: zod_1.z.string().datetime(),
     submittedAt: zod_1.z.string().datetime().nullable(),
     localTestExitCode: zod_1.z.number().int().nullable()
-});
-exports.AiCriterionScoreSchema = zod_1.z.object({
-    id: zod_1.z.string().min(1),
-    points: zod_1.z.number(),
-    earned: zod_1.z.number(),
-    justification: zod_1.z.string()
 });
 exports.TrackingReviewSchema = zod_1.z.object({
     id: zod_1.z.string().min(1),
@@ -3633,13 +3649,13 @@ const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 function getKey() {
-    const raw = process.env.PRAXIS_ENCRYPTION_KEY;
+    const raw = process.env.NIBRAS_ENCRYPTION_KEY;
     if (!raw) {
-        throw new Error("PRAXIS_ENCRYPTION_KEY is not set.");
+        throw new Error("NIBRAS_ENCRYPTION_KEY is not set.");
     }
     const key = Buffer.from(raw, "hex");
     if (key.length !== 32) {
-        throw new Error("PRAXIS_ENCRYPTION_KEY must be a 32-byte (64 hex character) value.");
+        throw new Error("NIBRAS_ENCRYPTION_KEY must be a 32-byte (64 hex character) value.");
     }
     return key;
 }
@@ -3828,7 +3844,7 @@ const contracts_1 = __nccwpck_require__(16);
 function findProjectRoot(startCwd) {
     let current = node_path_1.default.resolve(startCwd);
     while (true) {
-        const manifestPath = node_path_1.default.join(current, ".praxis", "project.json");
+        const manifestPath = node_path_1.default.join(current, ".nibras", "project.json");
         if (node_fs_1.default.existsSync(manifestPath)) {
             return current;
         }
@@ -3840,15 +3856,15 @@ function findProjectRoot(startCwd) {
     }
 }
 function getManifestPath(projectRoot) {
-    return node_path_1.default.join(projectRoot, ".praxis", "project.json");
+    return node_path_1.default.join(projectRoot, ".nibras", "project.json");
 }
 function getTaskPath(projectRoot) {
-    return node_path_1.default.join(projectRoot, ".praxis", "task.md");
+    return node_path_1.default.join(projectRoot, ".nibras", "task.md");
 }
 function loadProjectManifest(cwd) {
     const projectRoot = findProjectRoot(cwd);
     if (!projectRoot) {
-        throw new Error("No .praxis/project.json found in this directory or any parent directory.");
+        throw new Error("No .nibras/project.json found in this directory or any parent directory.");
     }
     const manifestPath = getManifestPath(projectRoot);
     const raw = node_fs_1.default.readFileSync(manifestPath, "utf8");
@@ -3889,16 +3905,16 @@ exports.getGlobalConfigPath = getGlobalConfigPath;
 const node_os_1 = __importDefault(__nccwpck_require__(161));
 const node_path_1 = __importDefault(__nccwpck_require__(760));
 function getDefaultApiBaseUrl() {
-    return process.env.PRAXIS_API_BASE_URL || "http://127.0.0.1:4848";
+    return process.env.NIBRAS_API_BASE_URL || "http://127.0.0.1:4848";
 }
 function getGlobalConfigDir() {
     if (process.platform === "win32") {
-        return node_path_1.default.join(process.env.APPDATA || node_path_1.default.join(node_os_1.default.homedir(), "AppData", "Roaming"), "praxis");
+        return node_path_1.default.join(process.env.APPDATA || node_path_1.default.join(node_os_1.default.homedir(), "AppData", "Roaming"), "nibras");
     }
     if (process.platform === "darwin") {
-        return node_path_1.default.join(node_os_1.default.homedir(), "Library", "Application Support", "praxis");
+        return node_path_1.default.join(node_os_1.default.homedir(), "Library", "Application Support", "nibras");
     }
-    return node_path_1.default.join(process.env.XDG_CONFIG_HOME || node_path_1.default.join(node_os_1.default.homedir(), ".config"), "praxis");
+    return node_path_1.default.join(process.env.XDG_CONFIG_HOME || node_path_1.default.join(node_os_1.default.homedir(), ".config"), "nibras");
 }
 function getGlobalConfigPath() {
     return node_path_1.default.join(getGlobalConfigDir(), "config.json");

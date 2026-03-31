@@ -29,7 +29,7 @@ function printUsage() {
 ██║ ╚████║██║██████╔╝██║  ██║██║  ██║███████║
 ╚═╝  ╚═══╝╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
-praxis <subject> <command> <project> [options]
+nibras <subject> <command> <project> [options]
 
 Commands
   test              Run checks or grading
@@ -42,21 +42,21 @@ Global commands
   update-buildpack  Update language version
 
 Example
-  praxis cs161 test exam1
-  praxis cs161 test exam1 --earned 60
-  praxis cs161 submit exam1
-  praxis cs161 setup exam1
+  nibras cs161 test exam1
+  nibras cs161 test exam1 --earned 60
+  nibras cs161 submit exam1
+  nibras cs161 setup exam1
 `);
 }
 
 function resolveProject(config, subject, project) {
   const subjectConfig = config.subjects?.[subject];
   if (!subjectConfig) {
-    throw new Error(`Unknown subject "${subject}". Configure it in .praxis.json.`);
+    throw new Error(`Unknown subject "${subject}". Configure it in .nibras.json.`);
   }
   const projectConfig = subjectConfig.projects?.[project];
   if (!projectConfig) {
-    throw new Error(`Unknown project "${project}" for subject "${subject}". Configure it in .praxis.json.`);
+    throw new Error(`Unknown project "${project}" for subject "${subject}". Configure it in .nibras.json.`);
   }
   return { subjectConfig, projectConfig };
 }
@@ -87,7 +87,7 @@ function runTest(argv, subject, project, config) {
     .option("--review-file <path>", "Write semantic grading review output to a JSON file")
     .option("--fail-on-review", "Exit non-zero if any semantic question requires review")
     .option("--no-ai", "Disable AI semantic grading");
-  cmd.parse(["node", "praxis", ...argv], { from: "user" });
+  cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
   const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
@@ -95,7 +95,7 @@ function runTest(argv, subject, project, config) {
 
   if (projectType === "check50") {
     const slug = resolveSlug(opts.slug, config, projectConfig);
-    if (!slug) throw new Error("slug is required. Set it in .praxis.json or PRAXIS_SLUG.");
+    if (!slug) throw new Error("slug is required. Set it in .nibras.json or NIBRAS_SLUG.");
 
     const localChecks =
       typeof opts.local === "boolean" ? opts.local : projectConfig.localChecks ?? config.localChecks;
@@ -241,7 +241,7 @@ function runSubmit(argv, subject, project, config) {
     .option("--remote <url>", "Git remote for submissions")
     .option("--files <files...>", "Files to submit (defaults to .cs50.yaml or git tracked files)")
     .option("--ref <ref>", "Submission reference override");
-  cmd.parse(["node", "praxis", ...argv], { from: "user" });
+  cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
   const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
@@ -263,7 +263,7 @@ function runSubmit(argv, subject, project, config) {
 function runTask(argv, subject, project, config) {
   const cmd = new Command();
   cmd.option("--file <path>", "Read instructions from a local file");
-  cmd.parse(["node", "praxis", ...argv], { from: "user" });
+  cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
   const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
@@ -285,7 +285,7 @@ function runSetup(argv, subject, project, config) {
   const cmd = new Command();
   cmd.option("--url <url>", "Override setup zip URL");
   cmd.option("--dir <path>", "Override destination directory");
-  cmd.parse(["node", "praxis", ...argv], { from: "user" });
+  cmd.parse(["node", "nibras", ...argv], { from: "user" });
   const opts = cmd.opts();
 
   const { subjectConfig, projectConfig } = resolveProject(config, subject, project);
@@ -326,7 +326,7 @@ async function run(argv) {
     if (subject === "ping") {
       const cmd = new Command();
       cmd.option("--remote <url>", "Git remote for submissions");
-      cmd.parse(["node", "praxis", ...argv.slice(3)], { from: "user" });
+      cmd.parse(["node", "nibras", ...argv.slice(3)], { from: "user" });
       const opts = cmd.opts();
       const output = await pingRemote(opts.remote || config.submitRemote);
       // eslint-disable-next-line no-console
@@ -335,7 +335,7 @@ async function run(argv) {
     }
     const cmd = new Command();
     cmd.option("--node <version>", "Node version to pin", "18");
-    cmd.parse(["node", "praxis", ...argv.slice(3)], { from: "user" });
+    cmd.parse(["node", "nibras", ...argv.slice(3)], { from: "user" });
     const opts = cmd.opts();
     const nodeVersion = updateBuildpack({ cwd: process.cwd(), nodeVersion: String(opts.node) });
     // eslint-disable-next-line no-console

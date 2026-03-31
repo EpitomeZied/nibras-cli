@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { apiFetch, discoverApiBaseUrl } from "../../lib/session";
-import PraxisLogo from "../../_components/praxis-logo";
+import NibrasLogo from "../../_components/nibras-logo";
 
 type InvitePreview = {
   code: string;
@@ -105,7 +105,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
         gap: 24
       }}>
         <div>
-          <PraxisLogo variant="theme" width={110} priority />
+          <NibrasLogo variant="theme" width={110} priority />
         </div>
 
         {loadingInvite && (

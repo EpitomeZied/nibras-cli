@@ -7,7 +7,7 @@ const { buildApp } = require("../apps/api/dist/app");
 const { FileStore } = require("../apps/api/dist/store");
 
 function makeStorePath() {
-  return path.join(os.tmpdir(), `praxis-cors-${Date.now()}-${Math.random()}.json`);
+  return path.join(os.tmpdir(), `nibras-cors-${Date.now()}-${Math.random()}.json`);
 }
 
 async function withEnv(overrides, fn) {
@@ -37,9 +37,9 @@ async function withEnv(overrides, fn) {
 
 test("API CORS allows configured browser origins for preflight requests", async () => {
   await withEnv({
-    PRAXIS_WEB_CORS_ORIGINS: undefined,
-    PRAXIS_WEB_BASE_URL: "http://127.0.0.1:3000",
-    NEXT_PUBLIC_PRAXIS_WEB_BASE_URL: "http://127.0.0.1:3000"
+    NIBRAS_WEB_CORS_ORIGINS: undefined,
+    NIBRAS_WEB_BASE_URL: "http://127.0.0.1:3000",
+    NEXT_PUBLIC_NIBRAS_WEB_BASE_URL: "http://127.0.0.1:3000"
   }, async () => {
     const app = buildApp(new FileStore(makeStorePath()));
     try {
@@ -65,9 +65,9 @@ test("API CORS allows configured browser origins for preflight requests", async 
 
 test("API CORS does not approve disallowed origins", async () => {
   await withEnv({
-    PRAXIS_WEB_CORS_ORIGINS: "https://allowed.example",
-    PRAXIS_WEB_BASE_URL: "http://127.0.0.1:3000",
-    NEXT_PUBLIC_PRAXIS_WEB_BASE_URL: "http://127.0.0.1:3000"
+    NIBRAS_WEB_CORS_ORIGINS: "https://allowed.example",
+    NIBRAS_WEB_BASE_URL: "http://127.0.0.1:3000",
+    NEXT_PUBLIC_NIBRAS_WEB_BASE_URL: "http://127.0.0.1:3000"
   }, async () => {
     const app = buildApp(new FileStore(makeStorePath()));
     try {
@@ -90,7 +90,7 @@ test("API CORS does not approve disallowed origins", async () => {
 
 test("API requests without an Origin header still work", async () => {
   await withEnv({
-    PRAXIS_WEB_CORS_ORIGINS: "https://allowed.example"
+    NIBRAS_WEB_CORS_ORIGINS: "https://allowed.example"
   }, async () => {
     const app = buildApp(new FileStore(makeStorePath()));
     try {

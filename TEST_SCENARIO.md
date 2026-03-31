@@ -1,6 +1,6 @@
-# Praxis Manual Test Scenario
+# Nibras Manual Test Scenario
 
-This is the canonical manual validation path for Praxis.
+This is the canonical manual validation path for Nibras.
 
 ## Purpose
 
@@ -152,10 +152,10 @@ ngrok http 8080
 
 5. Copy the generated public URL into these env vars in `.env`:
 
-- `PRAXIS_API_BASE_URL`
-- `PRAXIS_WEB_BASE_URL`
-- `NEXT_PUBLIC_PRAXIS_API_BASE_URL`
-- `NEXT_PUBLIC_PRAXIS_WEB_BASE_URL`
+- `NIBRAS_API_BASE_URL`
+- `NIBRAS_WEB_BASE_URL`
+- `NEXT_PUBLIC_NIBRAS_API_BASE_URL`
+- `NEXT_PUBLIC_NIBRAS_WEB_BASE_URL`
 
 6. Restart the API, web app, and proxy after editing `.env`.
 
@@ -220,30 +220,30 @@ Expected result:
 Use the live backend from the previous section.
 
 ```bash
-praxis login
-praxis whoami
-praxis ping
-mkdir -p /tmp/praxis-e2e
-cd /tmp/praxis-e2e
-praxis setup --project cs161/exam1 --dir .
-praxis task
-praxis test
+nibras login
+nibras whoami
+nibras ping
+mkdir -p /tmp/nibras-e2e
+cd /tmp/nibras-e2e
+nibras setup --project cs161/exam1 --dir .
+nibras task
+nibras test
 ```
 
 Expected result:
 
-- `praxis login` completes the device flow
-- `praxis whoami` shows the authenticated user
-- `praxis ping` reports:
+- `nibras login` completes the device flow
+- `nibras whoami` shows the authenticated user
+- `nibras ping` reports:
   - API reachable
   - Auth valid
   - GitHub linked
   - GitHub App installed
-- `praxis setup` writes:
-  - `.praxis/project.json`
-  - `.praxis/task.md`
-- `praxis task` prints the task text
-- `praxis test` runs the project-local test command
+- `nibras setup` writes:
+  - `.nibras/project.json`
+  - `.nibras/task.md`
+- `nibras task` prints the task text
+- `nibras test` runs the project-local test command
 
 ## Submission And Verification Flow
 
@@ -253,8 +253,8 @@ Use the same provisioned directory from the CLI flow.
 mkdir -p answers
 printf 'test answer\n' > answers/q1.txt
 git status --short
-praxis test
-praxis submit
+nibras test
+nibras submit
 ```
 
 Expected result:
@@ -271,7 +271,7 @@ Expected result:
 
 Important:
 
-- `npm run worker:dev` must be running before `praxis submit`, otherwise the submission may remain `queued`
+- `npm run worker:dev` must be running before `nibras submit`, otherwise the submission may remain `queued`
 
 ## Failure And Recovery Checks
 
@@ -331,11 +331,11 @@ Expected result:
 
 ### Wrong repo or repo mismatch
 
-Run `praxis submit` from an unrelated git repo.
+Run `nibras submit` from an unrelated git repo.
 
 Expected result:
 
-- submit fails or `praxis ping` shows the repo mismatch
+- submit fails or `nibras ping` shows the repo mismatch
 
 ### Forbidden changed files during submit
 
@@ -343,7 +343,7 @@ Modify a file outside `submission.allowedPaths`.
 
 Expected result:
 
-- `praxis submit` refuses to proceed
+- `nibras submit` refuses to proceed
 
 ## Final Acceptance Checklist
 
@@ -358,11 +358,11 @@ Expected result:
 - [ ] `https://<public-url>/v1/github/config` reports `"configured": true`
 - [ ] browser GitHub OAuth succeeds
 - [ ] GitHub App installation succeeds
-- [ ] `praxis login` succeeds
-- [ ] `praxis setup --project cs161/exam1 --dir .` writes `.praxis/project.json`
-- [ ] `praxis setup --project cs161/exam1 --dir .` writes `.praxis/task.md`
-- [ ] `praxis ping` reports valid auth, linked GitHub, and installed GitHub App
-- [ ] `praxis submit` pushes successfully
+- [ ] `nibras login` succeeds
+- [ ] `nibras setup --project cs161/exam1 --dir .` writes `.nibras/project.json`
+- [ ] `nibras setup --project cs161/exam1 --dir .` writes `.nibras/task.md`
+- [ ] `nibras ping` reports valid auth, linked GitHub, and installed GitHub App
+- [ ] `nibras submit` pushes successfully
 - [ ] the submission leaves `queued`
 - [ ] the submission reaches a terminal state
 - [ ] webhook signature validation succeeds

@@ -18,11 +18,11 @@ export function getStoredApiBaseUrl(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-  return normalizeApiBaseUrl(window.localStorage.getItem("praxis.apiBaseUrl"));
+  return normalizeApiBaseUrl(window.localStorage.getItem("nibras.apiBaseUrl"));
 }
 
 export function getConfiguredApiBaseUrl(): string | null {
-  return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_PRAXIS_API_BASE_URL);
+  return normalizeApiBaseUrl(process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL);
 }
 
 export function getCurrentOriginCandidate(): string | null {
@@ -43,7 +43,7 @@ export function resolveApiBaseUrl(): string {
 
 export function persistSessionValues(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values)) {
-    const normalizedValue = key === "praxis.apiBaseUrl"
+    const normalizedValue = key === "nibras.apiBaseUrl"
       ? normalizeApiBaseUrl(value) || value
       : value;
     window.localStorage.setItem(key, normalizedValue);
@@ -66,7 +66,7 @@ export async function discoverApiBaseUrl(): Promise<string> {
         return response.ok;
       },
       persistApiBaseUrl: async (candidate) => {
-        window.localStorage.setItem("praxis.apiBaseUrl", candidate);
+        window.localStorage.setItem("nibras.apiBaseUrl", candidate);
       }
     }).catch((error) => {
       discoveryPromise = null;

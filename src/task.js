@@ -20,10 +20,10 @@ async function loadTask({ cwd, slug, taskUrlBase, file, taskUrl }) {
   }
 
   if (!taskUrlBase) {
-    throw new Error("taskUrlBase is required. Set it in .praxis.json or PRAXIS_TASK_URL_BASE.");
+    throw new Error("taskUrlBase is required. Set it in .nibras.json or NIBRAS_TASK_URL_BASE.");
   }
   if (!slug) {
-    throw new Error("slug is required. Set it in .praxis.json or PRAXIS_SLUG.");
+    throw new Error("slug is required. Set it in .nibras.json or NIBRAS_SLUG.");
   }
   const url = `${taskUrlBase.replace(/\/$/, "")}/${slug}`;
   return fetchText(url);

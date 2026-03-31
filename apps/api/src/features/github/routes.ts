@@ -6,7 +6,7 @@ import {
   GitHubInstallationCompleteRequestSchema,
   GitHubInstallationCompleteResponseSchema,
   GitHubInstallUrlResponseSchema
-} from "@praxis/contracts";
+} from "@nibras/contracts";
 import {
   buildGitHubInstallUrl,
   buildGitHubOAuthUrl,
@@ -19,7 +19,7 @@ import {
   startGitHubDeviceFlow,
   verifySignedState,
   verifyWebhookSignature
-} from "@praxis/github";
+} from "@nibras/github";
 import { requireUser } from "../../lib/auth";
 import { requestBaseUrl } from "../../lib/request-base-url";
 import { createWebSessionCookie } from "../../lib/web-session";
@@ -108,7 +108,7 @@ export function registerGitHubRoutes(
       reply.code(404).type("text/html").send("<h1>Unknown user code</h1>");
       return;
     }
-    reply.type("text/html").send("<h1>Praxis device approved</h1><p>You can return to the CLI.</p>");
+    reply.type("text/html").send("<h1>Nibras device approved</h1><p>You can return to the CLI.</p>");
   });
 
   app.post("/v1/device/poll", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (request, reply) => {

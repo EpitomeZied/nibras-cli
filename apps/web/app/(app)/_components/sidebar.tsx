@@ -60,21 +60,21 @@ export default function Sidebar({
   loading: boolean;
 }) {
   const pathname = usePathname();
-  const displayName = user?.username || user?.githubLogin || "Praxis User";
+  const displayName = user?.username || user?.githubLogin || "Nibras User";
 
   return (
     <aside className="sidebar">
       {/* Brand */}
       <div className="brandBlock">
         <Image
-          src="/branding/praxis-icon.svg"
-          alt="Praxis icon"
+          src="/branding/nibras-icon.svg"
+          alt="Nibras icon"
           width={32}
           height={32}
           priority
         />
         <div>
-          <strong className="brandTitle">Praxis</strong>
+          <strong className="brandTitle">Nibras</strong>
           <p className="brandSubtitle">Developer Platform</p>
         </div>
       </div>

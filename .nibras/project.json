@@ -13,7 +13,7 @@
   },
   "submission": {
     "allowedPaths": [
-      ".praxis/**",
+      ".nibras/**",
       "src/**",
       "test/**",
       "README.md",

@@ -42,16 +42,16 @@ test("dashboard data loading returns install-url when GitHub App is configured",
         return { projects: [{ id: "p1" }], milestonesByProject: {}, statsByProject: {}, activity: [] };
       }
       if (path === "/v1/github/config") {
-        return { configured: true, appName: "Praxis" };
+        return { configured: true, appName: "Nibras" };
       }
       if (path === "/v1/github/install-url") {
-        return { installUrl: "https://github.com/apps/praxis/installations/new" };
+        return { installUrl: "https://github.com/apps/nibras/installations/new" };
       }
       throw new Error(`Unexpected path: ${path}`);
     }
   });
 
-  assert.equal(payload.installUrl, "https://github.com/apps/praxis/installations/new");
+  assert.equal(payload.installUrl, "https://github.com/apps/nibras/installations/new");
   assert.equal(payload.githubAppMessage, "");
   assert.equal(payload.githubAppStatus, "configured");
 });

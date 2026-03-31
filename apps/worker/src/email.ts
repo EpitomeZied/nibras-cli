@@ -5,7 +5,7 @@
 async function sendEmail(to: string, subject: string, text: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
-  const from = process.env.PRAXIS_EMAIL_FROM ?? "Praxis <noreply@praxis.dev>";
+  const from = process.env.NIBRAS_EMAIL_FROM ?? "Nibras <noreply@nibras.dev>";
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
@@ -26,9 +26,9 @@ export type SubmissionStatusEmailContext = {
 
 export async function sendSubmissionStatusEmail(ctx: SubmissionStatusEmailContext): Promise<void> {
   const subjectMap = {
-    passed: `[Praxis] ${ctx.projectName} — tests passed`,
-    failed: `[Praxis] ${ctx.projectName} — tests failed`,
-    needs_review: `[Praxis] ${ctx.projectName} — tests passed, awaiting review`
+    passed: `[Nibras] ${ctx.projectName} — tests passed`,
+    failed: `[Nibras] ${ctx.projectName} — tests failed`,
+    needs_review: `[Nibras] ${ctx.projectName} — tests passed, awaiting review`
   };
   const bodyMap = {
     passed: `Hi ${ctx.studentName},\n\nYour submission for "${ctx.projectName}" passed all tests.\n\nView details: ${ctx.submissionUrl}`,
@@ -47,7 +47,7 @@ export type ReviewReadyEmailContext = {
 };
 
 export async function sendReviewReadyEmail(ctx: ReviewReadyEmailContext): Promise<void> {
-  const subject = `[Praxis] Review needed — ${ctx.projectName} (${ctx.studentName})`;
+  const subject = `[Nibras] Review needed — ${ctx.projectName} (${ctx.studentName})`;
   const text = `Hi ${ctx.instructorName},\n\n${ctx.studentName}'s submission for "${ctx.projectName}" passed automated tests but was flagged for human review.\n\nReview queue: ${ctx.reviewQueueUrl}`;
   await sendEmail(ctx.instructorEmail, subject, text);
 }

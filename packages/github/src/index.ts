@@ -61,8 +61,8 @@ export function loadGitHubAppConfig(): GitHubAppConfig | null {
     privateKey,
     webhookSecret,
     appName,
-    apiBaseUrl: process.env.PRAXIS_API_BASE_URL,
-    webBaseUrl: process.env.PRAXIS_WEB_BASE_URL,
+    apiBaseUrl: process.env.NIBRAS_API_BASE_URL,
+    webBaseUrl: process.env.NIBRAS_WEB_BASE_URL,
     templateOwner: process.env.GITHUB_TEMPLATE_OWNER,
     templateRepo: process.env.GITHUB_TEMPLATE_REPO,
     apiVersion: process.env.GITHUB_API_VERSION || "2022-11-28"
@@ -359,7 +359,7 @@ export async function postCommitStatus(
         state,
         description: options.description,
         target_url: options.targetUrl,
-        context: options.context ?? "praxis/verification"
+        context: options.context ?? "nibras/verification"
       })
     },
     installationToken,

@@ -11,10 +11,10 @@ export type ProxyConfig = {
 
 function loadConfig(): ProxyConfig {
   return {
-    host: process.env.PRAXIS_PROXY_HOST || "127.0.0.1",
-    port: Number(process.env.PRAXIS_PROXY_PORT || "8080"),
-    apiOrigin: process.env.PRAXIS_LOCAL_API_ORIGIN || "http://127.0.0.1:4848",
-    webOrigin: process.env.PRAXIS_LOCAL_WEB_ORIGIN || "http://127.0.0.1:3000"
+    host: process.env.NIBRAS_PROXY_HOST || "127.0.0.1",
+    port: Number(process.env.NIBRAS_PROXY_PORT || "8080"),
+    apiOrigin: process.env.NIBRAS_LOCAL_API_ORIGIN || "http://127.0.0.1:4848",
+    webOrigin: process.env.NIBRAS_LOCAL_WEB_ORIGIN || "http://127.0.0.1:3000"
   };
 }
 
@@ -73,7 +73,7 @@ async function startServer(): Promise<void> {
   const address = server.address() as AddressInfo | null;
   const boundHost = address?.address || config.host;
   const boundPort = address?.port || config.port;
-  console.log(`Praxis proxy listening on http://${boundHost}:${boundPort}`);
+  console.log(`Nibras proxy listening on http://${boundHost}:${boundPort}`);
   console.log(`API origin: ${config.apiOrigin}`);
   console.log(`Web origin: ${config.webOrigin}`);
 }

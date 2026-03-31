@@ -8,7 +8,7 @@ const { buildApp } = require("../apps/api/dist/app");
 const { FileStore } = require("../apps/api/dist/store");
 
 function makeStorePath() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "praxis-web-auth-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nibras-web-auth-"));
   return path.join(dir, "store.json");
 }
 
@@ -23,7 +23,7 @@ test("web session endpoints authenticate with the session cookie and clear it on
       method: "GET",
       url: "/v1/web/session",
       cookies: {
-        praxis_web_session: session.sessionToken
+        nibras_web_session: session.sessionToken
       }
     });
     assert.equal(sessionResponse.statusCode, 200);
@@ -33,18 +33,18 @@ test("web session endpoints authenticate with the session cookie and clear it on
       method: "POST",
       url: "/v1/web/logout",
       cookies: {
-        praxis_web_session: session.sessionToken
+        nibras_web_session: session.sessionToken
       }
     });
     assert.equal(logoutResponse.statusCode, 200);
-    assert.match(String(logoutResponse.headers["set-cookie"]), /praxis_web_session=/);
+    assert.match(String(logoutResponse.headers["set-cookie"]), /nibras_web_session=/);
     assert.match(String(logoutResponse.headers["set-cookie"]), /Max-Age=0/);
 
     const afterLogout = await app.inject({
       method: "GET",
       url: "/v1/web/session",
       cookies: {
-        praxis_web_session: session.sessionToken
+        nibras_web_session: session.sessionToken
       }
     });
     assert.equal(afterLogout.statusCode, 401);
@@ -76,7 +76,7 @@ test("hosted submission routes are owner-restricted and admin overrides persist 
     userId: "user_demo",
     projectKey: "cs161/exam1",
     commitSha: "abc123",
-    repoUrl: "https://github.com/demo-user/praxis-cs161-exam1",
+    repoUrl: "https://github.com/demo-user/nibras-cs161-exam1",
     branch: "main"
   });
 

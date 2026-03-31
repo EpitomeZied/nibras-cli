@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import PraxisLogo from "./_components/praxis-logo";
+import NibrasLogo from "./_components/nibras-logo";
 import { discoverApiBaseUrl } from "./lib/session";
 import styles from "./signin.module.css";
 
@@ -45,8 +45,8 @@ export default function HomePage() {
       {/* Top nav */}
       <nav className={styles.nav}>
         <div className={styles.navLogo} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Image src="/branding/praxis-icon.svg" alt="Praxis" width={28} height={28} priority />
-          <span style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Praxis</span>
+          <Image src="/branding/nibras-icon.svg" alt="Nibras" width={28} height={28} priority />
+          <span style={{ fontWeight: 700, fontSize: 16, color: "#fff", letterSpacing: "-0.01em" }}>Nibras</span>
         </div>
       </nav>
 
@@ -88,7 +88,7 @@ export default function HomePage() {
           </div>
 
           <p className={styles.formHint}>
-            By continuing you agree to connect your GitHub account to Praxis.
+            By continuing you agree to connect your GitHub account to Nibras.
             Your repositories are only accessed with your explicit permission.
           </p>
         </div>

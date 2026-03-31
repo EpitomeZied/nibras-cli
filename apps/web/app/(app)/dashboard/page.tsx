@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { TrackingMilestone } from "@praxis/contracts";
+import type { TrackingMilestone } from "@nibras/contracts";
 import { apiFetch } from "../../lib/session";
 import { loadDashboardData } from "./load-dashboard-data.js";
 import type { LoadDashboardDataResult } from "./load-dashboard-data.js";

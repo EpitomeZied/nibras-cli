@@ -178,7 +178,7 @@ function resolveBaseUrl(aiConfig) {
 
 async function callOpenAiCompatibleApi({ aiConfig, subject, project, question, answerText, timeoutMs }) {
   if (!aiConfig.apiKey) {
-    throw new Error("PRAXIS_AI_API_KEY is required for semantic grading.");
+    throw new Error("NIBRAS_AI_API_KEY is required for semantic grading.");
   }
   if (!aiConfig.model) {
     throw new Error("AI model is required for semantic grading. Set it in config, env, or --ai-model.");

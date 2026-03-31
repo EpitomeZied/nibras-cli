@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Praxis",
+  title: "Nibras",
   description: "Hosted GitHub-linked CLI and dashboard for project workflows."
 };
 

@@ -18,7 +18,7 @@ const { updateBuildpack } = require("../src/updateBuildpack");
 const repoRoot = path.resolve(__dirname, "..");
 
 function makeTempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "praxis-test-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "nibras-test-"));
 }
 
 function withEnv(overrides, fn) {
@@ -111,7 +111,7 @@ function writeCheckConfig(dir, {
   project = {}
 } = {}) {
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       ...topLevel,
       subjects: {
@@ -186,7 +186,7 @@ async function startMockAiServer(handler) {
 test("loadConfig keeps file values when env overrides are absent", () => {
   const dir = makeTempDir();
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       slug: "org/repo",
       submitRemote: "git@example.com:course/submissions.git",
@@ -200,11 +200,11 @@ test("loadConfig keeps file values when env overrides are absent", () => {
 
   const config = withEnv(
     {
-      PRAXIS_SLUG: undefined,
-      PRAXIS_SUBMIT_REMOTE: undefined,
-      PRAXIS_TASK_URL_BASE: undefined,
-      PRAXIS_GRADING_ROOT: undefined,
-      PRAXIS_AI_MODEL: undefined
+      NIBRAS_SLUG: undefined,
+      NIBRAS_SUBMIT_REMOTE: undefined,
+      NIBRAS_TASK_URL_BASE: undefined,
+      NIBRAS_GRADING_ROOT: undefined,
+      NIBRAS_AI_MODEL: undefined
     },
     () => loadConfig(dir)
   );
@@ -219,7 +219,7 @@ test("loadConfig keeps file values when env overrides are absent", () => {
 test("loadConfig still lets explicit env vars override file config", () => {
   const dir = makeTempDir();
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       slug: "file/slug",
       submitRemote: "git@example.com:file.git",
@@ -232,10 +232,10 @@ test("loadConfig still lets explicit env vars override file config", () => {
 
   const config = withEnv(
     {
-      PRAXIS_SLUG: "env/slug",
-      PRAXIS_SUBMIT_REMOTE: "git@example.com:env.git",
-      PRAXIS_AI_MODEL: "env-model",
-      PRAXIS_AI_MIN_CONFIDENCE: "0.9"
+      NIBRAS_SLUG: "env/slug",
+      NIBRAS_SUBMIT_REMOTE: "git@example.com:env.git",
+      NIBRAS_AI_MODEL: "env-model",
+      NIBRAS_AI_MIN_CONFIDENCE: "0.9"
     },
     () => loadConfig(dir)
   );
@@ -248,7 +248,7 @@ test("loadConfig still lets explicit env vars override file config", () => {
 
 test("updateBuildpack preserves unrelated config fields", () => {
   const dir = makeTempDir();
-  const configPath = path.join(dir, ".praxis.json");
+  const configPath = path.join(dir, ".nibras.json");
   fs.writeFileSync(
     configPath,
     JSON.stringify({
@@ -267,10 +267,10 @@ test("updateBuildpack preserves unrelated config fields", () => {
 
   withEnv(
     {
-      PRAXIS_SLUG: undefined,
-      PRAXIS_SUBMIT_REMOTE: undefined,
-      PRAXIS_TASK_URL_BASE: undefined,
-      PRAXIS_GRADING_ROOT: undefined
+      NIBRAS_SLUG: undefined,
+      NIBRAS_SUBMIT_REMOTE: undefined,
+      NIBRAS_TASK_URL_BASE: undefined,
+      NIBRAS_GRADING_ROOT: undefined
     },
     () => updateBuildpack({ cwd: dir, nodeVersion: "20" })
   );
@@ -574,7 +574,7 @@ test("run test uses config-backed exact auto-check flow", async () => {
   fs.mkdirSync(answersDir, { recursive: true });
 
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       requireGrading: true,
       gradingRoot,
@@ -614,7 +614,7 @@ test("run test uses config-backed exact auto-check flow", async () => {
 
   try {
     const logs = await captureLogs(() =>
-      run(["node", "bin/praxis.js", "cs161", "test", "exam1", "--answers-dir", answersDir])
+      run(["node", "bin/nibras.js", "cs161", "test", "exam1", "--answers-dir", answersDir])
     );
 
     assert.equal(process.exitCode, undefined);
@@ -638,7 +638,7 @@ test("run test falls back to manual scoring when gradingRoot is set but grading 
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1"])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -660,7 +660,7 @@ test("run test lets project requireGrading false override top-level strict gradi
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1"])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -679,7 +679,7 @@ test("run test lets subject requireGrading false override top-level strict gradi
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1"])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -700,7 +700,7 @@ test("run test treats explicit --grading as strict even when requireGrading is f
       () =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -738,7 +738,7 @@ test("run test auto-checks when gradingRoot contains grading even without strict
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1", "--answers-dir", answersDir])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1", "--answers-dir", answersDir])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -763,7 +763,7 @@ test("run test supports absolute project paths for manual grading", async () => 
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1"])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -795,7 +795,7 @@ test("run test supports absolute project paths for auto-check default files", as
   });
 
   const logs = await withExitCodeReset(() =>
-    captureRunInDirectory(dir, ["node", "bin/praxis.js", "cs161", "test", "exam1"])
+    captureRunInDirectory(dir, ["node", "bin/nibras.js", "cs161", "test", "exam1"])
   );
 
   assert.equal(process.exitCode, undefined);
@@ -815,8 +815,8 @@ test("run test falls back to manual scoring when grading root comes from env onl
   const logs = await withExitCodeReset(() =>
     captureRunInDirectory(
       dir,
-      ["node", "bin/praxis.js", "cs161", "test", "exam1"],
-      { PRAXIS_GRADING_ROOT: path.join(dir, "grading") }
+      ["node", "bin/nibras.js", "cs161", "test", "exam1"],
+      { NIBRAS_GRADING_ROOT: path.join(dir, "grading") }
     )
   );
 
@@ -833,7 +833,7 @@ test("run test supports repo-backed exam1 strict grading with relative paths", a
       captureLogs(() =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -856,7 +856,7 @@ test("run test supports repo-backed exam1 strict grading with relative paths", a
 });
 
 test("repo config no longer advertises a broken exam1 setup URL", () => {
-  const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".praxis.json"), "utf8"));
+  const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".nibras.json"), "utf8"));
   assert.equal(config.subjects.cs161.projects.exam1.setupUrl, undefined);
   assert.equal(config.subjects.cs161.projects.exam1.setupZipName, undefined);
 });
@@ -870,7 +870,7 @@ test("run test supports repo-backed exam1 mixed scoring and alternate accepted s
       captureLogs(() =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -908,7 +908,7 @@ test("run test fails for repo-backed exam1 when an answer file is missing", asyn
       () =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -939,7 +939,7 @@ test("run test fails for repo-backed exam1 when an answer file is empty", async 
       () =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -962,7 +962,7 @@ test("run test supports semantic grading, review files, and fail-on-review", asy
   fs.mkdirSync(answersDir, { recursive: true });
 
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       requireGrading: true,
       gradingRoot,
@@ -1036,14 +1036,14 @@ test("run test supports semantic grading, review files, and fail-on-review", asy
   try {
     const logs = await withEnv(
       {
-        PRAXIS_AI_API_KEY: "test-key",
-        PRAXIS_AI_BASE_URL: server.baseUrl
+        NIBRAS_AI_API_KEY: "test-key",
+        NIBRAS_AI_BASE_URL: server.baseUrl
       },
       () =>
         captureLogs(() =>
           run([
             "node",
-            "bin/praxis.js",
+            "bin/nibras.js",
             "cs161",
             "test",
             "exam1",
@@ -1083,7 +1083,7 @@ test("run test fails when semantic grading is disabled", async () => {
   fs.mkdirSync(answersDir, { recursive: true });
 
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       requireGrading: true,
       gradingRoot,
@@ -1115,7 +1115,7 @@ test("run test fails when semantic grading is disabled", async () => {
       () =>
         run([
           "node",
-          "bin/praxis.js",
+          "bin/nibras.js",
           "cs161",
           "test",
           "exam1",
@@ -1138,7 +1138,7 @@ test("run test fails with a clear error when semantic grading lacks an API key",
   fs.mkdirSync(answersDir, { recursive: true });
 
   fs.writeFileSync(
-    path.join(dir, ".praxis.json"),
+    path.join(dir, ".nibras.json"),
     JSON.stringify({
       requireGrading: true,
       gradingRoot,
@@ -1172,21 +1172,21 @@ test("run test fails with a clear error when semantic grading lacks an API key",
   try {
     await withEnv(
       {
-        PRAXIS_AI_API_KEY: undefined
+        NIBRAS_AI_API_KEY: undefined
       },
       () =>
         assert.rejects(
           () =>
             run([
               "node",
-              "bin/praxis.js",
+              "bin/nibras.js",
               "cs161",
               "test",
               "exam1",
               "--answers-dir",
               answersDir
             ]),
-          /PRAXIS_AI_API_KEY/
+          /NIBRAS_AI_API_KEY/
         )
     );
   } finally {

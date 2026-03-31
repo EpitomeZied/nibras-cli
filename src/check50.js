@@ -38,7 +38,7 @@ async function runCheck50({ slug, localChecks, previous }) {
   if (localChecks) args.push("--local");
   args.push(slug, "-o", "json");
   const env = { ...process.env };
-  if (previous) env.PRAXIS_PREVIOUS = "1";
+  if (previous) env.NIBRAS_PREVIOUS = "1";
   const result = await runCommand("check50", args, { env });
   return result;
 }

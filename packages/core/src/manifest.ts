@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ProjectManifest, ProjectManifestSchema } from "@praxis/contracts";
+import { ProjectManifest, ProjectManifestSchema } from "@nibras/contracts";
 
 export function findProjectRoot(startCwd: string): string | null {
   let current = path.resolve(startCwd);
   while (true) {
-    const manifestPath = path.join(current, ".praxis", "project.json");
+    const manifestPath = path.join(current, ".nibras", "project.json");
     if (fs.existsSync(manifestPath)) {
       return current;
     }
@@ -18,17 +18,17 @@ export function findProjectRoot(startCwd: string): string | null {
 }
 
 export function getManifestPath(projectRoot: string): string {
-  return path.join(projectRoot, ".praxis", "project.json");
+  return path.join(projectRoot, ".nibras", "project.json");
 }
 
 export function getTaskPath(projectRoot: string): string {
-  return path.join(projectRoot, ".praxis", "task.md");
+  return path.join(projectRoot, ".nibras", "task.md");
 }
 
 export function loadProjectManifest(cwd: string): { projectRoot: string; manifest: ProjectManifest; manifestPath: string } {
   const projectRoot = findProjectRoot(cwd);
   if (!projectRoot) {
-    throw new Error("No .praxis/project.json found in this directory or any parent directory.");
+    throw new Error("No .nibras/project.json found in this directory or any parent directory.");
   }
   const manifestPath = getManifestPath(projectRoot);
   const raw = fs.readFileSync(manifestPath, "utf8");

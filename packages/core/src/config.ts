@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { CliConfig, CliConfigSchema } from "@praxis/contracts";
+import { CliConfig, CliConfigSchema } from "@nibras/contracts";
 import { getDefaultApiBaseUrl, getGlobalConfigPath } from "./paths";
 
 export function readCliConfig(): CliConfig {

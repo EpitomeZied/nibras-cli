@@ -11,12 +11,12 @@ const { FileStore } = require("../apps/api/dist/store");
 const repoRoot = path.resolve(__dirname, "..");
 
 function makeTempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "praxis-modern-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "nibras-modern-"));
 }
 
 async function startApi(storePath) {
-  const previousStore = process.env.PRAXIS_API_STORE;
-  process.env.PRAXIS_API_STORE = storePath;
+  const previousStore = process.env.NIBRAS_API_STORE;
+  process.env.NIBRAS_API_STORE = storePath;
   const app = buildApp(new FileStore(storePath));
   await app.listen({ port: 0, host: "127.0.0.1" });
   const address = app.server.address();
@@ -26,9 +26,9 @@ async function startApi(storePath) {
     close: async () => {
       await app.close();
       if (previousStore === undefined) {
-        delete process.env.PRAXIS_API_STORE;
+        delete process.env.NIBRAS_API_STORE;
       } else {
-        process.env.PRAXIS_API_STORE = previousStore;
+        process.env.NIBRAS_API_STORE = previousStore;
       }
     }
   };
@@ -48,7 +48,7 @@ async function createSession(apiBaseUrl) {
 }
 
 function writeCliConfig(configRoot, apiBaseUrl, session) {
-  const configDir = path.join(configRoot, "praxis");
+  const configDir = path.join(configRoot, "nibras");
   fs.mkdirSync(configDir, { recursive: true });
   fs.writeFileSync(path.join(configDir, "config.json"), JSON.stringify({
     apiBaseUrl,
@@ -60,7 +60,7 @@ function writeCliConfig(configRoot, apiBaseUrl, session) {
 
 function runCli(args, options = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("node", [path.join(repoRoot, "bin", "praxis.js"), ...args], {
+    const child = spawn("node", [path.join(repoRoot, "bin", "nibras.js"), ...args], {
       cwd: options.cwd || repoRoot,
       env: {
         ...process.env,
@@ -86,7 +86,7 @@ function runCli(args, options = {}) {
 test("modern CLI help renders the new command surface", async () => {
   const result = await runCli(["--plain"]);
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /CLI to interact with Praxis/);
+  assert.match(result.stdout, /CLI to interact with Nibras/);
   assert.match(result.stdout, /login:/);
   assert.match(result.stdout, /legacy:/);
 });
@@ -129,8 +129,8 @@ test("modern CLI setup bootstraps a local project from the API", async () => {
 
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Project: cs161\/exam1/);
-    assert.ok(fs.existsSync(path.join(projectDir, ".praxis", "project.json")));
-    assert.ok(fs.existsSync(path.join(projectDir, ".praxis", "task.md")));
+    assert.ok(fs.existsSync(path.join(projectDir, ".nibras", "project.json")));
+    assert.ok(fs.existsSync(path.join(projectDir, ".nibras", "task.md")));
   } finally {
     await server.close();
   }
@@ -173,9 +173,9 @@ test("modern CLI submit commits, pushes, and waits for verification", async () =
     const remote = path.join(tmp, "remote.git");
     const projectDir = path.join(tmp, "project");
     fs.mkdirSync(projectDir, { recursive: true });
-    fs.mkdirSync(path.join(projectDir, ".praxis"), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, ".nibras"), { recursive: true });
     fs.mkdirSync(path.join(projectDir, "answers"), { recursive: true });
-    fs.writeFileSync(path.join(projectDir, ".praxis", "project.json"), JSON.stringify({
+    fs.writeFileSync(path.join(projectDir, ".nibras", "project.json"), JSON.stringify({
       projectKey: "cs161/exam1",
       releaseVersion: "2026-03-01",
       apiBaseUrl: server.apiBaseUrl,
@@ -187,11 +187,11 @@ test("modern CLI submit commits, pushes, and waits for verification", async () =
         supportsPrevious: true
       },
       submission: {
-        allowedPaths: ["answers/**", ".praxis/**"],
+        allowedPaths: ["answers/**", ".nibras/**"],
         waitForVerificationSeconds: 10
       }
     }, null, 2));
-    fs.writeFileSync(path.join(projectDir, ".praxis", "task.md"), "# Task\n");
+    fs.writeFileSync(path.join(projectDir, ".nibras", "task.md"), "# Task\n");
     fs.writeFileSync(path.join(projectDir, "answers", "q1.txt"), "initial\n");
 
     assert.equal(spawnSync("git", ["init", "--bare", remote], { encoding: "utf8" }).status, 0);

@@ -67,7 +67,7 @@ export function buildApiBaseUrlCandidates({
 
 export function formatApiDiscoveryError(candidates) {
   const attempted = candidates.length > 0 ? candidates.join(", ") : "no API base URLs";
-  return `Unable to reach the Praxis API. Tried: ${attempted}. Start \`npm run api:dev\` for local API access, start \`npm run proxy:dev\` for same-origin proxy access, or update \`.env\` and your tunnel URL before signing in again.`;
+  return `Unable to reach the Nibras API. Tried: ${attempted}. Start \`npm run api:dev\` for local API access, start \`npm run proxy:dev\` for same-origin proxy access, or update \`.env\` and your tunnel URL before signing in again.`;
 }
 
 export async function discoverApiBaseUrlWith({
@@ -108,7 +108,7 @@ export function createApiUrl(apiBaseUrl, path) {
 }
 
 export function formatApiFetchError(apiBaseUrl) {
-  return `Unable to reach the Praxis API at ${apiBaseUrl}. Start \`npm run api:dev\` for local API access, start \`npm run proxy:dev\` for same-origin proxy access, or update \`.env\` and your tunnel URL.`;
+  return `Unable to reach the Nibras API at ${apiBaseUrl}. Start \`npm run api:dev\` for local API access, start \`npm run proxy:dev\` for same-origin proxy access, or update \`.env\` and your tunnel URL.`;
 }
 
 export async function apiFetchWith({

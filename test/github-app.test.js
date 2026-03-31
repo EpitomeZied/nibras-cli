@@ -44,7 +44,7 @@ test("GitHub app JWT generation accepts RSA private keys from GitHub", async () 
     clientSecret: "client-secret",
     privateKey,
     webhookSecret: "webhook-secret",
-    appName: "praxis-dev-zied"
+    appName: "nibras-dev-zied"
   });
   assert.equal(typeof jwt, "string");
   assert.match(jwt, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
@@ -98,7 +98,7 @@ test("GitHub user lookup falls back to the primary email endpoint when profile e
       clientSecret: "secret",
       privateKey: "private-key",
       webhookSecret: "webhook-secret",
-      appName: "praxis-test",
+      appName: "nibras-test",
       apiVersion: "2022-11-28"
     }, "user-token");
     assert.equal(user.email, "primary@example.com");
@@ -119,7 +119,7 @@ test("GitHub OAuth start sanitizes untrusted return_to targets", async () => {
     GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
     GITHUB_APP_NAME: process.env.GITHUB_APP_NAME,
-    PRAXIS_WEB_BASE_URL: process.env.PRAXIS_WEB_BASE_URL
+    NIBRAS_WEB_BASE_URL: process.env.NIBRAS_WEB_BASE_URL
   };
 
   process.env.GITHUB_APP_ID = "1";
@@ -127,10 +127,10 @@ test("GitHub OAuth start sanitizes untrusted return_to targets", async () => {
   process.env.GITHUB_APP_CLIENT_SECRET = "secret";
   process.env.GITHUB_APP_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\\nMIIBVwIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA1nrWuXbR8+7y6Kk4fHq4\\n+vAc9/Yo8luFs3ql3m1rLzP54ha7qjR+uC7X+J2IcF9GTOj6OMzQ1i4WS9VmqHj7pncE\\nSwIDAQABAkAFoM/3we0nCnJm9n6QQN0JrgR6m7kQuVvx0hgHqYb1Y3WK07jPvpw59h8z\\nBVqYl1C5cxk2bOgQaLhB5yyLqFxpfK1BAiEA+kVLdP0wVR2z67q7QCY2H8YDySa9j0Kw\\npqD7+z3t0hcCIQDY6qShdU1TjzC9s2niHzR6x1AOeX4DB+MEd+fQzT47XQIhAKgNbspA\\nUXBMLFIFlNIeNdAyjDx6fFt9VxDqVjPW8M2JAiEAo6EuzXgS4N2iQdTk5ExT+zvM9dDc\\n3HV3d6uxzj1hUZkCIBbV5sH3sRh6QU8RZUS2l0h6eJQk9g94D96sl8GF8Hdl\\n-----END PRIVATE KEY-----";
   process.env.GITHUB_WEBHOOK_SECRET = "webhook-secret";
-  process.env.GITHUB_APP_NAME = "praxis-test";
-  process.env.PRAXIS_WEB_BASE_URL = "https://praxis.example";
+  process.env.GITHUB_APP_NAME = "nibras-test";
+  process.env.NIBRAS_WEB_BASE_URL = "https://nibras.example";
 
-  const app = buildApp(new FileStore("/tmp/praxis-oauth-start-test.json"));
+  const app = buildApp(new FileStore("/tmp/nibras-oauth-start-test.json"));
 
   try {
     const response = await app.inject({
@@ -147,7 +147,7 @@ test("GitHub OAuth start sanitizes untrusted return_to targets", async () => {
 
     const decoded = verifySignedState("secret", signedState);
     assert.deepEqual(decoded, {
-      returnTo: "https://praxis.example/auth/complete"
+      returnTo: "https://nibras.example/auth/complete"
     });
   } finally {
     await app.close();
@@ -175,9 +175,9 @@ test("GitHub webhook endpoint rejects invalid signatures and accepts valid ones"
   process.env.GITHUB_APP_CLIENT_SECRET = "secret";
   process.env.GITHUB_APP_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\\nMIIBVwIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA1nrWuXbR8+7y6Kk4fHq4\\n+vAc9/Yo8luFs3ql3m1rLzP54ha7qjR+uC7X+J2IcF9GTOj6OMzQ1i4WS9VmqHj7pncE\\nSwIDAQABAkAFoM/3we0nCnJm9n6QQN0JrgR6m7kQuVvx0hgHqYb1Y3WK07jPvpw59h8z\\nBVqYl1C5cxk2bOgQaLhB5yyLqFxpfK1BAiEA+kVLdP0wVR2z67q7QCY2H8YDySa9j0Kw\\npqD7+z3t0hcCIQDY6qShdU1TjzC9s2niHzR6x1AOeX4DB+MEd+fQzT47XQIhAKgNbspA\\nUXBMLFIFlNIeNdAyjDx6fFt9VxDqVjPW8M2JAiEAo6EuzXgS4N2iQdTk5ExT+zvM9dDc\\n3HV3d6uxzj1hUZkCIBbV5sH3sRh6QU8RZUS2l0h6eJQk9g94D96sl8GF8Hdl\\n-----END PRIVATE KEY-----";
   process.env.GITHUB_WEBHOOK_SECRET = "webhook-secret";
-  process.env.GITHUB_APP_NAME = "praxis-test";
+  process.env.GITHUB_APP_NAME = "nibras-test";
 
-  const app = buildApp(new FileStore("/tmp/praxis-webhook-test.json"));
+  const app = buildApp(new FileStore("/tmp/nibras-webhook-test.json"));
   try {
     const payload = JSON.stringify({
       ref: "refs/heads/main",

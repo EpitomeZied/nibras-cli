@@ -50,7 +50,7 @@ export async function runSandboxed(
   opts: SandboxOptions = {}
 ): Promise<SandboxResult> {
   const resolved = resolveOptions(opts);
-  const workDir = join(tmpdir(), `praxis-verify-${randomUUID()}`);
+  const workDir = join(tmpdir(), `nibras-verify-${randomUUID()}`);
 
   try {
     mkdirSync(workDir, { recursive: true });
@@ -125,7 +125,7 @@ export async function runSandboxed(
         // Prevent the child from inheriting secrets
         DATABASE_URL: undefined,
         GITHUB_APP_PRIVATE_KEY: undefined,
-        PRAXIS_ENCRYPTION_KEY: undefined
+        NIBRAS_ENCRYPTION_KEY: undefined
       }
     });
 

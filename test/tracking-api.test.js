@@ -9,7 +9,7 @@ const { buildApp } = require("../apps/api/dist/app");
 const { FileStore } = require("../apps/api/dist/store");
 
 function makeStorePath() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "praxis-tracking-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nibras-tracking-"));
   return path.join(dir, "store.json");
 }
 
@@ -158,7 +158,7 @@ test("student github milestone submissions can be reviewed and linked to webhook
   process.env.GITHUB_APP_CLIENT_SECRET = "secret";
   process.env.GITHUB_APP_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\\nMIIBVwIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA1nrWuXbR8+7y6Kk4fHq4\\n+vAc9/Yo8luFs3ql3m1rLzP54ha7qjR+uC7X+J2IcF9GTOj6OMzQ1i4WS9VmqHj7pncE\\nSwIDAQABAkAFoM/3we0nCnJm9n6QQN0JrgR6m7kQuVvx0hgHqYb1Y3WK07jPvpw59h8z\\nBVqYl1C5cxk2bOgQaLhB5yyLqFxpfK1BAiEA+kVLdP0wVR2z67q7QCY2H8YDySa9j0Kw\\npqD7+z3t0hcCIQDY6qShdU1TjzC9s2niHzR6x1AOeX4DB+MEd+fQzT47XQIhAKgNbspA\\nUXBMLFIFlNIeNdAyjDx6fFt9VxDqVjPW8M2JAiEAo6EuzXgS4N2iQdTk5ExT+zvM9dDc\\n3HV3d6uxzj1hUZkCIBbV5sH3sRh6QU8RZUS2l0h6eJQk9g94D96sl8GF8Hdl\\n-----END PRIVATE KEY-----";
   process.env.GITHUB_WEBHOOK_SECRET = "webhook-secret";
-  process.env.GITHUB_APP_NAME = "praxis-test";
+  process.env.GITHUB_APP_NAME = "nibras-test";
 
   const storePath = makeStorePath();
   const store = new FileStore(storePath);
@@ -190,9 +190,9 @@ test("student github milestone submissions can be reviewed and linked to webhook
       },
       payload: JSON.stringify({
         submissionType: "github",
-        submissionValue: "https://github.com/demo-user/praxis-cs161-exam1",
+        submissionValue: "https://github.com/demo-user/nibras-cs161-exam1",
         notes: "Initial draft",
-        repoUrl: "https://github.com/demo-user/praxis-cs161-exam1",
+        repoUrl: "https://github.com/demo-user/nibras-cs161-exam1",
         branch: "main",
         commitSha: ""
       })
@@ -238,8 +238,8 @@ test("student github milestone submissions can be reviewed and linked to webhook
       ref: "refs/heads/main",
       after: "abc123",
       repository: {
-        name: "praxis-cs161-exam1",
-        html_url: "https://github.com/demo-user/praxis-cs161-exam1",
+        name: "nibras-cs161-exam1",
+        html_url: "https://github.com/demo-user/nibras-cs161-exam1",
         owner: { login: "demo-user" }
       }
     });

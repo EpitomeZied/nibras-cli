@@ -35,13 +35,13 @@ export default function TopHeader({
   loading: boolean;
 }) {
   const pathname = usePathname();
-  const identity = user?.username || user?.githubLogin || "Praxis";
+  const identity = user?.username || user?.githubLogin || "Nibras";
   const breadcrumb = BREADCRUMBS[pathname] ?? "Dashboard";
 
   return (
     <header className="topHeader">
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 12, color: "var(--text-soft)" }}>Praxis</span>
+        <span style={{ fontSize: 12, color: "var(--text-soft)" }}>Nibras</span>
         <span style={{ fontSize: 12, color: "var(--text-soft)" }}>/</span>
         <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>{breadcrumb}</span>
       </div>

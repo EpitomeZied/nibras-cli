@@ -48,4 +48,4 @@ COPY --from=build /app/apps/web/.next ./apps/web/.next
 COPY --from=build /app/apps/web/package.json ./apps/web/package.json
 COPY --from=build /app/node_modules ./node_modules
 EXPOSE 3000
-CMD ["npm", "run", "start", "--workspace=@praxis/web"]
+CMD ["npm", "run", "start", "--workspace=@nibras/web"]

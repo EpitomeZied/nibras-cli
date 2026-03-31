@@ -1,6 +1,6 @@
-# Praxis CLI — πρᾶξις
+# Nibras CLI — πρᾶξις
 
-`praxis` is a course operations CLI and hosted validation stack for project
+`nibras` is a course operations CLI and hosted validation stack for project
 setup, testing, submission, and tracked verification.
 
 This repo includes:
@@ -22,11 +22,11 @@ directory is the legacy CLI and is kept for backwards compatibility.
 
 Supported workflows include:
 
-- project-local commands with `praxis test`, `praxis submit`, `praxis task`, and `praxis setup`
-- device login with `praxis login`, `logout`, and `whoami`
+- project-local commands with `nibras test`, `nibras submit`, `nibras task`, and `nibras setup`
+- device login with `nibras login`, `logout`, and `whoami`
 - tracked submissions, verification status transitions, and admin overrides
 - strict private grading, semantic grading, manual score fallback, and optional `check50`
-- AI grading with confidence scores, criterion breakdowns, and reasoning summaries (optional, requires `PRAXIS_AI_API_KEY`)
+- AI grading with confidence scores, criterion breakdowns, and reasoning summaries (optional, requires `NIBRAS_AI_API_KEY`)
 - instructor dashboard: course management, project/milestone setup, submission review queue, grade CSV export
 - GitHub OAuth, GitHub App install linking, signed webhook handling, and commit status checks on student repos
 - transactional email notifications for students and instructors via Resend (optional, requires `RESEND_API_KEY`)
@@ -51,7 +51,7 @@ Project tracking docs:
 The published CLI package:
 
 ```bash
-npm install -g @praxis/cli
+npm install -g @nibras/cli
 ```
 
 Or install from source (legacy CLI entry point):
@@ -139,10 +139,10 @@ The proxy fans requests out like this:
 
 Use the public ngrok URL in:
 
-- `PRAXIS_API_BASE_URL`
-- `PRAXIS_WEB_BASE_URL`
-- `NEXT_PUBLIC_PRAXIS_API_BASE_URL`
-- `NEXT_PUBLIC_PRAXIS_WEB_BASE_URL`
+- `NIBRAS_API_BASE_URL`
+- `NIBRAS_WEB_BASE_URL`
+- `NEXT_PUBLIC_NIBRAS_API_BASE_URL`
+- `NEXT_PUBLIC_NIBRAS_WEB_BASE_URL`
 
 GitHub cannot call `127.0.0.1`, so the public tunnel URL must also be used in
 the GitHub App settings.
@@ -209,7 +209,7 @@ Emails sent automatically:
 Relevant env vars:
 
 - `RESEND_API_KEY` — get a free key at resend.com
-- `PRAXIS_EMAIL_FROM` — sender address, must be a verified domain in your Resend account (e.g. `Praxis <noreply@yourdomain.com>`)
+- `NIBRAS_EMAIL_FROM` — sender address, must be a verified domain in your Resend account (e.g. `Nibras <noreply@yourdomain.com>`)
 
 Omit `RESEND_API_KEY` to disable email entirely with no other changes required.
 
@@ -217,9 +217,9 @@ Omit `RESEND_API_KEY` to disable email entirely with no other changes required.
 
 After every submission is verified, the worker posts a GitHub commit status to
 the student's repo. Students see a ✅, ❌, or 🔄 badge directly on their commit
-and can click through to their Praxis submission page.
+and can click through to their Nibras submission page.
 
-| Praxis status | GitHub badge | Label |
+| Nibras status | GitHub badge | Label |
 |---|---|---|
 | `passed` | ✅ green | All tests passed |
 | `failed` | ❌ red | Tests failed |
@@ -230,7 +230,7 @@ Requires the GitHub App to have **Commit statuses: Read and write** permission
 flow so their `installationId` is recorded. If either is missing the check is
 skipped silently.
 
-`PRAXIS_WEB_BASE_URL` must be set for the status badge to link back to the
+`NIBRAS_WEB_BASE_URL` must be set for the status badge to link back to the
 submission page.
 
 ## Grade Export
@@ -247,16 +247,16 @@ submission status otherwise.
 
 ## AI Grading
 
-When `PRAXIS_AI_API_KEY` and `PRAXIS_AI_MODEL` are set, the worker
+When `NIBRAS_AI_API_KEY` and `NIBRAS_AI_MODEL` are set, the worker
 automatically grades semantic questions after a successful verification run.
 Results pre-fill the instructor review form with confidence scores, criterion
 breakdowns, reasoning summaries, and evidence quotes.
 
 Relevant env vars (see `.env.example` for defaults):
 
-- `PRAXIS_AI_API_KEY` — required to enable AI grading
-- `PRAXIS_AI_MODEL` — model name (default: `gpt-4o-mini`)
-- `PRAXIS_AI_BASE_URL` — override for Azure, Ollama, or other OpenAI-compatible providers
-- `PRAXIS_AI_MIN_CONFIDENCE` — submissions below this threshold are flagged for human review (default: `0.8`)
+- `NIBRAS_AI_API_KEY` — required to enable AI grading
+- `NIBRAS_AI_MODEL` — model name (default: `gpt-4o-mini`)
+- `NIBRAS_AI_BASE_URL` — override for Azure, Ollama, or other OpenAI-compatible providers
+- `NIBRAS_AI_MIN_CONFIDENCE` — submissions below this threshold are flagged for human review (default: `0.8`)
 
-Omit `PRAXIS_AI_API_KEY` to disable AI grading entirely with no other changes required.
+Omit `NIBRAS_AI_API_KEY` to disable AI grading entirely with no other changes required.

@@ -1,9 +1,9 @@
 {
-  "name": "praxis",
+  "name": "nibras",
   "version": "0.1.0",
   "description": "Hosted, GitHub-linked CLI for project setup, testing, and submission.",
   "bin": {
-    "praxis": "bin/praxis.js"
+    "nibras": "bin/nibras.js"
   },
   "type": "commonjs",
   "main": "src/cli.js",
@@ -12,23 +12,23 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "node -r dotenv/config bin/praxis.js",
+    "start": "node -r dotenv/config bin/nibras.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",
-    "db:local:reset": "docker compose down -v && docker compose up -d && until docker compose exec -T postgres pg_isready -U praxis -d praxis; do sleep 1; done",
+    "db:local:reset": "docker compose down -v && docker compose up -d && until docker compose exec -T postgres pg_isready -U nibras -d nibras; do sleep 1; done",
     "db:local:migrate": "npm run db:deploy",
-    "build": "npm run db:generate && npm run build -w @praxis/contracts && npm run build -w @praxis/core && npm run build -w @praxis/github && npm run build -w @praxis/grading && npm run build -w @praxis/api && npm run build -w @praxis/proxy && npm run build -w @praxis/cli && npm run build -w @praxis/worker",
+    "build": "npm run db:generate && npm run build -w @nibras/contracts && npm run build -w @nibras/core && npm run build -w @nibras/github && npm run build -w @nibras/grading && npm run build -w @nibras/api && npm run build -w @nibras/proxy && npm run build -w @nibras/cli && npm run build -w @nibras/worker",
     "api:dev": "node -r dotenv/config apps/api/dist/server.js",
     "worker:dev": "node -r dotenv/config apps/worker/dist/worker.js",
     "proxy:dev": "node -r dotenv/config apps/proxy/dist/server.js",
-    "web:dev": "npm run dev -w @praxis/web",
+    "web:dev": "npm run dev -w @nibras/web",
     "dev:bootstrap": "node scripts/dev-bootstrap.js",
-    "dev:watch": "concurrently -k --names contracts,core,github,grading,api,proxy,worker \"npm run watch -w @praxis/contracts\" \"npm run watch -w @praxis/core\" \"npm run watch -w @praxis/github\" \"npm run watch -w @praxis/grading\" \"npm run watch -w @praxis/api\" \"npm run watch -w @praxis/proxy\" \"npm run watch -w @praxis/worker\"",
-    "dev:services": "concurrently -k --names api,worker,web \"nodemon --watch apps/api/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run api:dev\\\"\" \"nodemon --watch apps/worker/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run worker:dev\\\"\" \"npm run dev -w @praxis/web\"",
+    "dev:watch": "concurrently -k --names contracts,core,github,grading,api,proxy,worker \"npm run watch -w @nibras/contracts\" \"npm run watch -w @nibras/core\" \"npm run watch -w @nibras/github\" \"npm run watch -w @nibras/grading\" \"npm run watch -w @nibras/api\" \"npm run watch -w @nibras/proxy\" \"npm run watch -w @nibras/worker\"",
+    "dev:services": "concurrently -k --names api,worker,web \"nodemon --watch apps/api/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run api:dev\\\"\" \"nodemon --watch apps/worker/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run worker:dev\\\"\" \"npm run dev -w @nibras/web\"",
     "dev": "npm run dev:bootstrap && concurrently -k \"npm run dev:watch\" \"npm run dev:services\"",
-    "web:build": "npm run build -w @praxis/web",
+    "web:build": "npm run build -w @nibras/web",
     "manual:preflight": "npm test && npm run web:build",
     "test": "npm run build && node --test test/*.js",
     "lint": "node -e \"console.log('no lint configured')\""
