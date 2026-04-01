@@ -18,14 +18,19 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
   --accent: var(--primary);
   --bg: var(--page-bg);
   --background: var(--page-bg);
   --error: var(--danger);
   --sidebar-bg: #0a0e1a;
+  --font-sans: 'Inter', 'Segoe UI', sans-serif;
+  --font-mono: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
 }
 
 * {
@@ -45,7 +50,7 @@ body {
     radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
     var(--page-bg);
   color: var(--text);
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
 }
 
 a {
@@ -362,12 +367,18 @@ main {
 }
 
 .navLinkActive {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.15);
 }
 
 .navLinkActive strong {
   color: var(--primary-strong) !important;
+}
+
+/* Left-border accent active state */
+.navLinkAccentBorder {
+  border-left: 2px solid var(--primary) !important;
+  padding-left: 8px;
 }
 
 .navIcon {
@@ -647,4 +658,62 @@ main {
   .pageHero {
     padding: 20px;
   }
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0% {
+    background-position: -600px 0;
+  }
+  100% {
+    background-position: 600px 0;
+  }
+}
+
+.skeleton {
+  display: inline-block;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--surface-strong) 50%,
+    var(--surface) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--surface-strong) 50%,
+    var(--surface) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* ── Notification badge ──────────────────────────────────────────────────── */
+
+.notifBadge {
+  position: relative;
+}
+
+.notifBadge::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 2px solid var(--sidebar-bg);
 }

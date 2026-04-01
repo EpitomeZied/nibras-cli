@@ -6,6 +6,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import * as Sentry from '@sentry/node';
 import rawBodyPlugin from 'fastify-raw-body';
+import { Counter, Registry, collectDefaultMetrics } from 'prom-client';
 import { PrismaClient } from '@prisma/client';
 import { loadGitHubAppConfig } from '@nibras/github';
 import { PrismaStore } from './prisma-store';
@@ -133,6 +134,13 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     global: true,
     max: globalRateMax,
     timeWindow: '1 minute',
+    // Expose quota headers so clients know how many requests they have left.
+    addHeaders: {
+      'x-ratelimit-limit': true,
+      'x-ratelimit-remaining': true,
+      'x-ratelimit-reset': true,
+      'retry-after': true,
+    },
     // Use Bearer token as rate-limit key for authenticated requests so each
     // user gets their own quota; fall back to IP for unauthenticated callers.
     keyGenerator: (request) => {
@@ -150,7 +158,7 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['authorization', 'content-type', 'x-request-id'],
-    exposedHeaders: ['x-request-id', 'x-total-count'],
+    exposedHeaders: ['x-request-id', 'x-total-count', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset'],
     origin(origin, callback) {
       if (!origin) {
         callback(null, true);
@@ -186,10 +194,20 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
   });
 
   // ── Prometheus-compatible metrics ─────────────────────────────────────────
-  const requestCounts: Record<string, number> = {};
+  // Use a fresh per-app Registry so multiple buildApp() calls (e.g. in tests)
+  // don't collide on the global default registry.
+  const promRegistry = new Registry();
+  collectDefaultMetrics({ register: promRegistry });
+
+  const httpRequestsTotal = new Counter({
+    name: 'nibras_http_requests_total',
+    help: 'Total HTTP requests by method and status',
+    labelNames: ['method', 'status'] as const,
+    registers: [promRegistry],
+  });
+
   app.addHook('onResponse', async (request, reply) => {
-    const key = `${request.method}_${reply.statusCode}`;
-    requestCounts[key] = (requestCounts[key] || 0) + 1;
+    httpRequestsTotal.inc({ method: request.method, status: String(reply.statusCode) });
   });
 
   app.get('/metrics', { schema: { tags: ['system'], summary: 'Prometheus-compatible metrics' } }, async (request, reply) => {
@@ -202,15 +220,12 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
         return reply.code(401).send({ error: 'Unauthorized.', code: 'AUTH_REQUIRED' });
       }
     }
-    const lines: string[] = [
-      '# HELP nibras_http_requests_total Total HTTP requests by method and status',
-      '# TYPE nibras_http_requests_total counter',
-    ];
-    for (const [key, count] of Object.entries(requestCounts)) {
-      const [method, status] = key.split('_');
-      lines.push(`nibras_http_requests_total{method="${method}",status="${status}"} ${count}`);
-    }
 
+    // prom-client handles nibras_http_requests_total + all default process metrics.
+    let output = await promRegistry.metrics();
+
+    // DB-sourced gauges appended as raw Prometheus text — always fresh from the DB,
+    // not subject to counter-reset issues on process restart.
     if (process.env.DATABASE_URL) {
       try {
         const prisma = new PrismaClient();
@@ -221,26 +236,26 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
           prisma.verificationJob.count({ where: { status: 'needs_review' } }),
         ]);
         await prisma.$disconnect();
-        lines.push(
+        output += [
           '',
           '# HELP nibras_verification_queue_depth Number of queued verification jobs',
           '# TYPE nibras_verification_queue_depth gauge',
           `nibras_verification_queue_depth ${queueDepth}`,
           '',
-          '# HELP nibras_verification_total Completed verifications by status',
-          '# TYPE nibras_verification_total counter',
-          `nibras_verification_total{status="passed"} ${passedCount}`,
-          `nibras_verification_total{status="failed"} ${failedCount}`,
-          `nibras_verification_total{status="needs_review"} ${reviewCount}`
-        );
+          '# HELP nibras_verification_by_status Verifications grouped by final status',
+          '# TYPE nibras_verification_by_status gauge',
+          `nibras_verification_by_status{status="passed"} ${passedCount}`,
+          `nibras_verification_by_status{status="failed"} ${failedCount}`,
+          `nibras_verification_by_status{status="needs_review"} ${reviewCount}`,
+        ].join('\n') + '\n';
       } catch {
-        lines.push('# ERROR: could not query DB for verification metrics');
+        output += '# ERROR: could not query DB for verification metrics\n';
       }
     }
 
     return reply
-      .header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
-      .send(lines.join('\n') + '\n');
+      .header('Content-Type', promRegistry.contentType)
+      .send(output);
   });
 
   // Capture unhandled errors in Sentry when DSN is configured

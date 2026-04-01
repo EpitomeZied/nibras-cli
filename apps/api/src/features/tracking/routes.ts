@@ -818,4 +818,40 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
     }
     return await store.getTrackingSubmissionCommits(requestBaseUrl(request), params.submissionId);
   });
+
+  /**
+   * GET /v1/tracking/courses/:courseId/export.csv
+   * Export all student submission data for the course as a CSV file.
+   * Restricted to instructors, TAs, and admins.
+   */
+  app.get('/v1/tracking/courses/:courseId/export.csv', {
+    schema: {
+      tags: ['tracking'],
+      summary: 'Export student grades as CSV (instructor/admin only)',
+      produces: ['text/csv'],
+    },
+  }, async (request, reply) => {
+    const auth = await requireUser(request, reply, store);
+    if (!auth) return;
+    const params = request.params as { courseId: string };
+    if (!validateId(params.courseId, reply, 'courseId')) return;
+    if (!canManageCourse(auth, params.courseId)) {
+      return reply.code(403).send(Errors.forbidden());
+    }
+    const rows = await store.exportCourseGrades(requestBaseUrl(request), params.courseId);
+    const csvCell = (value: string | null | undefined): string =>
+      `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const header = 'githubLogin,username,milestoneTitle,projectKey,status,submittedAt,commitSha\n';
+    const body = rows
+      .map((r) =>
+        [r.githubLogin, r.username, r.milestoneTitle, r.projectKey, r.status, r.submittedAt, r.commitSha]
+          .map(csvCell)
+          .join(',')
+      )
+      .join('\n');
+    return reply
+      .header('Content-Type', 'text/csv; charset=utf-8')
+      .header('Content-Disposition', `attachment; filename="course-${params.courseId}-grades.csv"`)
+      .send(header + body + '\n');
+  });
 }

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { appNavItems } from './nav-config';
 
 type ShellSessionUser = {
@@ -71,7 +72,37 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  Settings: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
 };
+
+const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    aria-hidden="true"
+    style={{ transition: 'transform 0.2s ease', transform: collapsed ? 'rotate(180deg)' : 'none' }}
+  >
+    <path
+      d="M9 3L5 7l4 4"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 export default function Sidebar({
   user,
@@ -83,16 +114,56 @@ export default function Sidebar({
   const pathname = usePathname();
   const displayName = user?.username || user?.githubLogin || 'Nibras User';
 
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nibras.sidebar.collapsed');
+      if (saved === 'true') setCollapsed(true);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function toggleCollapse() {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem('nibras.sidebar.collapsed', String(next));
+    } catch {
+      // ignore
+    }
+  }
+
   return (
-    <aside className="sidebar">
+    <aside
+      className="sidebar"
+      style={{
+        width: collapsed ? 64 : undefined,
+        transition: 'width 0.2s ease',
+        overflow: collapsed ? 'visible' : undefined,
+      }}
+    >
       {/* Brand */}
-      <div className="brandBlock">
+      <div className="brandBlock" style={{ justifyContent: collapsed ? 'center' : undefined }}>
         <Image src="/branding/nibras-icon.svg" alt="Nibras icon" width={32} height={32} priority />
-        <div>
-          <strong className="brandTitle">Nibras</strong>
-          <p className="brandSubtitle">Developer Platform</p>
-        </div>
+        {!collapsed && (
+          <div>
+            <strong className="brandTitle">Nibras</strong>
+            <p className="brandSubtitle">Developer Platform</p>
+          </div>
+        )}
       </div>
+
+      {/* Section label: MAIN */}
+      {!collapsed && (
+        <span
+          className="sectionEyebrow"
+          style={{ paddingLeft: 10, marginBottom: -4, fontSize: 10 }}
+        >
+          Main
+        </span>
+      )}
 
       {/* Primary nav */}
       <nav className="sidebarNav" aria-label="Primary">
@@ -104,12 +175,18 @@ export default function Sidebar({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`navLink ${isActive ? 'navLinkActive' : ''}`}
+                className={`navLink ${isActive ? 'navLinkActive navLinkAccentBorder' : ''}`}
+                title={collapsed ? item.label : undefined}
+                style={
+                  collapsed
+                    ? { justifyContent: 'center', padding: '9px 0' }
+                    : undefined
+                }
               >
                 <span className="navIcon" aria-hidden="true">
                   {NAV_ICONS[item.label] ?? '•'}
                 </span>
-                <strong>{item.label}</strong>
+                {!collapsed && <strong>{item.label}</strong>}
               </Link>
             );
           })}
@@ -118,32 +195,87 @@ export default function Sidebar({
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
+      {/* Section label: SYSTEM */}
+      {!collapsed && (
+        <span
+          className="sectionEyebrow"
+          style={{ paddingLeft: 10, marginBottom: -4, fontSize: 10 }}
+        >
+          System
+        </span>
+      )}
+
       {/* Bottom links */}
       <nav className="sidebarNav" aria-label="Secondary">
-        <Link href="/dashboard" className={`navLink ${pathname === '/dashboard' ? '' : ''}`}>
+        <Link
+          href="/dashboard"
+          className="navLink"
+          title={collapsed ? 'Settings' : undefined}
+          style={collapsed ? { justifyContent: 'center', padding: '9px 0' } : undefined}
+        >
           <span className="navIcon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
+            {NAV_ICONS['Settings']}
           </span>
-          <strong>Settings</strong>
+          {!collapsed && <strong>Settings</strong>}
         </Link>
       </nav>
 
+      {/* Collapse toggle */}
+      <button
+        onClick={toggleCollapse}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: 8,
+          padding: '8px 10px',
+          borderRadius: 10,
+          border: '1px solid var(--border)',
+          background: 'transparent',
+          color: 'var(--text-soft)',
+          cursor: 'pointer',
+          fontSize: 12,
+          transition: 'background 0.15s, color 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-strong)';
+          (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+          (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-soft)';
+        }}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        <CollapseIcon collapsed={collapsed} />
+        {!collapsed && <span>Collapse</span>}
+      </button>
+
       {/* Profile footer */}
-      <div className="sidebarFooter">
-        <div className="sidebarProfile">
-          <span className="avatarCircle">{loading ? '…' : initials(displayName)}</span>
-          <div>
-            <strong>{loading ? 'Loading session' : displayName}</strong>
-            <span>{user?.email || 'GitHub-linked account'}</span>
+      {!collapsed && (
+        <div className="sidebarFooter">
+          <div className="sidebarProfile">
+            <span className="avatarCircle">{loading ? '…' : initials(displayName)}</span>
+            <div>
+              <strong>{loading ? 'Loading session' : displayName}</strong>
+              <span>{user?.email || 'GitHub-linked account'}</span>
+            </div>
           </div>
+          <Link className="logoutLink" href="/">
+            Sign out
+          </Link>
         </div>
-        <Link className="logoutLink" href="/">
-          Sign out
-        </Link>
-      </div>
+      )}
+
+      {/* Collapsed: just avatar */}
+      {collapsed && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+          <span className="avatarCircle" title={displayName}>
+            {loading ? '…' : initials(displayName)}
+          </span>
+        </div>
+      )}
     </aside>
   );
 }

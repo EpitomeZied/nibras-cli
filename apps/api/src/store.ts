@@ -492,6 +492,24 @@ export interface AppStore {
   listUsers(apiBaseUrl: string): Promise<UserRecord[]>;
   setUserSystemRole(apiBaseUrl: string, userId: string, role: SystemRole): Promise<UserRecord | null>;
   deleteUserAccount(apiBaseUrl: string, userId: string): Promise<void>;
+  listUserSubmissions(
+    apiBaseUrl: string,
+    userId: string,
+    opts?: PaginationOpts
+  ): Promise<SubmissionRecord[]>;
+  countUserSubmissions(apiBaseUrl: string, userId: string): Promise<number>;
+  exportCourseGrades(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<Array<{
+    githubLogin: string;
+    username: string;
+    milestoneTitle: string;
+    projectKey: string;
+    status: string;
+    submittedAt: string | null;
+    commitSha: string;
+  }>>;
   close?(): Promise<void>;
 }
 
@@ -909,6 +927,38 @@ export class FileStore implements AppStore {
     // Remove the user record
     data.users = data.users.filter((u) => u.id !== userId);
     this.write(data);
+  }
+
+  async listUserSubmissions(
+    _apiBaseUrl: string,
+    userId: string,
+    opts?: PaginationOpts
+  ): Promise<SubmissionRecord[]> {
+    const data = this.read(_apiBaseUrl);
+    let results = data.submissions.filter((s) => s.userId === userId);
+    if (opts?.offset) results = results.slice(opts.offset);
+    if (opts?.limit) results = results.slice(0, opts.limit);
+    return results;
+  }
+
+  async countUserSubmissions(_apiBaseUrl: string, userId: string): Promise<number> {
+    const data = this.read(_apiBaseUrl);
+    return data.submissions.filter((s) => s.userId === userId).length;
+  }
+
+  async exportCourseGrades(
+    _apiBaseUrl: string,
+    _courseId: string
+  ): Promise<Array<{
+    githubLogin: string;
+    username: string;
+    milestoneTitle: string;
+    projectKey: string;
+    status: string;
+    submittedAt: string | null;
+    commitSha: string;
+  }>> {
+    return [];
   }
 
   async refreshCliSession(apiBaseUrl: string, refreshToken: string): Promise<SessionRecord | null> {

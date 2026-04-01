@@ -1,23 +1,37 @@
 import type { Metadata } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Nibras',
-  description: 'Hosted GitHub-linked CLI and dashboard for project workflows.',
+  description: 'The developer education platform built for serious instructors.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={`${inter.variable} ${jetbrainsMono.variable}`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  document.documentElement.setAttribute("data-theme", "dark");
+                  var saved = localStorage.getItem('nibras.theme');
+                  document.documentElement.setAttribute("data-theme", saved || "dark");
                 } catch (error) {
-                  document.documentElement.setAttribute("data-theme", "light");
+                  document.documentElement.setAttribute("data-theme", "dark");
                 }
               })();
             `,

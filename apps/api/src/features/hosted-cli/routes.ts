@@ -97,6 +97,44 @@ export function registerHostedCliRoutes(
     });
   });
 
+  /**
+   * GET /v1/me/submissions
+   * List all submissions belonging to the authenticated user.
+   * Supports optional ?limit=N&offset=N pagination; returns X-Total-Count header.
+   */
+  app.get(
+    '/v1/me/submissions',
+    {
+      schema: {
+        tags: ['submissions'],
+        summary: "List the authenticated user's own submissions",
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', minimum: 1, maximum: 200 },
+            offset: { type: 'integer', minimum: 0 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const auth = await requireUser(request, reply, store);
+      if (!auth) return;
+      const apiBaseUrl = requestBaseUrl(request);
+      const query = request.query as { limit?: number; offset?: number };
+      const opts =
+        query.limit !== undefined || query.offset !== undefined
+          ? { limit: query.limit, offset: query.offset }
+          : undefined;
+      const [submissions, total] = await Promise.all([
+        store.listUserSubmissions(apiBaseUrl, auth.user.id, opts),
+        store.countUserSubmissions(apiBaseUrl, auth.user.id),
+      ]);
+      void reply.header('X-Total-Count', String(total));
+      return reply.send(submissions);
+    }
+  );
+
   app.get(
     '/v1/web/session',
     { schema: { tags: ['auth'], summary: 'Get current web session user' } },

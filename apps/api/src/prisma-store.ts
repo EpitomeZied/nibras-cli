@@ -2585,6 +2585,69 @@ export class PrismaStore implements AppStore {
     return deliveries.map(toGithubDeliveryRecord);
   }
 
+  async listUserSubmissions(
+    apiBaseUrl: string,
+    userId: string,
+    opts?: { limit?: number; offset?: number }
+  ): Promise<SubmissionRecord[]> {
+    await this.seed(apiBaseUrl);
+    const rows = await this.prisma.submissionAttempt.findMany({
+      where: { userId },
+      include: { project: true },
+      orderBy: { createdAt: 'desc' },
+      take: opts?.limit,
+      skip: opts?.offset,
+    });
+    return rows.map(toSubmissionRecord);
+  }
+
+  async countUserSubmissions(apiBaseUrl: string, userId: string): Promise<number> {
+    await this.seed(apiBaseUrl);
+    return this.prisma.submissionAttempt.count({ where: { userId } });
+  }
+
+  async exportCourseGrades(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<Array<{
+    githubLogin: string;
+    username: string;
+    milestoneTitle: string;
+    projectKey: string;
+    status: string;
+    submittedAt: string | null;
+    commitSha: string;
+  }>> {
+    await this.seed(apiBaseUrl);
+    const memberships = await this.prisma.courseMembership.findMany({
+      where: { courseId, role: CourseRole.student },
+      include: {
+        user: {
+          include: {
+            githubAccount: { select: { login: true } },
+            submissionAttempts: {
+              where: { project: { courseId } },
+              include: { project: true, milestone: true },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      },
+    });
+    return memberships.flatMap((m) => {
+      const login = m.user.githubAccount?.login ?? '';
+      return m.user.submissionAttempts.map((s) => ({
+        githubLogin: login,
+        username: m.user.username,
+        milestoneTitle: s.milestone?.title ?? '',
+        projectKey: s.project.slug,
+        status: s.status,
+        submittedAt: s.submittedAt?.toISOString() ?? null,
+        commitSha: s.commitSha,
+      }));
+    });
+  }
+
   async close(): Promise<void> {
     await this.prisma.$disconnect();
   }

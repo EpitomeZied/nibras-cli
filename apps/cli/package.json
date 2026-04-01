@@ -24,9 +24,14 @@
   "dependencies": {
     "@nibras/contracts": "file:../../packages/contracts",
     "@nibras/core": "file:../../packages/core",
+    "boxen": "^5.1.2",
+    "cli-progress": "^3.12.0",
+    "gradient-string": "^2.0.2",
+    "ora": "^5.4.1",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
     "@vercel/ncc": "^0.38.4"
   }
 }
