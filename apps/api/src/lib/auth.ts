@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { AppStore, CourseMembershipRecord, UserRecord } from '../store';
 import { requestBaseUrl } from './request-base-url';
+import { Errors } from './errors';
 
 function getBearerToken(request: FastifyRequest): string | null {
   const raw = request.headers.authorization;
@@ -47,7 +48,7 @@ export async function requireUser(
   const authKind = bearerToken ? 'bearer' : webSessionToken ? 'web' : null;
   const token = bearerToken || webSessionToken;
   if (!authKind || !token) {
-    reply.code(401).send({ error: 'Authentication required.' });
+    reply.code(401).send(Errors.authRequired());
     return null;
   }
 
@@ -56,7 +57,7 @@ export async function requireUser(
       ? await store.getUserByToken(apiBaseUrl, token)
       : await store.getUserByWebSession(apiBaseUrl, token);
   if (!user) {
-    reply.code(401).send({ error: 'Invalid session.' });
+    reply.code(401).send(Errors.invalidSession());
     return null;
   }
   const memberships = await store.listCourseMemberships(apiBaseUrl, user.id);
