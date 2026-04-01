@@ -262,6 +262,8 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     if (store.close) {
       await store.close();
     }
+    const { closeQueue } = await import('./lib/queue');
+    await closeQueue();
   });
 
   registerGitHubRoutes(app, store, githubConfig);

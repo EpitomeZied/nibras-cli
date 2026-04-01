@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { generateRepositoryFromTemplate, GitHubAppConfig } from '@nibras/github';
 import { encrypt as encryptValue, decrypt as decryptValue } from '@nibras/core';
+import { enqueueVerificationJob } from './lib/queue';
 import {
   ActivityRecord,
   AppStore,
@@ -1370,7 +1371,7 @@ export class PrismaStore implements AppStore {
       return toSubmissionRecord(existing);
     }
     try {
-      const created = await this.prisma.$transaction(async (tx) => {
+      const { created, vJobId } = await this.prisma.$transaction(async (tx) => {
         const submission = await tx.submissionAttempt.create({
           data: {
             userId: payload.userId,
@@ -1397,13 +1398,20 @@ export class PrismaStore implements AppStore {
             log: 'Queued',
           },
         });
-        await tx.verificationJob.create({
+        const vJob = await tx.verificationJob.create({
           data: {
             submissionAttemptId: submission.id,
             status: SubmissionStatus.queued,
           },
         });
-        return submission;
+        return { created: submission, vJobId: vJob.id };
+      });
+      // Enqueue to BullMQ if Redis is configured; no-op otherwise (worker polls DB)
+      void enqueueVerificationJob({
+        jobId: vJobId,
+        submissionAttemptId: created.id,
+        attempt: 0,
+        maxAttempts: 3,
       });
       return toSubmissionRecord(created);
     } catch (error) {
@@ -1492,7 +1500,7 @@ export class PrismaStore implements AppStore {
     const nextAttempt = await this.prisma.verificationRun.count({
       where: { submissionAttemptId: submissionId },
     });
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const { updated, retryJobId } = await this.prisma.$transaction(async (tx) => {
       const submission = await tx.submissionAttempt.update({
         where: { id: submissionId },
         data: {
@@ -1501,14 +1509,29 @@ export class PrismaStore implements AppStore {
         },
         include: { project: true },
       });
-      await tx.verificationJob.updateMany({
-        where: { submissionAttemptId: submissionId },
-        data: {
-          status: status as SubmissionStatus,
-          finishedAt: new Date(),
-          claimedAt: null,
-        },
-      });
+      // For retry: reset job to queued; for other overrides: mark finished
+      let newJobId: string | null = null;
+      if (status === 'queued') {
+        // Create a fresh job for re-queuing
+        await tx.verificationJob.updateMany({
+          where: { submissionAttemptId: submissionId },
+          data: { status: SubmissionStatus.queued, finishedAt: null, claimedAt: null },
+        });
+        const existingJob = await tx.verificationJob.findFirst({
+          where: { submissionAttemptId: submissionId },
+          select: { id: true },
+        });
+        newJobId = existingJob?.id ?? null;
+      } else {
+        await tx.verificationJob.updateMany({
+          where: { submissionAttemptId: submissionId },
+          data: {
+            status: status as SubmissionStatus,
+            finishedAt: new Date(),
+            claimedAt: null,
+          },
+        });
+      }
       await tx.verificationRun.create({
         data: {
           submissionAttemptId: submissionId,
@@ -1536,8 +1559,17 @@ export class PrismaStore implements AppStore {
           } as Prisma.InputJsonValue,
         },
       });
-      return submission;
+      return { updated: submission, retryJobId: newJobId };
     });
+    // If re-queued for retry, enqueue to BullMQ (no-op when Redis not configured)
+    if (status === 'queued' && retryJobId) {
+      void enqueueVerificationJob({
+        jobId: retryJobId,
+        submissionAttemptId: submissionId,
+        attempt: nextAttempt,
+        maxAttempts: 3,
+      });
+    }
     return toSubmissionRecord(updated);
   }
 

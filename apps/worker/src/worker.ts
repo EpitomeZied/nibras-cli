@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { Prisma, PrismaClient, SubmissionStatus } from '@prisma/client';
 import { createServer } from 'node:http';
 import * as Sentry from '@sentry/node';
+import { Worker as BullWorker, type Job } from 'bullmq';
 import {
   gradeSemanticAnswer,
   type AiConfig,
@@ -13,6 +14,7 @@ import {
   type AiGradeResult,
 } from '@nibras/grading';
 import { runSandboxed } from './sandbox';
+import { VERIFICATION_QUEUE_NAME, parseRedisUrl, type VerificationJobPayload } from './queue';
 
 const execFileAsync = promisify(execFile);
 
@@ -482,6 +484,45 @@ async function tick(prisma: PrismaClient): Promise<void> {
   }
 }
 
+async function processBullJob(
+  job: Job<VerificationJobPayload>,
+  prisma: PrismaClient
+): Promise<void> {
+  const { jobId, submissionAttemptId, attempt, maxAttempts } = job.data;
+  log('info', 'BullMQ job received', { jobId, submissionAttemptId });
+
+  const transaction = process.env.SENTRY_DSN
+    ? Sentry.startInactiveSpan({ name: 'verification-job', op: 'worker.job' })
+    : null;
+
+  try {
+    const { exitCode, log: verificationLog } = await runVerification(submissionAttemptId, prisma);
+    let aiResult: AiRunResult | null = null;
+    if (exitCode === 0) {
+      try {
+        aiResult = await runAiGrading(submissionAttemptId, prisma);
+      } catch (err) {
+        log('warn', 'AI grading error (non-fatal)', {
+          jobId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    await finalizeJob(jobId, submissionAttemptId, attempt, exitCode, verificationLog, aiResult, prisma);
+    log('info', 'BullMQ job completed', { jobId, exitCode, aiRan: aiResult !== null });
+    transaction?.setStatus({ code: 1, message: 'ok' });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log('error', 'BullMQ job failed', { jobId, error: message });
+    if (process.env.SENTRY_DSN) Sentry.captureException(err, { tags: { jobId } });
+    transaction?.setStatus({ code: 2, message: 'internal_error' });
+    await failJob(jobId, submissionAttemptId, attempt, maxAttempts, message, prisma);
+    throw err; // Let BullMQ handle retries
+  } finally {
+    transaction?.end();
+  }
+}
+
 async function main(): Promise<void> {
   const prisma = new PrismaClient();
   const healthServer = createServer((request, response) => {
@@ -506,18 +547,52 @@ async function main(): Promise<void> {
   await new Promise<void>((resolve) => {
     healthServer.listen(HEALTH_PORT, '0.0.0.0', resolve);
   });
-  log('info', 'Worker started', { pollIntervalMs: POLL_INTERVAL_MS });
 
-  while (!shuttingDown) {
-    try {
-      await tick(prisma);
-    } catch (err) {
-      log('error', 'Unexpected error in worker tick', {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-    if (!shuttingDown) {
-      await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  const redisUrl = process.env.REDIS_URL;
+
+  if (redisUrl) {
+    // ── BullMQ mode: instant dispatch via Redis ───────────────────────────────
+    log('info', 'Starting in BullMQ mode', {
+      queue: VERIFICATION_QUEUE_NAME,
+      concurrency: Number(process.env.WORKER_CONCURRENCY ?? 1),
+    });
+
+    const bullWorker = new BullWorker<VerificationJobPayload>(
+      VERIFICATION_QUEUE_NAME,
+      (job) => processBullJob(job, prisma),
+      {
+        connection: parseRedisUrl(redisUrl),
+        concurrency: Number(process.env.WORKER_CONCURRENCY ?? 1),
+      }
+    );
+
+    bullWorker.on('error', (err) => {
+      log('error', 'BullMQ worker error', { error: err.message });
+      if (process.env.SENTRY_DSN) Sentry.captureException(err);
+    });
+
+    // Wait until shutdown signal
+    await new Promise<void>((resolve) => {
+      const check = () => (shuttingDown ? resolve() : setTimeout(check, 500));
+      check();
+    });
+
+    await bullWorker.close();
+  } else {
+    // ── DB polling mode: backward-compatible fallback ─────────────────────────
+    log('info', 'Starting in DB polling mode', { pollIntervalMs: POLL_INTERVAL_MS });
+
+    while (!shuttingDown) {
+      try {
+        await tick(prisma);
+      } catch (err) {
+        log('error', 'Unexpected error in worker tick', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      if (!shuttingDown) {
+        await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      }
     }
   }
 
