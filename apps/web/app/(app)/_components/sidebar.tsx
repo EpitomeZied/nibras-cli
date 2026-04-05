@@ -148,7 +148,13 @@ export default function Sidebar({
       {/* Brand */}
       <div className="brandBlock" style={{ justifyContent: collapsed ? 'center' : undefined }}>
         {collapsed ? (
-          <Image src="/branding/nibras-icon.svg" alt="Nibras icon" width={32} height={32} priority />
+          <Image
+            src="/branding/nibras-icon.svg"
+            alt="Nibras icon"
+            width={32}
+            height={32}
+            priority
+          />
         ) : (
           <NibrasLogo variant="theme" width={120} priority />
         )}
