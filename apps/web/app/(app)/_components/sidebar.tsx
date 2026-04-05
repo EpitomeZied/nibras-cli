@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import NibrasLogo from '@/app/_components/nibras-logo';
 import { appNavItems } from './nav-config';
 
 type ShellSessionUser = {
@@ -146,12 +147,10 @@ export default function Sidebar({
     >
       {/* Brand */}
       <div className="brandBlock" style={{ justifyContent: collapsed ? 'center' : undefined }}>
-        <Image src="/branding/nibras-icon.svg" alt="Nibras icon" width={32} height={32} priority />
-        {!collapsed && (
-          <div>
-            <strong className="brandTitle">Nibras</strong>
-            <p className="brandSubtitle">Developer Platform</p>
-          </div>
+        {collapsed ? (
+          <Image src="/branding/nibras-icon.svg" alt="Nibras icon" width={32} height={32} priority />
+        ) : (
+          <NibrasLogo variant="theme" width={120} priority />
         )}
       </div>
 
