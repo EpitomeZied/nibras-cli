@@ -410,8 +410,16 @@ export default function HomePage() {
 
           <div className={styles.cliFeatures}>
             {[
-              { icon: '◉', label: 'Live feedback on every step', desc: 'Real-time status on every async operation' },
-              { icon: '█', label: 'Progress you can actually see', desc: 'Visual verification polling with ETA' },
+              {
+                icon: '◉',
+                label: 'Live feedback on every step',
+                desc: 'Real-time status on every async operation',
+              },
+              {
+                icon: '█',
+                label: 'Progress you can actually see',
+                desc: 'Visual verification polling with ETA',
+              },
               {
                 icon: '╭',
                 label: 'Clear pass/fail summaries',
@@ -439,7 +447,9 @@ export default function HomePage() {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>Why instructors switch to Nibras</span>
-          <h2 className={styles.sectionTitle}>Less admin. Faster grading. A better experience for both.</h2>
+          <h2 className={styles.sectionTitle}>
+            Less admin. Faster grading. A better experience for both.
+          </h2>
         </div>
 
         <div className={styles.testimonials}>
@@ -511,9 +521,7 @@ export default function HomePage() {
             {submitting ? 'Connecting…' : 'Continue with GitHub'}
           </button>
 
-          <p className={styles.formHint}>
-            Free during early access. No credit card.
-          </p>
+          <p className={styles.formHint}>Free during early access. No credit card.</p>
         </div>
       </section>
 

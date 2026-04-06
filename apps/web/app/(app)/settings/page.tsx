@@ -128,9 +128,7 @@ export default function SettingsPage() {
             <div className={styles.prefInfo}>
               <span className={styles.prefLabel}>GitHub connection</span>
               <p className={styles.prefDesc}>
-                {user?.githubLinked
-                  ? `Connected as @${user.githubLogin}`
-                  : 'Not connected'}
+                {user?.githubLinked ? `Connected as @${user.githubLogin}` : 'Not connected'}
               </p>
             </div>
             <span

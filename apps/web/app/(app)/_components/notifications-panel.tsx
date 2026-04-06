@@ -68,7 +68,12 @@ function deriveNotifications(
           body: `${m.title} was due ${new Date(m.dueAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
           color: '#f87171',
         });
-      } else if (due - now <= sevenDays && due > now && m.status !== 'passed' && m.status !== 'approved') {
+      } else if (
+        due - now <= sevenDays &&
+        due > now &&
+        m.status !== 'passed' &&
+        m.status !== 'approved'
+      ) {
         notifications.push({
           id: `deadline-${m.id}`,
           type: 'deadline',
@@ -214,11 +219,25 @@ export default function NotificationsPanel({ user }: { user: ShellSessionUser | 
           {/* Items */}
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
             {!loaded ? (
-              <div style={{ padding: '20px 16px', color: 'var(--text-soft)', fontSize: 13, textAlign: 'center' }}>
+              <div
+                style={{
+                  padding: '20px 16px',
+                  color: 'var(--text-soft)',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}
+              >
                 Loading…
               </div>
             ) : count === 0 ? (
-              <div style={{ padding: '28px 16px', color: 'var(--text-soft)', fontSize: 13, textAlign: 'center' }}>
+              <div
+                style={{
+                  padding: '28px 16px',
+                  color: 'var(--text-soft)',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}
+              >
                 All caught up 🎉
               </div>
             ) : (
@@ -244,10 +263,28 @@ export default function NotificationsPanel({ user }: { user: ShellSessionUser | 
                     }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: n.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: n.color,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        marginBottom: 2,
+                      }}
+                    >
                       {n.title}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--text-muted)',
+                        lineHeight: 1.4,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {n.body}
                     </div>
                   </div>

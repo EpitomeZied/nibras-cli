@@ -190,7 +190,11 @@ export default function OnboardingPage() {
   // Persist OS selection
   function handleSetOs(v: OS) {
     setOs(v);
-    try { localStorage.setItem('nibras.onboarding.os', v); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('nibras.onboarding.os', v);
+    } catch {
+      /* ignore */
+    }
   }
 
   // IntersectionObserver — track active section
@@ -200,7 +204,9 @@ export default function OnboardingPage() {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveStep(id); },
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveStep(id);
+        },
         { rootMargin: '-20% 0px -70% 0px' }
       );
       obs.observe(el);
@@ -214,9 +220,7 @@ export default function OnboardingPage() {
   }
 
   const configPath =
-    os === 'windows'
-      ? '%APPDATA%\\nibras\\config.json'
-      : '~/.config/nibras/config.json';
+    os === 'windows' ? '%APPDATA%\\nibras\\config.json' : '~/.config/nibras/config.json';
 
   const dirExample =
     os === 'windows'
@@ -290,25 +294,45 @@ export default function OnboardingPage() {
                     {os === 'linux' ? (
                       <>
                         install via{' '}
-                        <a href="https://github.com/nvm-sh/nvm" target="_blank" rel="noreferrer" className={styles.link}>
+                        <a
+                          href="https://github.com/nvm-sh/nvm"
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.link}
+                        >
                           nvm
                         </a>{' '}
                         or{' '}
-                        <a href="https://nodejs.org" target="_blank" rel="noreferrer" className={styles.link}>
+                        <a
+                          href="https://nodejs.org"
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.link}
+                        >
                           nodejs.org
                         </a>
                       </>
                     ) : os === 'windows' ? (
                       <>
                         download the Windows installer from{' '}
-                        <a href="https://nodejs.org" target="_blank" rel="noreferrer" className={styles.link}>
+                        <a
+                          href="https://nodejs.org"
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.link}
+                        >
                           nodejs.org
                         </a>
                       </>
                     ) : (
                       <>
                         download from{' '}
-                        <a href="https://nodejs.org" target="_blank" rel="noreferrer" className={styles.link}>
+                        <a
+                          href="https://nodejs.org"
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.link}
+                        >
                           nodejs.org
                         </a>{' '}
                         or use <code className={styles.inlineCode}>brew install node</code>
@@ -321,10 +345,13 @@ export default function OnboardingPage() {
                 label={
                   <>
                     <strong>Git</strong> — installed and configured with{' '}
-                    <code className={styles.inlineCode}>git config --global user.name &quot;Your Name&quot;</code>
+                    <code className={styles.inlineCode}>
+                      git config --global user.name &quot;Your Name&quot;
+                    </code>
                     {os === 'windows' && (
                       <span style={{ color: 'var(--text-soft)', fontSize: 13 }}>
-                        {' '}(run in Git Bash or WSL)
+                        {' '}
+                        (run in Git Bash or WSL)
                       </span>
                     )}
                   </>
@@ -353,8 +380,8 @@ export default function OnboardingPage() {
                 <span className={styles.calloutIcon}>💡</span>
                 <p>
                   On Windows, run your terminal (<strong>PowerShell</strong> or{' '}
-                  <strong>Git Bash</strong>) as <strong>Administrator</strong> when installing global
-                  npm packages.
+                  <strong>Git Bash</strong>) as <strong>Administrator</strong> when installing
+                  global npm packages.
                 </p>
               </div>
             )}
@@ -368,8 +395,7 @@ export default function OnboardingPage() {
             <p className={styles.bodyText}>Or run without installing using npx:</p>
             <CliCodeBlock code="npx @nibras/cli --help" />
             <p className={styles.hint}>
-              Verify the install:{' '}
-              <code className={styles.inlineCode}>nibras --version</code>
+              Verify the install: <code className={styles.inlineCode}>nibras --version</code>
             </p>
           </Section>
 
@@ -385,8 +411,7 @@ export default function OnboardingPage() {
               <TerminalMockup title="nibras login" lines={loginOutput} />
             </div>
             <p className={styles.hint}>
-              Credentials are stored in{' '}
-              <code className={styles.inlineCode}>{configPath}</code>. Run{' '}
+              Credentials are stored in <code className={styles.inlineCode}>{configPath}</code>. Run{' '}
               <code className={styles.inlineCode}>nibras whoami</code> to confirm.
             </p>
           </Section>
@@ -402,8 +427,8 @@ export default function OnboardingPage() {
                 Go to <strong>Instructor → New Course</strong>
               </li>
               <li>
-                Enter the course code (e.g.{' '}
-                <code className={styles.inlineCode}>cs101</code>), title, and term
+                Enter the course code (e.g. <code className={styles.inlineCode}>cs101</code>),
+                title, and term
               </li>
               <li>Add a project with an allowed file path pattern</li>
               <li>
@@ -429,8 +454,7 @@ export default function OnboardingPage() {
               <TerminalMockup title="nibras setup" lines={setupOutput} />
             </div>
             <p className={styles.hint}>
-              Specify a target directory:{' '}
-              <code className={styles.inlineCode}>{dirExample}</code>
+              Specify a target directory: <code className={styles.inlineCode}>{dirExample}</code>
             </p>
           </Section>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { TrackingMilestone } from '@nibras/contracts';
 import { apiFetch } from '../../lib/session';
@@ -7,51 +8,105 @@ import { loadDashboardData } from './load-dashboard-data.js';
 import type { LoadDashboardDataResult } from './load-dashboard-data.js';
 import styles from './page.module.css';
 
-function formatShortDate(value: string | null): string {
+/* ── helpers ──────────────────────────────────────────────────────────────── */
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function formatShortDate(value: string | null | undefined): string {
   if (!value) return 'No due date';
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function sortByDueDate(left: TrackingMilestone, right: TrackingMilestone): number {
-  if (!left.dueAt && !right.dueAt) return 0;
-  if (!left.dueAt) return 1;
-  if (!right.dueAt) return -1;
-  return left.dueAt.localeCompare(right.dueAt);
+function daysUntil(dateStr: string): number {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - now.getTime()) / 86_400_000);
 }
 
-// Simple sparkline SVG path generator
-function sparklinePath(values: number[]): string {
-  if (values.length < 2) return '';
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const w = 80;
-  const h = 32;
-  const step = w / (values.length - 1);
-  return values
-    .map((v, i) => {
-      const x = i * step;
-      const y = h - ((v - min) / range) * h;
-      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(' ');
+function sortByDueDate(a: TrackingMilestone, b: TrackingMilestone): number {
+  if (!a.dueAt && !b.dueAt) return 0;
+  if (!a.dueAt) return 1;
+  if (!b.dueAt) return -1;
+  return a.dueAt.localeCompare(b.dueAt);
 }
 
-// Mock weekly data for chart bars
-const CHART_DATA = [
-  { label: '1 Jan', views: 28, purchases: 12 },
-  { label: '2 Jan', views: 45, purchases: 22 },
-  { label: '3 Jan', views: 38, purchases: 16 },
-  { label: '4 Jan', views: 62, purchases: 30 },
-  { label: '5 Jan', views: 50, purchases: 24 },
-  { label: '6 Jan', views: 72, purchases: 38 },
-  { label: '7 Jan', views: 58, purchases: 28 },
-];
+function actionEmoji(action: string): string {
+  if (action.includes('approve')) return '✅';
+  if (action.includes('review')) return '👀';
+  if (action.includes('submit')) return '📤';
+  if (action.includes('comment')) return '💬';
+  if (action.includes('create')) return '🆕';
+  if (action.includes('fail') || action.includes('reject')) return '❌';
+  if (action.includes('push') || action.includes('commit')) return '📦';
+  return '⚡';
+}
 
-const MAX_CHART = 80;
+/* ── sub-components ───────────────────────────────────────────────────────── */
+
+function SkeletonLine({ w = '100%', h = 14 }: { w?: string; h?: number }) {
+  return (
+    <div
+      className={styles.skeleton}
+      style={{ width: w, height: h, borderRadius: 6 }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function MilestoneBar({
+  approved,
+  underReview,
+  total,
+}: {
+  approved: number;
+  underReview: number;
+  total: number;
+}) {
+  if (total === 0) {
+    return (
+      <div className={styles.milestoneBar}>
+        <div className={styles.milestoneSegEmpty} style={{ width: '100%' }} />
+      </div>
+    );
+  }
+  const pctApproved = (approved / total) * 100;
+  const pctReview = (underReview / total) * 100;
+  const pctOpen = Math.max(0, 100 - pctApproved - pctReview);
+  return (
+    <div className={styles.milestoneBar}>
+      {pctApproved > 0 && (
+        <div
+          className={`${styles.milestoneSegment} ${styles.segGreen}`}
+          style={{ width: `${pctApproved}%` }}
+          title={`Approved: ${approved}`}
+        />
+      )}
+      {pctReview > 0 && (
+        <div
+          className={`${styles.milestoneSegment} ${styles.segPurple}`}
+          style={{ width: `${pctReview}%` }}
+          title={`Under review: ${underReview}`}
+        />
+      )}
+      {pctOpen > 0 && (
+        <div
+          className={`${styles.milestoneSegment} ${styles.segGray}`}
+          style={{ width: `${pctOpen}%` }}
+          title={`Open: ${total - approved - underReview}`}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── main page ────────────────────────────────────────────────────────────── */
 
 export default function DashboardPage() {
   const [data, setData] = useState<LoadDashboardDataResult | null>(null);
@@ -60,410 +115,604 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let alive = true;
-
     void (async () => {
       try {
         const payload = await loadDashboardData({
           fetchJson: async (path: string, init?: RequestInit & { auth?: boolean }) => {
-            const response = await apiFetch(path, init);
-            return response.json() as Promise<unknown>;
+            const res = await apiFetch(path, init);
+            return res.json() as Promise<unknown>;
           },
         });
-
-        if (!alive) return;
-        setData(payload);
+        if (alive) setData(payload);
       } catch (err) {
-        if (alive) {
-          setError(err instanceof Error ? err.message : String(err));
-        }
+        if (alive) setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (alive) setLoading(false);
       }
     })();
-
     return () => {
       alive = false;
     };
   }, []);
 
-  const me = data?.me || null;
-  const dashboard = data?.dashboard || null;
-  const installUrl = data?.installUrl || '';
+  const me = data?.me ?? null;
+  const dashboard = data?.dashboard ?? null;
+  const installUrl = data?.installUrl ?? '';
 
-  const allMilestones = useMemo(() => {
-    if (!dashboard) return [];
-    return Object.values(dashboard.milestonesByProject).flat();
-  }, [dashboard]);
+  const displayName = me?.user?.username || me?.user?.githubLogin || 'Developer';
+  const firstName = displayName.split(/[\s_-]+/)[0]?.replace(/[^a-zA-Z]/g, '') || 'Developer';
 
-  const datedMilestones = useMemo(
-    () => [...allMilestones].filter((item) => item.dueAt).sort(sortByDueDate),
-    [allMilestones]
-  );
-
+  /* derived stats */
   const totals = useMemo(() => {
-    if (!dashboard) return { approved: 0, underReview: 0, total: 0 };
+    if (!dashboard) return { approved: 0, underReview: 0, open: 0, total: 0 };
     return Object.values(dashboard.statsByProject).reduce(
       (acc, s) => ({
         approved: acc.approved + s.approved,
         underReview: acc.underReview + s.underReview,
+        open: acc.open + Math.max(0, s.total - s.approved - s.underReview),
         total: acc.total + s.total,
       }),
-      { approved: 0, underReview: 0, total: 0 }
+      { approved: 0, underReview: 0, open: 0, total: 0 }
     );
   }, [dashboard]);
 
-  const activeProjects = useMemo(() => {
-    if (!dashboard) return [];
-    return dashboard.projects.slice(0, 4).map((project) => ({
-      project,
-      stats: dashboard.statsByProject[project.id],
-    }));
-  }, [dashboard]);
+  const completionPct = totals.total > 0 ? Math.round((totals.approved / totals.total) * 100) : 0;
 
-  const displayName = me?.user.username || me?.user.githubLogin || 'Developer';
-  const nameParts = displayName.split(/[\s_-]+/);
-  const firstName = nameParts[0]?.toUpperCase() || 'DEVELOPER';
+  const allMilestones = useMemo(
+    () => (dashboard ? Object.values(dashboard.milestonesByProject).flat() : []),
+    [dashboard]
+  );
 
-  const completionRate = totals.total > 0 ? Math.round((totals.approved / totals.total) * 100) : 0;
+  const datedMilestones = useMemo(
+    () => [...allMilestones].filter((m) => m.dueAt).sort(sortByDueDate),
+    [allMilestones]
+  );
 
-  // Fake sparkline data based on real values
-  const approvedSparkline = [
-    Math.max(0, totals.approved - 3),
-    Math.max(0, totals.approved - 2),
-    Math.max(0, totals.approved - 4),
-    Math.max(0, totals.approved - 1),
-    totals.approved,
-  ];
+  const overdueMilestones = useMemo(
+    () => datedMilestones.filter((m) => daysUntil(m.dueAt!) < 0 && m.statusLabel !== 'approved'),
+    [datedMilestones]
+  );
 
-  const reviewSparkline = [
-    Math.max(0, totals.underReview + 1),
-    Math.max(0, totals.underReview + 2),
-    Math.max(0, totals.underReview),
-    Math.max(0, totals.underReview + 1),
-    totals.underReview,
-  ];
+  const upcomingMilestones = useMemo(
+    () =>
+      datedMilestones
+        .filter((m) => daysUntil(m.dueAt!) >= 0 && m.statusLabel !== 'approved')
+        .slice(0, 5),
+    [datedMilestones]
+  );
 
-  const today = new Date();
-  const weekAgo = new Date(today);
-  weekAgo.setDate(weekAgo.getDate() - 6);
-  const dateRange = `${weekAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  const activeProjects = useMemo(
+    () =>
+      (dashboard?.projects ?? []).slice(0, 5).map((p) => ({
+        project: p,
+        stats: dashboard!.statsByProject[p.id],
+      })),
+    [dashboard]
+  );
+
+  /* welcome sub-text */
+  const welcomeSub = useMemo(() => {
+    if (loading) return null;
+    if (overdueMilestones.length > 0)
+      return `⚠️ You have ${overdueMilestones.length} overdue milestone${overdueMilestones.length > 1 ? 's' : ''} — check deadlines below.`;
+    if (upcomingMilestones.length > 0) {
+      const next = upcomingMilestones[0];
+      const days = daysUntil(next.dueAt!);
+      return `📅 Next deadline: ${next.title} — ${days === 0 ? 'today!' : days === 1 ? 'tomorrow' : `in ${days} days`}`;
+    }
+    if (totals.total > 0) return `🎉 All caught up! ${completionPct}% of milestones approved.`;
+    return '🚀 Start by exploring your projects below.';
+  }, [loading, overdueMilestones, upcomingMilestones, totals, completionPct]);
 
   return (
     <main className={styles.page}>
-      {/* ── Welcome Banner ───────────────────────────────────────── */}
+      {/* ── GitHub App install banner ─────────────────────────────── */}
+      {!loading && installUrl && (
+        <div className={styles.installBanner}>
+          <span className={styles.installIcon}>🔗</span>
+          <div className={styles.installText}>
+            <strong>Connect GitHub App</strong>
+            <span>Install the Nibras GitHub App to enable automatic submission tracking.</span>
+          </div>
+          <a href={installUrl} className={styles.installBtn}>
+            Install now →
+          </a>
+        </div>
+      )}
+
+      {error && <div className={styles.errorBar}>{error}</div>}
+
+      {/* ── Welcome banner ────────────────────────────────────────── */}
       <section className={styles.welcomeBanner}>
         <div className={styles.welcomeText}>
-          <p className={styles.welcomeGreeting}>Welcome back,</p>
-          <h1 className={styles.welcomeName}>{displayName.toUpperCase()}</h1>
-          <p className={styles.welcomeSub}>
-            Track your progress, manage your projects and milestone activity.
-          </p>
+          <p className={styles.welcomeGreeting}>{getGreeting()},</p>
+          <h1 className={styles.welcomeName}>{firstName.toUpperCase()}</h1>
+          {loading ? (
+            <SkeletonLine w="260px" h={13} />
+          ) : (
+            <p className={styles.welcomeSub}>{welcomeSub}</p>
+          )}
         </div>
-        <div className={styles.bannerActions}>
-          <span className={styles.dateChip}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <rect
-                x="1"
-                y="2"
-                width="12"
-                height="11"
-                rx="2"
-                stroke="currentColor"
-                strokeWidth="1.2"
-              />
-              <path d="M1 5h12" stroke="currentColor" strokeWidth="1.2" />
+        <div className={styles.bannerMeta}>
+          {dashboard?.course && (
+            <span className={styles.courseChip}>
+              🎓 {dashboard.course.courseCode} — {dashboard.course.title}
+            </span>
+          )}
+          <div className={styles.bannerActions}>
+            <Link href="/projects" className={styles.quickActionBtn}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                <rect
+                  x="0.5"
+                  y="0.5"
+                  width="5"
+                  height="5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+                <rect
+                  x="7.5"
+                  y="0.5"
+                  width="5"
+                  height="5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+                <rect
+                  x="0.5"
+                  y="7.5"
+                  width="5"
+                  height="5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+                <rect
+                  x="7.5"
+                  y="7.5"
+                  width="5"
+                  height="5"
+                  rx="1.2"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+              Projects
+            </Link>
+            <Link href="/instructor/onboarding" className={styles.quickActionBtn}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+                <path
+                  d="M6.5 5.5v4"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+                <circle cx="6.5" cy="3.5" r="0.7" fill="currentColor" />
+              </svg>
+              CLI Guide
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stat cards ───────────────────────────────────────────── */}
+      <section className={styles.statsRow}>
+        {/* Approved */}
+        <article className={styles.statCard}>
+          <div
+            className={styles.statIcon}
+            style={{ background: 'rgba(52,211,153,0.12)', color: '#34d399' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path
-                d="M4 1v2M10 1v2"
+                d="M3 9l4 4 8-8"
                 stroke="currentColor"
-                strokeWidth="1.2"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className={styles.statBody}>
+            <span className={styles.statLabel}>Approved</span>
+            <strong className={styles.statValue}>
+              {loading ? <SkeletonLine w="40px" h={30} /> : totals.approved}
+            </strong>
+            <span className={`${styles.statBadge} ${styles.badgeGreen}`}>
+              {completionPct}% done
+            </span>
+          </div>
+        </article>
+
+        {/* Under Review */}
+        <article className={styles.statCard}>
+          <div
+            className={styles.statIcon}
+            style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M9 5v4l2.5 2.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
                 strokeLinecap="round"
               />
             </svg>
-            {dateRange}
-          </span>
-          {installUrl ? (
-            <a className={styles.addBtn} href={installUrl}>
-              Install GitHub App +
-            </a>
-          ) : (
-            <a className={styles.addBtn} href="/projects">
-              Open Projects +
-            </a>
-          )}
-        </div>
-      </section>
-
-      {error ? <div className={styles.errorBar}>{error}</div> : null}
-
-      {/* ── Stat Cards ───────────────────────────────────────────── */}
-      <section className={styles.statsRow}>
-        <article className={styles.statCard}>
-          <div className={styles.statLeft}>
-            <span className={styles.statLabel}>Approved</span>
-            <strong className={styles.statValue}>{loading ? '—' : totals.approved}</strong>
-            <span className={`${styles.statBadge} ${styles.badgeGreen}`}>+{completionRate}%</span>
           </div>
-          <svg className={styles.sparkline} viewBox="0 0 80 32" fill="none">
-            <path
-              d={sparklinePath(approvedSparkline)}
-              stroke="#34d399"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </article>
-
-        <article className={styles.statCard}>
-          <div className={styles.statLeft}>
+          <div className={styles.statBody}>
             <span className={styles.statLabel}>Under Review</span>
-            <strong className={styles.statValue}>{loading ? '—' : totals.underReview}</strong>
+            <strong className={styles.statValue}>
+              {loading ? <SkeletonLine w="40px" h={30} /> : totals.underReview}
+            </strong>
             <span className={`${styles.statBadge} ${styles.badgePurple}`}>In queue</span>
           </div>
-          <svg className={styles.sparkline} viewBox="0 0 80 32" fill="none">
-            <path
-              d={sparklinePath(reviewSparkline)}
-              stroke="#a78bfa"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
         </article>
 
+        {/* Total milestones */}
         <article className={styles.statCard}>
-          <div className={styles.statLeft}>
-            <span className={styles.statLabel}>Total Projects</span>
-            <strong className={styles.statValue}>
-              {loading ? '—' : dashboard?.projects.length || 0}
-            </strong>
-            <span className={`${styles.statBadge} ${styles.badgeBlue}`}>Active</span>
-          </div>
-          <div className={styles.projectsIcon} aria-hidden="true">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <div
+            className={styles.statIcon}
+            style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <rect
                 x="2"
                 y="2"
-                width="10"
-                height="10"
-                rx="2"
-                fill="rgba(59,130,246,0.3)"
-                stroke="#3b82f6"
+                width="6"
+                height="6"
+                rx="1.5"
+                stroke="currentColor"
                 strokeWidth="1.5"
               />
               <rect
-                x="16"
+                x="10"
                 y="2"
-                width="10"
-                height="10"
-                rx="2"
-                fill="rgba(59,130,246,0.15)"
-                stroke="#3b82f6"
+                width="6"
+                height="6"
+                rx="1.5"
+                stroke="currentColor"
                 strokeWidth="1.5"
               />
               <rect
                 x="2"
-                y="16"
-                width="10"
-                height="10"
-                rx="2"
-                fill="rgba(59,130,246,0.15)"
-                stroke="#3b82f6"
+                y="10"
+                width="6"
+                height="6"
+                rx="1.5"
+                stroke="currentColor"
                 strokeWidth="1.5"
               />
               <rect
-                x="16"
-                y="16"
-                width="10"
-                height="10"
-                rx="2"
-                fill="rgba(59,130,246,0.3)"
-                stroke="#3b82f6"
+                x="10"
+                y="10"
+                width="6"
+                height="6"
+                rx="1.5"
+                stroke="currentColor"
                 strokeWidth="1.5"
               />
             </svg>
           </div>
+          <div className={styles.statBody}>
+            <span className={styles.statLabel}>Total Milestones</span>
+            <strong className={styles.statValue}>
+              {loading ? <SkeletonLine w="40px" h={30} /> : totals.total}
+            </strong>
+            <span className={`${styles.statBadge} ${styles.badgeBlue}`}>
+              {loading ? '—' : `${totals.open} open`}
+            </span>
+          </div>
         </article>
       </section>
 
-      {/* ── Main Grid ────────────────────────────────────────────── */}
+      {/* ── Main grid ────────────────────────────────────────────── */}
       <div className={styles.mainGrid}>
-        {/* Left column */}
+        {/* LEFT column */}
         <div className={styles.leftCol}>
-          {/* Statistics chart */}
+          {/* Milestone progress */}
           <section className={styles.panel}>
             <div className={styles.panelHeadRow}>
               <div>
-                <h2 className={styles.panelTitle}>Statistics</h2>
-                <span className={styles.panelSub}>your av. completion {completionRate}%</span>
-              </div>
-              <div className={styles.chartControls}>
-                <button className={`${styles.chartTab} ${styles.chartTabActive}`}>1W</button>
-                <button className={styles.chartTab}>1M</button>
-                <button className={styles.chartTab}>1Y</button>
-                <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{ background: '#34d399' }} />
-                  views
-                </span>
-                <span className={styles.legendItem}>
-                  <span className={styles.dot} style={{ background: '#3b82f6' }} />
-                  milestones
+                <h2 className={styles.panelTitle}>Milestone Progress</h2>
+                <span className={styles.panelSub}>
+                  {loading
+                    ? 'Loading…'
+                    : `${totals.approved} approved · ${totals.underReview} in review · ${totals.open} open`}
                 </span>
               </div>
+              <span className={styles.filterChip}>{completionPct}% complete</span>
             </div>
-            <div className={styles.chart}>
-              <div className={styles.chartBars}>
-                {CHART_DATA.map((d) => (
-                  <div key={d.label} className={styles.chartBarGroup}>
-                    <div className={styles.chartBarPair}>
-                      <div
-                        className={`${styles.chartBar} ${styles.chartBarGreen}`}
-                        style={{ height: `${(d.views / MAX_CHART) * 100}%` }}
+
+            {loading ? (
+              <div className={styles.skeletonList}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={styles.skeletonProjectRow}>
+                    <SkeletonLine w="120px" h={12} />
+                    <SkeletonLine w="100%" h={10} />
+                    <SkeletonLine w="36px" h={12} />
+                  </div>
+                ))}
+              </div>
+            ) : activeProjects.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyEmoji}>📂</span>
+                <p>No projects yet.</p>
+                <Link href="/projects" className={styles.emptyLink}>
+                  Browse projects →
+                </Link>
+              </div>
+            ) : (
+              <div className={styles.projectProgressList}>
+                {/* Overall bar */}
+                <div className={styles.overallBar}>
+                  <div className={styles.overallBarLabel}>
+                    <span>Overall</span>
+                    <span>{completionPct}%</span>
+                  </div>
+                  <MilestoneBar
+                    approved={totals.approved}
+                    underReview={totals.underReview}
+                    total={totals.total}
+                  />
+                  <div className={styles.barLegend}>
+                    <span className={styles.legendDot} style={{ background: '#34d399' }} />
+                    <span>Approved</span>
+                    <span className={styles.legendDot} style={{ background: '#a78bfa' }} />
+                    <span>Review</span>
+                    <span
+                      className={styles.legendDot}
+                      style={{ background: 'var(--surface-muted)' }}
+                    />
+                    <span>Open</span>
+                  </div>
+                </div>
+
+                {/* Per-project rows */}
+                {activeProjects.map(({ project, stats }) => {
+                  const pct = stats?.completion ?? 0;
+                  const dotColor = pct >= 80 ? '#34d399' : pct >= 40 ? '#fbbf24' : '#60a5fa';
+                  return (
+                    <div key={project.id} className={styles.projectProgressRow}>
+                      <span
+                        className={styles.projectDot}
+                        style={{ background: dotColor }}
+                        title={`${pct}% complete`}
                       />
-                      <div
-                        className={`${styles.chartBar} ${styles.chartBarBlue}`}
-                        style={{ height: `${(d.purchases / MAX_CHART) * 100}%` }}
-                      />
+                      <span className={styles.projectName}>{project.title}</span>
+                      <div className={styles.locationBar}>
+                        <div
+                          className={styles.locationFill}
+                          style={{ width: `${pct}%`, background: dotColor }}
+                        />
+                      </div>
+                      <span className={styles.locationPct}>{pct}%</span>
                     </div>
-                    <span className={styles.chartLabel}>{d.label}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              <div className={styles.chartGridLines}>
-                {[80, 60, 40, 20, 0].map((v) => (
-                  <div key={v} className={styles.gridLine}>
-                    <span className={styles.gridLabel}>{v}k</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </section>
 
-          {/* Activity / Homework */}
+          {/* Activity feed */}
           <section className={styles.panel}>
             <div className={styles.panelHeadRow}>
               <div>
                 <h2 className={styles.panelTitle}>Activity</h2>
                 <span className={styles.panelSub}>
-                  {dashboard?.activity.length
-                    ? `You have ${dashboard.activity.length} recent events`
-                    : 'No recent activity recorded'}
+                  {loading
+                    ? 'Loading…'
+                    : dashboard?.activity?.length
+                      ? `${dashboard.activity.length} recent events`
+                      : 'No recent activity'}
                 </span>
               </div>
-              <a className={styles.viewAll} href="/projects">
+              <Link href="/projects" className={styles.viewAll}>
                 View all
-              </a>
+              </Link>
             </div>
-            <div className={styles.activityList}>
-              {loading && <p className={styles.emptyMsg}>Loading…</p>}
-              {!loading && !dashboard?.activity.length ? (
-                <p className={styles.emptyMsg}>No activity yet.</p>
-              ) : null}
-              {dashboard?.activity.slice(0, 5).map((entry) => (
-                <div key={entry.id} className={styles.activityRow}>
-                  <div className={styles.activityDot} />
-                  <div className={styles.activityBody}>
-                    <strong>{entry.summary}</strong>
-                    <span>{entry.action.replace(/_/g, ' ')}</span>
+
+            {loading ? (
+              <div className={styles.skeletonList}>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className={styles.activityRow}>
+                    <SkeletonLine w="28px" h={28} />
+                    <div style={{ flex: 1, display: 'grid', gap: 6 }}>
+                      <SkeletonLine w="60%" h={12} />
+                      <SkeletonLine w="40%" h={10} />
+                    </div>
+                    <SkeletonLine w="50px" h={11} />
                   </div>
-                  <time className={styles.activityTime}>{formatShortDate(entry.createdAt)}</time>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : !dashboard?.activity?.length ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyEmoji}>🌱</span>
+                <p>No activity yet. Submit your first milestone!</p>
+              </div>
+            ) : (
+              <div className={styles.activityList}>
+                {dashboard.activity.slice(0, 6).map((entry) => (
+                  <div key={entry.id} className={styles.activityRow}>
+                    <span className={styles.activityEmoji} aria-hidden="true">
+                      {actionEmoji(entry.action)}
+                    </span>
+                    <div className={styles.activityBody}>
+                      <strong>{entry.summary}</strong>
+                      <span>{entry.action.replace(/_/g, ' ')}</span>
+                    </div>
+                    <time className={styles.activityTime}>{formatShortDate(entry.createdAt)}</time>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
-        {/* Right column */}
+        {/* RIGHT column */}
         <div className={styles.rightCol}>
           {/* My Projects */}
           <section className={styles.panel}>
             <div className={styles.panelHeadRow}>
               <h2 className={styles.panelTitle}>My Projects</h2>
-              <a className={styles.viewAll} href="/projects">
+              <Link href="/projects" className={styles.viewAll}>
                 View all
-              </a>
+              </Link>
             </div>
-            <div className={styles.courseList}>
-              {loading && <p className={styles.emptyMsg}>Loading…</p>}
-              {!loading && !activeProjects.length ? (
-                <p className={styles.emptyMsg}>No projects yet.</p>
-              ) : null}
-              {activeProjects.map(({ project, stats }) => (
-                <div key={project.id} className={styles.courseCard}>
-                  <div className={styles.courseThumbnail}>
-                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                      <rect
-                        x="1"
-                        y="1"
-                        width="20"
-                        height="20"
-                        rx="4"
-                        fill="rgba(59,130,246,0.2)"
-                        stroke="#3b82f6"
-                        strokeWidth="1.2"
-                      />
-                      <path
-                        d="M7 11l3 3 5-5"
-                        stroke="#60a5fa"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+
+            {loading ? (
+              <div className={styles.skeletonList}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={styles.courseCard}>
+                    <SkeletonLine w="38px" h={38} />
+                    <div style={{ flex: 1, display: 'grid', gap: 6 }}>
+                      <SkeletonLine w="70%" h={12} />
+                      <SkeletonLine w="50%" h={10} />
+                    </div>
                   </div>
-                  <div className={styles.courseInfo}>
-                    <strong className={styles.courseTitle}>{project.title}</strong>
-                    <span className={styles.courseMeta}>
-                      {stats?.total ?? 0} milestones · {stats?.approved ?? 0} practical works
-                    </span>
-                  </div>
-                  <div className={styles.courseStats}>
-                    <span className={styles.coursePercent}>{stats?.completion ?? 0}%</span>
-                    <span
-                      className={`${styles.courseBadge} ${(stats?.completion ?? 0) >= 50 ? styles.badgeGreen : styles.badgeBlue}`}
-                    >
-                      {stats?.approved ?? 0}x
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : !activeProjects.length ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyEmoji}>📋</span>
+                <p>No projects assigned yet.</p>
+              </div>
+            ) : (
+              <div className={styles.courseList}>
+                {activeProjects.map(({ project, stats }) => {
+                  const pct = stats?.completion ?? 0;
+                  const dotColor = pct >= 80 ? '#34d399' : pct >= 40 ? '#fbbf24' : '#60a5fa';
+                  return (
+                    <div key={project.id} className={styles.courseCard}>
+                      <div
+                        className={styles.courseThumbnail}
+                        style={{ background: `${dotColor}1a`, border: `1px solid ${dotColor}40` }}
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 18 18"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <rect
+                            x="1"
+                            y="1"
+                            width="16"
+                            height="16"
+                            rx="3.5"
+                            fill={`${dotColor}30`}
+                            stroke={dotColor}
+                            strokeWidth="1.2"
+                          />
+                          <path
+                            d="M5 9l3 3 5-5"
+                            stroke={dotColor}
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div className={styles.courseInfo}>
+                        <strong className={styles.courseTitle}>{project.title}</strong>
+                        <span className={styles.courseMeta}>
+                          {stats?.total ?? 0} milestones · {stats?.approved ?? 0} approved
+                        </span>
+                      </div>
+                      <div className={styles.courseStats}>
+                        <span className={styles.coursePercent} style={{ color: dotColor }}>
+                          {pct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          {/* Progress Breakdown */}
+          {/* Deadlines */}
           <section className={styles.panel}>
             <div className={styles.panelHeadRow}>
-              <h2 className={styles.panelTitle}>Progress</h2>
-              <span className={styles.filterChip}>All projects</span>
+              <div>
+                <h2 className={styles.panelTitle}>Deadlines</h2>
+                <span className={styles.panelSub}>
+                  {loading
+                    ? 'Loading…'
+                    : overdueMilestones.length > 0
+                      ? `${overdueMilestones.length} overdue`
+                      : upcomingMilestones.length > 0
+                        ? `${upcomingMilestones.length} upcoming`
+                        : 'All clear 🎉'}
+                </span>
+              </div>
             </div>
-            <div className={styles.locationList}>
-              {activeProjects.length === 0 && !loading ? (
-                <p className={styles.emptyMsg}>No data yet.</p>
-              ) : null}
-              {activeProjects.map(({ project, stats }) => {
-                const pct = stats?.completion ?? 0;
-                return (
-                  <div key={project.id} className={styles.locationRow}>
-                    <span className={styles.locationName}>{project.title}</span>
-                    <div className={styles.locationBar}>
-                      <div className={styles.locationFill} style={{ width: `${pct}%` }} />
+
+            {loading ? (
+              <div className={styles.skeletonList}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={styles.deadlineRow}>
+                    <SkeletonLine w="7px" h={7} />
+                    <div style={{ flex: 1, display: 'grid', gap: 5 }}>
+                      <SkeletonLine w="70%" h={12} />
+                      <SkeletonLine w="40%" h={10} />
                     </div>
-                    <span className={styles.locationPct}>{pct}%</span>
+                    <SkeletonLine w="48px" h={11} />
                   </div>
-                );
-              })}
-              {/* Upcoming deadlines */}
-              {datedMilestones.slice(0, 3).map((m) => (
-                <div key={m.id} className={styles.deadlineRow}>
-                  <span className={styles.deadlineDot} />
-                  <div className={styles.deadlineBody}>
-                    <strong>{m.title}</strong>
-                    <span>{m.statusLabel}</span>
-                  </div>
-                  <time className={styles.deadlineDate}>{formatShortDate(m.dueAt)}</time>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : overdueMilestones.length === 0 && upcomingMilestones.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyEmoji}>✅</span>
+                <p>No upcoming deadlines — you&apos;re all caught up!</p>
+              </div>
+            ) : (
+              <div className={styles.deadlineList}>
+                {overdueMilestones.slice(0, 3).map((m) => {
+                  const d = daysUntil(m.dueAt!);
+                  return (
+                    <div key={m.id} className={`${styles.deadlineRow} ${styles.deadlineOverdue}`}>
+                      <span className={`${styles.deadlineDot} ${styles.dotRed}`} />
+                      <div className={styles.deadlineBody}>
+                        <strong>{m.title}</strong>
+                        <span>
+                          {Math.abs(d)} day{Math.abs(d) !== 1 ? 's' : ''} overdue
+                        </span>
+                      </div>
+                      <time className={`${styles.deadlineDate} ${styles.dateRed}`}>
+                        {formatShortDate(m.dueAt)}
+                      </time>
+                    </div>
+                  );
+                })}
+                {upcomingMilestones.map((m) => {
+                  const d = daysUntil(m.dueAt!);
+                  const urgent = d <= 2;
+                  return (
+                    <div key={m.id} className={styles.deadlineRow}>
+                      <span
+                        className={styles.deadlineDot}
+                        style={{ background: urgent ? '#fbbf24' : 'var(--primary)' }}
+                      />
+                      <div className={styles.deadlineBody}>
+                        <strong>{m.title}</strong>
+                        <span>{m.statusLabel}</span>
+                      </div>
+                      <time
+                        className={styles.deadlineDate}
+                        style={{ color: urgent ? '#fbbf24' : undefined }}
+                      >
+                        {d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : formatShortDate(m.dueAt)}
+                      </time>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
       </div>
