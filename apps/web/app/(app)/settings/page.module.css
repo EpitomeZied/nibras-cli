@@ -176,6 +176,115 @@
   flex-shrink: 0;
 }
 
+/* GitHub App install row */
+.appInstallRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.appInstallLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.appInstallIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.appInstallRight {
+  flex-shrink: 0;
+}
+
+.installAppBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 9px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.13s;
+}
+
+.installAppBtn:hover {
+  background: var(--primary-strong);
+  transform: translateY(-1px);
+}
+
+/* Install callout banner */
+.installCallout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.installCalloutIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.installCallout > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.installCallout strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.installCallout p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.installCalloutBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.13s;
+}
+
+.installCalloutBtn:hover {
+  background: var(--primary-strong);
+  transform: translateY(-1px);
+}
+
 .signOutRow {
   padding-top: 8px;
   border-top: 1px solid var(--border);

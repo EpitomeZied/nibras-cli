@@ -138,6 +138,9 @@ export default function DashboardPage() {
   const me = data?.me ?? null;
   const dashboard = data?.dashboard ?? null;
   const installUrl = data?.installUrl ?? '';
+  const githubAppInstalled = (me as { user?: { githubAppInstalled?: boolean } } | null)?.user
+    ?.githubAppInstalled;
+  const showInstallBanner = !loading && (installUrl || githubAppInstalled === false);
 
   const displayName = me?.user?.username || me?.user?.githubLogin || 'Developer';
   const firstName = displayName.split(/[\s_-]+/)[0]?.replace(/[^a-zA-Z]/g, '') || 'Developer';
@@ -207,16 +210,22 @@ export default function DashboardPage() {
   return (
     <main className={styles.page}>
       {/* ── GitHub App install banner ─────────────────────────────── */}
-      {!loading && installUrl && (
+      {showInstallBanner && (
         <div className={styles.installBanner}>
           <span className={styles.installIcon}>🔗</span>
           <div className={styles.installText}>
             <strong>Connect GitHub App</strong>
             <span>Install the Nibras GitHub App to enable automatic submission tracking.</span>
           </div>
-          <a href={installUrl} className={styles.installBtn}>
-            Install now →
-          </a>
+          {installUrl ? (
+            <a href={installUrl} className={styles.installBtn}>
+              Install now →
+            </a>
+          ) : (
+            <Link href="/settings" className={styles.installBtn}>
+              Go to Settings →
+            </Link>
+          )}
         </div>
       )}
 
