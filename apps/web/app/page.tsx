@@ -139,17 +139,17 @@ export default function HomePage() {
       {/* ── Stats bar ───────────────────────────────────────────────────────── */}
       <div className={styles.statsBar}>
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>500+</span>
+          <span className={styles.statNumber}>0</span>
           <span className={styles.statLabel}>Instructors using Nibras</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>50k+</span>
+          <span className={styles.statNumber}>0</span>
           <span className={styles.statLabel}>Submissions processed</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>1,200+</span>
+          <span className={styles.statNumber}>0</span>
           <span className={styles.statLabel}>Courses launched</span>
         </div>
         <div className={styles.statDivider} />
