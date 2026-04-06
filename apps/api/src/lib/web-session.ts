@@ -25,14 +25,15 @@ export function createWebSessionCookie(
   token: string,
   options: CookieOptions = {}
 ): string {
+  const secure = isSecureRequest(request);
   const parts = [
     `${COOKIE_NAME}=${encodeURIComponent(token)}`,
     'Path=/',
     'HttpOnly',
-    'SameSite=Lax',
+    secure ? 'SameSite=None' : 'SameSite=Lax',
   ];
 
-  if (isSecureRequest(request)) {
+  if (secure) {
     parts.push('Secure');
   }
   if (typeof options.maxAgeSeconds === 'number') {

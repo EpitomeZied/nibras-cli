@@ -4,8 +4,18 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/session';
 import styles from './page.module.css';
 
+type LogLine = { text: string; type: 'cmd' | 'info' | 'success' | 'error' | 'muted' };
+
 export default function AuthCompletePage() {
-  const [status, setStatus] = useState('Completing sign-in...');
+  const [lines, setLines] = useState<LogLine[]>([
+    { text: 'nibras auth --provider github', type: 'cmd' },
+    { text: 'Verifying session…', type: 'info' },
+  ]);
+  const [done, setDone] = useState(false);
+
+  function addLine(line: LogLine) {
+    setLines((prev) => [...prev, line]);
+  }
 
   useEffect(() => {
     void (async () => {
@@ -14,26 +24,40 @@ export default function AuthCompletePage() {
         if (!response.ok) {
           throw new Error('Web session was not established.');
         }
-        setStatus('Sign-in complete. Redirecting to the dashboard...');
+        addLine({ text: '✓ Session established', type: 'success' });
+        addLine({ text: 'Redirecting to dashboard…', type: 'muted' });
+        setDone(true);
         window.setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 700);
+        }, 900);
       } catch (err) {
-        setStatus(err instanceof Error ? err.message : String(err));
+        addLine({
+          text: `✗ ${err instanceof Error ? err.message : String(err)}`,
+          type: 'error',
+        });
       }
     })();
   }, []);
 
   return (
-    <main className="pageWrap">
-      <section className={`${styles.card} surfaceCard`}>
-        <div className={styles.badge}>Session</div>
-        <h1>Finishing sign-in</h1>
-        <p className="statusMessage">{status}</p>
-        <div className={styles.progressRail}>
-          <span className={styles.progressFill} />
+    <main className={styles.page}>
+      <div className={styles.window}>
+        <div className={styles.titleBar}>
+          <span className={styles.dot} style={{ background: '#ff5f57' }} />
+          <span className={styles.dot} style={{ background: '#febc2e' }} />
+          <span className={styles.dot} style={{ background: '#28c840' }} />
+          <span className={styles.title}>nibras — terminal</span>
         </div>
-      </section>
+        <div className={styles.body}>
+          {lines.map((line, i) => (
+            <div key={i} className={`${styles.line} ${styles[line.type]}`}>
+              {line.type === 'cmd' && <span className={styles.prompt}>~ </span>}
+              {line.text}
+            </div>
+          ))}
+          {!done && <span className={styles.cursor} />}
+        </div>
+      </div>
     </main>
   );
 }
