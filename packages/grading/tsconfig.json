@@ -1,8 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "module": "CommonJS",
+    "moduleResolution": "Node10",
+    "paths": {
+      "openai": ["../../node_modules/openai"],
+      "zod": ["../../node_modules/zod"]
+    }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*", "index.ts"],
+  "exclude": ["node_modules", "dist"]
 }

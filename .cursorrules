@@ -1,0 +1,22 @@
+Project: Nibras - AI Grading System
+Stack: TypeScript, Node.js, Fastify, Next.js, Prisma, OpenAI
+
+Coding Standards:
+- Use TypeScript strict mode
+- Use async/await for all async operations
+- Always handle errors with try-catch
+- Use Zod for schema validation
+- Export types and functions from index.ts files
+
+AI Grading Guidelines:
+- Use structured outputs (JSON Schema) for all AI calls
+- Temperature: 0.1-0.2 for consistent grading
+- Confidence threshold: 0.8 (flag below for human review)
+- Always include model answer when available
+- Store full AI response for auditability
+
+File Structure:
+- Prompts: packages/grading/src/prompts/
+- Services: packages/grading/src/services/
+- Types: packages/grading/src/types.ts
+- Utils: packages/grading/src/utils/
