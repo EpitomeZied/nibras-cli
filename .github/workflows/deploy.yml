@@ -25,7 +25,7 @@ jobs:
           flyctl deploy \
             --config fly.web.toml \
             --app nibras-web \
-            --build-arg NEXT_PUBLIC_NIBRAS_API_BASE_URL=https://nibras-api.fly.dev \
+            --build-arg NEXT_PUBLIC_NIBRAS_API_BASE_URL=https://nibras-web.fly.dev \
             --build-arg NEXT_PUBLIC_NIBRAS_WEB_BASE_URL=https://nibras-web.fly.dev \
             --remote-only
         env:

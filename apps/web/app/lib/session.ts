@@ -18,14 +18,7 @@ export function getStoredApiBaseUrl(): string | null {
   if (typeof window === 'undefined') {
     return null;
   }
-  const stored = normalizeApiBaseUrl(window.localStorage.getItem('nibras.apiBaseUrl'));
-  // Discard a stored URL that matches the web app's own origin — this was mistakenly
-  // cached by the old discovery order (page origin was probed before configured URL).
-  if (stored && stored === normalizeApiBaseUrl(window.location.origin)) {
-    window.localStorage.removeItem('nibras.apiBaseUrl');
-    return null;
-  }
-  return stored;
+  return normalizeApiBaseUrl(window.localStorage.getItem('nibras.apiBaseUrl'));
 }
 
 export function getConfiguredApiBaseUrl(): string | null {
