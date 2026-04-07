@@ -1348,11 +1348,19 @@ export class PrismaStore implements AppStore {
     await this.seed(apiBaseUrl);
     const project = await this.prisma.project.findUnique({
       where: { slug: payload.projectKey },
-      include: { releases: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      include: {
+        releases: { orderBy: { createdAt: 'desc' }, take: 1 },
+        milestones: { orderBy: { order: 'asc' } },
+      },
     });
     if (!project || project.releases.length === 0) {
       throw new Error('Project release not found.');
     }
+    // Auto-assign the latest (highest order) milestone for this project
+    const latestMilestone =
+      project.milestones.length > 0
+        ? project.milestones[project.milestones.length - 1]
+        : null;
     const repo = await this.prisma.userProjectRepo.findUnique({
       where: {
         userId_projectId: {
@@ -1383,7 +1391,7 @@ export class PrismaStore implements AppStore {
             projectId: project.id,
             projectReleaseId: project.releases[0].id,
             userProjectRepoId: repo.id,
-            milestoneId: null,
+            milestoneId: latestMilestone?.id ?? null,
             commitSha: payload.commitSha,
             repoUrl: payload.repoUrl,
             branch: payload.branch,
@@ -2403,7 +2411,6 @@ export class PrismaStore implements AppStore {
   ): Promise<SubmissionRecord[]> {
     await this.seed(apiBaseUrl);
     const where = {
-      milestoneId: { not: null },
       status: filters?.status as SubmissionStatus | undefined,
       projectId: filters?.projectId,
       project: filters?.courseId ? { courseId: filters.courseId } : undefined,
@@ -2427,7 +2434,6 @@ export class PrismaStore implements AppStore {
     await this.seed(apiBaseUrl);
     return this.prisma.submissionAttempt.count({
       where: {
-        milestoneId: { not: null },
         status: filters?.status as SubmissionStatus | undefined,
         projectId: filters?.projectId,
         project: filters?.courseId ? { courseId: filters.courseId } : undefined,
