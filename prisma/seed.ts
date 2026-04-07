@@ -61,7 +61,7 @@ async function main() {
   const manifest = {
     projectKey: 'cs161/exam1',
     releaseVersion: '2026-03-01',
-    apiBaseUrl: 'http://127.0.0.1:4848',
+    apiBaseUrl: 'https://nibras-api.fly.dev',
     defaultBranch: 'main',
     buildpack: { node: '20' },
     test: {
