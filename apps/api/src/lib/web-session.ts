@@ -7,6 +7,10 @@ type CookieOptions = {
 };
 
 function isSecureRequest(request: FastifyRequest): boolean {
+  // In production, always treat as secure (Fly.io terminates TLS before the app).
+  if (process.env.NODE_ENV === 'production') {
+    return true;
+  }
   const forwardedProto = request.headers['x-forwarded-proto'];
   const proto = Array.isArray(forwardedProto)
     ? forwardedProto[0]
