@@ -15,17 +15,29 @@ export const dynamic = 'force-dynamic';
  *   https://nibras-web.fly.dev/api/auth/callback
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
 
+  // Derive the public web origin from headers set by the Fly.io proxy,
+  // falling back to the build-time configured web base URL.
+  // Never use request.url directly — it contains the internal container address.
+  const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
+  const forwardedHost =
+    request.headers.get('x-forwarded-host') ??
+    request.headers.get('host') ??
+    '';
+  const publicOrigin =
+    forwardedHost
+      ? `${forwardedProto}://${forwardedHost}`
+      : (process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL ?? 'https://nibras-web.fly.dev');
+
   if (!code || !state) {
-    return NextResponse.redirect(`${origin}/?auth=required`);
+    return NextResponse.redirect(`${publicOrigin}/?auth=required`);
   }
 
   const apiInternalUrl =
     process.env.NIBRAS_API_INTERNAL_URL ||
-    process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL ||
     'https://nibras-api.fly.dev';
 
   const callbackUrl =
@@ -38,7 +50,7 @@ export async function GET(request: NextRequest) {
       redirect: 'manual', // Don't follow — we need to capture Set-Cookie + Location
     });
   } catch {
-    return NextResponse.redirect(`${origin}/?auth=required`);
+    return NextResponse.redirect(`${publicOrigin}/?auth=required`);
   }
 
   // Expect a 302 redirect from the API with a Set-Cookie header
@@ -46,18 +58,18 @@ export async function GET(request: NextRequest) {
   const location = apiResponse.headers.get('location');
 
   // Redirect destination: prefer what the API sent (it contains the return_to),
-  // but always keep it on the web origin for safety.
+  // but always keep it on the public web origin for safety.
   let redirectTo: string;
   if (location) {
     try {
       const loc = new URL(location);
-      // Only allow redirects to the same web origin
-      redirectTo = loc.origin === origin ? loc.href : `${origin}/auth/complete`;
+      // Only allow redirects to the same public web origin
+      redirectTo = loc.origin === publicOrigin ? loc.href : `${publicOrigin}/auth/complete`;
     } catch {
-      redirectTo = `${origin}/auth/complete`;
+      redirectTo = `${publicOrigin}/auth/complete`;
     }
   } else {
-    redirectTo = `${origin}/auth/complete`;
+    redirectTo = `${publicOrigin}/auth/complete`;
   }
 
   const response = NextResponse.redirect(redirectTo);

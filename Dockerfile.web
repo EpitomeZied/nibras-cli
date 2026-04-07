@@ -16,8 +16,10 @@ COPY tsconfig.base.json ./
 # Build-time public vars must be baked in at image build time for Next.js
 ARG NEXT_PUBLIC_NIBRAS_API_BASE_URL
 ARG NEXT_PUBLIC_NIBRAS_WEB_BASE_URL
+ARG NIBRAS_API_INTERNAL_URL
 ENV NEXT_PUBLIC_NIBRAS_API_BASE_URL=$NEXT_PUBLIC_NIBRAS_API_BASE_URL
 ENV NEXT_PUBLIC_NIBRAS_WEB_BASE_URL=$NEXT_PUBLIC_NIBRAS_WEB_BASE_URL
+ENV NIBRAS_API_INTERNAL_URL=$NIBRAS_API_INTERNAL_URL
 # Next.js requires .env.local to exist (even if empty) during build
 RUN touch apps/web/.env.local
 # Build contracts first so its type declarations are available to the web build
