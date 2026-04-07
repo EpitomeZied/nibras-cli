@@ -12,6 +12,11 @@ function parseOption(args: string[], name: string): string | null {
   return args[index + 1] || null;
 }
 
+function isGitHubCloneUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  return url.startsWith('https://github.com/') || url.startsWith('git@github.com:');
+}
+
 export async function commandSetup(args: string[], plain: boolean): Promise<void> {
   const projectKey = parseOption(args, '--project');
   if (!projectKey) {
@@ -27,28 +32,83 @@ export async function commandSetup(args: string[], plain: boolean): Promise<void
     })
   );
 
-  spinner.text('Writing project manifest');
-  fs.mkdirSync(path.join(targetDir, '.nibras'), { recursive: true });
-  writeProjectManifest(targetDir, response.manifest);
-  writeTaskText(targetDir, response.task);
+  const cloneUrl = response.repo.cloneUrl;
+  const repoName = response.repo.name;
+  const defaultBranch = response.repo.defaultBranch;
 
-  if (!fs.existsSync(path.join(targetDir, '.git'))) {
-    spinner.text('Initialising git repository');
-    spawnSync('git', ['init', '-b', response.repo.defaultBranch], {
-      cwd: targetDir,
-      stdio: 'ignore',
+  // Determine the final project directory
+  // If targetDir is CWD and a real clone URL exists, clone into a subdirectory
+  const isCurrentDir = targetDir === path.resolve(process.cwd());
+  const projectDir =
+    isCurrentDir && isGitHubCloneUrl(cloneUrl)
+      ? path.join(targetDir, repoName)
+      : targetDir;
+
+  const alreadyHasGit = fs.existsSync(path.join(projectDir, '.git'));
+
+  if (isGitHubCloneUrl(cloneUrl) && !alreadyHasGit) {
+    // ── Clone from GitHub template ────────────────────────────────────────
+    spinner.text(`Cloning ${response.repo.owner}/${repoName}`);
+    fs.mkdirSync(projectDir, { recursive: true });
+    const cloneResult = spawnSync('git', ['clone', cloneUrl, projectDir], {
+      stdio: plain ? 'ignore' : 'ignore',
     });
+    if (cloneResult.status !== 0) {
+      // Clone failed — fall through to git init
+      spinner.text('Clone failed, initialising git repository');
+      if (!fs.existsSync(path.join(projectDir, '.git'))) {
+        spawnSync('git', ['init', '-b', defaultBranch], {
+          cwd: projectDir,
+          stdio: 'ignore',
+        });
+      }
+    }
+  } else {
+    // ── No clone URL — init git locally ──────────────────────────────────
+    fs.mkdirSync(projectDir, { recursive: true });
+    if (!alreadyHasGit) {
+      spinner.text('Initialising git repository');
+      spawnSync('git', ['init', '-b', defaultBranch], {
+        cwd: projectDir,
+        stdio: 'ignore',
+      });
+    }
+
+    // Set the remote if cloneUrl is provided and remote is missing
+    if (cloneUrl) {
+      const remoteCheck = spawnSync('git', ['remote', 'get-url', 'origin'], {
+        cwd: projectDir,
+        stdio: 'pipe',
+      });
+      if (remoteCheck.status !== 0) {
+        spawnSync('git', ['remote', 'add', 'origin', cloneUrl], {
+          cwd: projectDir,
+          stdio: 'ignore',
+        });
+      }
+    }
   }
 
+  // ── Write manifest and task ───────────────────────────────────────────
+  spinner.text('Writing project manifest');
+  fs.mkdirSync(path.join(projectDir, '.nibras'), { recursive: true });
+  writeProjectManifest(projectDir, response.manifest);
+  writeTaskText(projectDir, response.task);
+
   spinner.succeed('Project set up');
+
+  const relDir = path.relative(process.cwd(), projectDir) || '.';
+  const isSubdir = relDir !== '.';
+
   printBox(
     `Project ready: ${response.projectKey}`,
     [
       `Project: ${response.projectKey}`,
-      `Repo:    ${response.repo.owner}/${response.repo.name}`,
-      `Dir:     ${targetDir}`,
+      `Repo:    ${response.repo.owner}/${repoName}`,
+      `Dir:     ${projectDir}`,
       ``,
       `Next steps:`,
+      ...(isSubdir ? [`  cd ${relDir}`] : []),
       `  nibras task     — view task instructions`,
       `  nibras test     — run local tests`,
       `  nibras submit   — submit your solution`,
