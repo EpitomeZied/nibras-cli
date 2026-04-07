@@ -23,7 +23,8 @@ export async function commandSetup(args: string[], plain: boolean): Promise<void
     throw new Error('setup requires --project <subject/project>.');
   }
 
-  const targetDir = path.resolve(parseOption(args, '--dir') || process.cwd());
+  const explicitDir = parseOption(args, '--dir');
+  const baseDir = path.resolve(explicitDir || process.cwd());
   const spinner = createSpinner(`Setting up project ${projectKey}`, plain);
 
   const response = ProjectSetupResponseSchema.parse(
@@ -36,13 +37,10 @@ export async function commandSetup(args: string[], plain: boolean): Promise<void
   const repoName = response.repo.name;
   const defaultBranch = response.repo.defaultBranch;
 
-  // Determine the final project directory
-  // If targetDir is CWD and a real clone URL exists, clone into a subdirectory
-  const isCurrentDir = targetDir === path.resolve(process.cwd());
-  const projectDir =
-    isCurrentDir && isGitHubCloneUrl(cloneUrl)
-      ? path.join(targetDir, repoName)
-      : targetDir;
+  // Determine the final project directory:
+  //   - If --dir was explicitly given, use it as-is
+  //   - Otherwise always create a named subdirectory (nibras-<project>)
+  const projectDir = explicitDir ? baseDir : path.join(baseDir, repoName);
 
   const alreadyHasGit = fs.existsSync(path.join(projectDir, '.git'));
 
