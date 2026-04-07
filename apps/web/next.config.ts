@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 import path from 'path';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL ?? 'http://localhost:4848';
+// Server-side only: the real API origin used for rewrites and API routes.
+// Must differ from apiBaseUrl when apiBaseUrl is the web origin (to avoid circular rewrites).
+const apiInternalUrl = process.env.NIBRAS_API_INTERNAL_URL ?? apiBaseUrl;
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -18,12 +21,13 @@ const nextConfig: NextConfig = {
     ],
   },
   // Proxy all /v1/* API calls through Next.js so session cookies are same-origin.
-  // This fixes cross-domain cookie issues between nibras-web.fly.dev and nibras-api.fly.dev.
+  // Uses NIBRAS_API_INTERNAL_URL to avoid circular rewrites when NEXT_PUBLIC_NIBRAS_API_BASE_URL
+  // is set to the web origin.
   async rewrites() {
     return [
       {
         source: '/v1/:path*',
-        destination: `${apiBaseUrl}/v1/:path*`,
+        destination: `${apiInternalUrl}/v1/:path*`,
       },
     ];
   },
