@@ -15,7 +15,7 @@ const ASCII_ART = [
 export function getVersion(): string {
   try {
     const pkg = JSON.parse(
-      fs.readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf8')
+      fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
     ) as { version: string };
     const gitSha = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
       cwd: path.resolve(__dirname, '../../..'),

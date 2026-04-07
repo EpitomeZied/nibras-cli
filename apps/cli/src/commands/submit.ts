@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import {
   MeResponseSchema,
   SubmissionPrepareResponseSchema,
@@ -19,6 +20,14 @@ import { createSpinner } from '../ui/spinner';
 import { createPollProgress } from '../ui/progress';
 import { printBox } from '../ui/box';
 
+function runTests(command: string, cwd: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, { cwd, shell: true, stdio: 'inherit' });
+    child.on('error', reject);
+    child.on('close', (code) => resolve(code ?? 0));
+  });
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -36,12 +45,21 @@ export async function commandSubmit(plain: boolean): Promise<void> {
   const repoUrl = await getOriginUrl(projectRoot);
   const branch = await getCurrentBranch(projectRoot);
 
-  // ── Step 2: Stage files ───────────────────────────────────────────────────
+  // ── Step 2: Run local tests ───────────────────────────────────────────────
+  if (!plain && process.stdout.isTTY) {
+    console.log(`\n  Running tests: ${manifest.test.command}\n`);
+  }
+  const testExitCode = await runTests(manifest.test.command, projectRoot);
+  if (!plain && process.stdout.isTTY) {
+    console.log();
+  }
+
+  // ── Step 3: Stage files ───────────────────────────────────────────────────
   const stageSpinner = createSpinner('Staging allowed files', plain);
   const stagedFiles = await stageAllowedFiles(projectRoot, manifest.submission.allowedPaths);
   stageSpinner.succeed(`Staged ${stagedFiles.length} file${stagedFiles.length === 1 ? '' : 's'}`);
 
-  // ── Step 3: Commit & push ─────────────────────────────────────────────────
+  // ── Step 4: Commit & push ─────────────────────────────────────────────────
   const pushSpinner = createSpinner('Committing and pushing', plain);
   await ensureGitIdentity(projectRoot, me.user.username, me.user.email);
   const timestamp = new Date().toISOString();
@@ -50,7 +68,7 @@ export async function commandSubmit(plain: boolean): Promise<void> {
   await pushBranch(projectRoot, manifest.defaultBranch);
   pushSpinner.succeed(`Pushed commit ${commitSha.slice(0, 7)}`);
 
-  // ── Step 4: Prepare submission ────────────────────────────────────────────
+  // ── Step 5: Prepare submission ────────────────────────────────────────────
   const prepSpinner = createSpinner('Preparing submission', plain);
   const prepared = SubmissionPrepareResponseSchema.parse(
     await apiRequest('/v1/submissions/prepare', {
@@ -61,14 +79,17 @@ export async function commandSubmit(plain: boolean): Promise<void> {
   await apiRequest(`/v1/submissions/${prepared.submissionId}/local-test-result`, {
     method: 'POST',
     body: JSON.stringify({
-      exitCode: 0,
-      summary: `Submitted ${stagedFiles.length} file(s).`,
+      exitCode: testExitCode,
+      summary:
+        testExitCode === 0
+          ? `Tests passed. Submitted ${stagedFiles.length} file(s).`
+          : `Tests failed (exit code ${testExitCode}). Submitted ${stagedFiles.length} file(s).`,
       ranPrevious: false,
     }),
   });
   prepSpinner.succeed('Submission registered');
 
-  // ── Step 5: Poll for verification ─────────────────────────────────────────
+  // ── Step 6: Poll for verification ─────────────────────────────────────────
   const pollProgress = createPollProgress(manifest.submission.waitForVerificationSeconds, plain);
   const deadline = Date.now() + manifest.submission.waitForVerificationSeconds * 1000;
   let lastStatus = '';
