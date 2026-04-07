@@ -1,5 +1,4 @@
 import gradient from 'gradient-string';
-import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -14,9 +13,8 @@ const ASCII_ART = [
 
 export function getVersion(): string {
   try {
-    const pkg = JSON.parse(
-      fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8')
-    ) as { version: string };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pkg = require('../../package.json') as { version: string };
     const gitSha = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
       cwd: path.resolve(__dirname, '../../..'),
       encoding: 'utf8',
