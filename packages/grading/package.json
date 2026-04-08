@@ -1,11 +1,21 @@
 {
   "name": "@nibras/grading",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "watch": "tsc -w -p tsconfig.json --preserveWatchOutput"
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.6.205"
   }
 }
