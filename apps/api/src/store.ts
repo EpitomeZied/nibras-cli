@@ -76,6 +76,7 @@ export type TrackingResourceRecord = {
 export type TrackingRubricItemRecord = {
   criterion: string;
   maxScore: number;
+  earned?: number;
 };
 
 export type RepoRecord = {

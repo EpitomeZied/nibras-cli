@@ -158,7 +158,7 @@ Respond with ONLY this JSON (no markdown, no explanation):
   return {
     score: totalEarned,
     confidence: parsed.confidence,
-    needsReview: parsed.needsReview || parsed.confidence < 0.7,
+    needsReview: parsed.needsReview || parsed.confidence < (aiConfig.minConfidence ?? 0.7),
     criterionScores: parsed.criterionScores,
     reasoningSummary: parsed.reasoningSummary,
     evidenceQuotes: parsed.evidenceQuotes || [],

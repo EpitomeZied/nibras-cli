@@ -160,8 +160,7 @@ type AiRunResult = {
 function loadAiConfig(): AiConfig | null {
   const apiKey = process.env.NIBRAS_AI_API_KEY;
   if (!apiKey) return null;
-  const model = process.env.NIBRAS_AI_MODEL;
-  if (!model) return null;
+  const model = process.env.NIBRAS_AI_MODEL ?? 'gpt-4o-mini';
   return {
     apiKey,
     model,
@@ -240,7 +239,9 @@ async function runAiGrading(
     let anyNeedsReview = false;
     const allCriterionScores: AiGradeResult['criterionScores'] = [];
     const allEvidenceQuotes: string[] = [];
-    let lastResult: AiGradeResult | null = null;
+    const allConfidences: number[] = [];
+    const allReasoningSummaries: string[] = [];
+    let gradedAny = false;
 
     for (const q of semanticQuestions) {
       const answerPath = join(tmpDir, q.answerFile);
@@ -276,10 +277,12 @@ async function runAiGrading(
         totalEarned += result.score;
         allCriterionScores.push(...result.criterionScores);
         allEvidenceQuotes.push(...result.evidenceQuotes);
+        allConfidences.push(result.confidence);
+        allReasoningSummaries.push(result.reasoningSummary);
         if (result.needsReview || result.confidence < (q.minConfidence ?? minConfidence)) {
           anyNeedsReview = true;
         }
-        lastResult = result;
+        gradedAny = true;
       } catch (err) {
         log('warn', 'AI grading failed for question', {
           questionId: q.id,
@@ -289,14 +292,19 @@ async function runAiGrading(
       }
     }
 
-    if (!lastResult) return null;
+    if (!gradedAny) return null;
+
+    const avgConfidence =
+      allConfidences.length > 0
+        ? allConfidences.reduce((sum, c) => sum + c, 0) / allConfidences.length
+        : 0;
 
     const aggregated: AiGradeResult = {
       score: totalEarned,
-      confidence: lastResult.confidence,
+      confidence: avgConfidence,
       needsReview: anyNeedsReview,
       criterionScores: allCriterionScores,
-      reasoningSummary: lastResult.reasoningSummary,
+      reasoningSummary: allReasoningSummaries.join('\n\n'),
       evidenceQuotes: allEvidenceQuotes,
     };
 
@@ -350,15 +358,28 @@ async function finalizeJob(
     // Create a draft review with AI results when AI grading ran
     if (verificationPassed && aiResult) {
       const r = aiResult.gradeResult;
-      // Use a system user id (first admin or fallback to the submission's user)
-      const submission = await tx.submissionAttempt.findUniqueOrThrow({
-        where: { id: submissionAttemptId },
-        select: { userId: true },
-      });
+      // Use the first admin user as reviewer; fall back to the submission owner
+      const [submission, adminUser] = await Promise.all([
+        tx.submissionAttempt.findUniqueOrThrow({
+          where: { id: submissionAttemptId },
+          select: { userId: true },
+        }),
+        tx.user.findFirst({
+          where: { systemRole: 'admin' },
+          select: { id: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+      ]);
+      const reviewerUserId = adminUser?.id ?? submission.userId;
+      if (!adminUser) {
+        log('warn', 'AI review: no admin user found, attributing review to submission owner', {
+          submissionAttemptId,
+        });
+      }
       await tx.review.create({
         data: {
           submissionAttemptId,
-          reviewerUserId: submission.userId,
+          reviewerUserId,
           status: 'pending',
           score: r.score,
           feedback: r.reasoningSummary,

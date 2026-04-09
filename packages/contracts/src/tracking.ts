@@ -26,6 +26,7 @@ export const TrackingResourceSchema = z.object({
 export const TrackingRubricItemSchema = z.object({
   criterion: z.string().min(1),
   maxScore: z.number().nonnegative(),
+  earned: z.number().nonnegative().optional(),
 });
 
 export const TrackingCourseSummarySchema = z.object({

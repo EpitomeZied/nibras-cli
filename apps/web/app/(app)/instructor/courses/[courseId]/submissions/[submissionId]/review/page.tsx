@@ -24,7 +24,7 @@ type Submission = {
   createdAt: string;
 };
 
-type RubricItem = { criterion: string; maxScore: number };
+type RubricItem = { criterion: string; maxScore: number; earned?: number };
 
 type Project = {
   rubric: RubricItem[];
@@ -138,7 +138,7 @@ export default function SubmissionReviewPage({
               rd.rubric.map((item) => ({
                 criterion: item.criterion,
                 maxScore: item.maxScore,
-                score: item.maxScore,
+                score: item.earned ?? 0,
               }))
             );
           }
@@ -166,7 +166,8 @@ export default function SubmissionReviewPage({
       feedback: feedback.trim(),
       rubric: rubricScores.map((row) => ({
         criterion: row.criterion,
-        maxScore: row.score,
+        maxScore: row.maxScore,
+        earned: row.score,
       })),
     };
 

@@ -25,9 +25,14 @@ interface ExtractedAnswers {
 async function extractAnswersFromFile(
   fileContent: string,
   questions: Array<{ id: string; question: string }>,
-  config: GradingConfig
+  config: GradingConfig,
+  assignmentInstructions?: string
 ): Promise<ExtractedAnswers> {
-  const systemPrompt = `You are an expert at extracting student answers from uploaded assignment files.
+  const instructionsSection = assignmentInstructions
+    ? `\nAssignment Instructions:\n${assignmentInstructions}\n`
+    : '';
+
+  const systemPrompt = `You are an expert at extracting student answers from uploaded assignment files.${instructionsSection}
 Given the file content and a list of questions, extract the student's answer for each question.
 
 RULES:
@@ -93,14 +98,6 @@ export async function gradeFile(
     };
   }
 
-  // لو في assignment instructions نضيفها للـ system context
-  const enrichedConfig = assignmentInstructions
-    ? {
-        ...config,
-        // نحقنها في أول سؤال كـ context (handled inside extraction)
-      }
-    : config;
-
   // Step 1: استخراج الإجابات
   const questionSummaries = modelAnswerQuestions.map((q) => ({
     id: q.id,
@@ -110,7 +107,8 @@ export async function gradeFile(
   const { answers, extractionNotes } = await extractAnswersFromFile(
     fileContent,
     questionSummaries,
-    enrichedConfig
+    config,
+    assignmentInstructions
   );
 
   const studentAnswers: StudentAnswer[] = answers.map((a) => ({
