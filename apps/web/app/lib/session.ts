@@ -85,17 +85,26 @@ export async function discoverApiBaseUrl(): Promise<string> {
 
 export async function apiFetch(
   path: string,
-  init: RequestInit & { auth?: boolean } = {}
+  init: RequestInit & { auth?: boolean; accessToken?: string } = {}
 ): Promise<Response> {
   if (typeof window === 'undefined') {
     throw new Error('Browser session helpers require window.');
   }
 
-  const { auth = false, ...requestInit } = init;
+  const { auth = false, accessToken: explicitToken, ...requestInit } = init;
+
+  // Prefer explicitly provided token, then fall back to the web session token
+  // stored in localStorage by /auth/complete after GitHub OAuth. This avoids
+  // relying on cross-domain cookies (blocked by Chrome 3P cookie restrictions).
+  const accessToken =
+    explicitToken ??
+    (auth ? (window.localStorage.getItem('nibras.webSession') ?? undefined) : undefined);
+
   return apiFetchWith({
     path,
     init: requestInit,
     auth,
+    accessToken,
     discoverApiBaseUrl,
     fetchImpl: (input, request) => fetch(input, request),
   });

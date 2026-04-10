@@ -18,7 +18,7 @@ const GradingExampleSchema = z.object({
 
 const GradingQuestionSchema = z.object({
   id: z.string().min(1),
-  mode: z.enum(['exact', 'semantic']),
+  mode: z.enum(['exact', 'semantic', 'exam']),
   prompt: z.string().optional(),
   points: z.number().nonnegative(),
   answerFile: z.string().min(1),
@@ -26,6 +26,10 @@ const GradingQuestionSchema = z.object({
   examples: z.array(GradingExampleSchema).optional(),
   solutions: z.array(z.string().min(1)).optional(),
   minConfidence: z.number().min(0).max(1).optional(),
+  // Exam-mode fields
+  type: z.enum(['mcq', 'short_answer', 'long_answer', 'true_false']).optional(),
+  modelAnswer: z.string().optional(),
+  gradingCriteria: z.string().optional(),
 });
 
 export const ProjectManifestSchema = z.object({
@@ -46,7 +50,7 @@ export const ProjectManifestSchema = z.object({
   grading: z
     .object({
       questions: z.array(GradingQuestionSchema),
-      totalPoints: z.number().nonnegative(),
+      totalPoints: z.number().nonnegative().optional(),
     })
     .optional(),
 });

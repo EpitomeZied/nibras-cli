@@ -20,10 +20,26 @@ export default function AuthCompletePage() {
   useEffect(() => {
     void (async () => {
       try {
-        const response = await apiFetch('/v1/web/session', { auth: true });
+        // Read the session token from the ?st= redirect param — provided by the
+        // API for browsers that block cross-domain cookies (Chrome 3P restrictions).
+        const st = new URLSearchParams(window.location.search).get('st');
+
+        const response = await apiFetch('/v1/web/session', {
+          auth: true,
+          // Pass token explicitly as accessToken so apiFetchWith sends it as
+          // Authorization: Bearer — bypasses cross-domain cookie restrictions.
+          ...(st ? { accessToken: st } : {}),
+        });
         if (!response.ok) {
           throw new Error('Web session was not established.');
         }
+
+        // Persist the web session token in localStorage so subsequent apiFetch
+        // calls can include it as a bearer token without relying on cookies.
+        if (st) {
+          window.localStorage.setItem('nibras.webSession', st);
+        }
+
         addLine({ text: '✓ Session established', type: 'success' });
         addLine({ text: 'Redirecting to dashboard…', type: 'muted' });
         setDone(true);

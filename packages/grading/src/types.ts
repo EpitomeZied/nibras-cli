@@ -96,6 +96,8 @@ export interface GradingConfig {
   baseURL?: string; // override for Azure/Ollama
   minConfidence?: number; // default: 0.8
   language?: "ar" | "en" | "auto"; // default: auto
+  maxRetries?: number; // retry attempts on 429/5xx (default: 2)
+  timeoutMs?: number; // per-request timeout in ms (default: none)
 }
 
 // ---------- Runner input ----------

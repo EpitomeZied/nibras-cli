@@ -52,9 +52,13 @@ export async function requireUser(
     return null;
   }
 
+  // Bearer token may be either a CLI access token OR a web session token that
+  // was passed via the ?st= redirect parameter (for browsers that block
+  // cross-domain cookies). Try access token first, fall back to web session.
   const user =
     authKind === 'bearer'
-      ? await store.getUserByToken(apiBaseUrl, token)
+      ? ((await store.getUserByToken(apiBaseUrl, token)) ??
+         (await store.getUserByWebSession(apiBaseUrl, token)))
       : await store.getUserByWebSession(apiBaseUrl, token);
   if (!user) {
     reply.code(401).send(Errors.invalidSession());

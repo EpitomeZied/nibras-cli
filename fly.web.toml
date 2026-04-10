@@ -5,7 +5,7 @@ primary_region = 'iad'
   dockerfile = 'Dockerfile.web'
 
   [build.args]
-    NEXT_PUBLIC_NIBRAS_API_BASE_URL = "https://nibras-web.fly.dev"
+    NEXT_PUBLIC_NIBRAS_API_BASE_URL = "https://nibras-api.fly.dev"
     NEXT_PUBLIC_NIBRAS_WEB_BASE_URL = "https://nibras-web.fly.dev"
     NIBRAS_API_INTERNAL_URL = "https://nibras-api.fly.dev"
 

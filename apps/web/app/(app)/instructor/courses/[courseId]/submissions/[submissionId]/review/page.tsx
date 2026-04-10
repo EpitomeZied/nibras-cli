@@ -24,7 +24,7 @@ type Submission = {
   createdAt: string;
 };
 
-type RubricItem = { criterion: string; maxScore: number };
+type RubricItem = { criterion: string; maxScore: number; earned?: number };
 
 type Project = {
   rubric: RubricItem[];
@@ -138,7 +138,16 @@ export default function SubmissionReviewPage({
               rd.rubric.map((item) => ({
                 criterion: item.criterion,
                 maxScore: item.maxScore,
-                score: item.maxScore,
+                score: item.earned ?? 0,
+              }))
+            );
+          } else if (rd.aiCriterionScores && rd.aiCriterionScores.length > 0) {
+            // Pre-fill from AI scores when no manual rubric has been saved yet
+            setRubricScores(
+              rd.aiCriterionScores.map((c) => ({
+                criterion: c.id,
+                maxScore: c.points,
+                score: c.earned,
               }))
             );
           }
@@ -166,7 +175,8 @@ export default function SubmissionReviewPage({
       feedback: feedback.trim(),
       rubric: rubricScores.map((row) => ({
         criterion: row.criterion,
-        maxScore: row.score,
+        maxScore: row.maxScore,
+        earned: row.score,
       })),
     };
 

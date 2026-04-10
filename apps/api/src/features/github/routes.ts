@@ -322,7 +322,12 @@ export function registerGitHubRoutes(
           maxAgeSeconds: 30 * 24 * 60 * 60,
         })
       );
-      reply.redirect(redirectUrl);
+      // Also pass the session token in the redirect URL so browsers that block
+      // cross-domain cookies (Chrome third-party cookie restrictions) can still
+      // authenticate. The web /auth/complete page reads ?st= and stores it in
+      // localStorage, then uses it as a Bearer token in subsequent API calls.
+      const separator = redirectUrl.includes('?') ? '&' : '?';
+      reply.redirect(`${redirectUrl}${separator}st=${encodeURIComponent(webSession.sessionToken)}`);
     }
   );
 
