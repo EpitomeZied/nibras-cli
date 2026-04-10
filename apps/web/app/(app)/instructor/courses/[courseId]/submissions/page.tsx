@@ -112,18 +112,14 @@ export default function CourseSubmissionsPage({
                   <th>Status</th>
                   <th>Type</th>
                   <th>Submitted</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((sub) => (
                   <tr key={sub.id}>
                     <td>
-                      <Link
-                        href={`/instructor/courses/${courseId}/submissions/${sub.id}/review`}
-                        style={{ fontWeight: 600 }}
-                      >
-                        {sub.projectKey}
-                      </Link>
+                      <strong>{sub.projectKey}</strong>
                     </td>
                     <td className={styles.mono}>{sub.branch}</td>
                     <td className={styles.mono}>{sub.commitSha.slice(0, 7)}</td>
@@ -140,6 +136,15 @@ export default function CourseSubmissionsPage({
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
+                    </td>
+                    <td>
+                      <Link
+                        href={`/instructor/courses/${courseId}/submissions/${sub.id}/review`}
+                        className={styles.btnPrimary}
+                        style={{ padding: '6px 14px', fontSize: 13, whiteSpace: 'nowrap' }}
+                      >
+                        Review →
+                      </Link>
                     </td>
                   </tr>
                 ))}

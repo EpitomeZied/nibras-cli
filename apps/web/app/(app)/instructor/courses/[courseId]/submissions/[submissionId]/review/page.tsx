@@ -105,13 +105,13 @@ export default function SubmissionReviewPage({
         const subData = (await subRes.json()) as Submission;
         setSubmission(subData);
 
-        const [projRes, reviewRes] = await Promise.all([
+        const [projResult, reviewResult] = await Promise.allSettled([
           apiFetch(`/v1/tracking/projects/${subData.projectId}`, { auth: true }),
           apiFetch(`/v1/tracking/submissions/${submissionId}/review`, { auth: true }),
         ]);
 
-        if (projRes.ok) {
-          const projData = (await projRes.json()) as Project;
+        if (projResult.status === 'fulfilled') {
+          const projData = (await projResult.value.json()) as Project;
           const scores = projData.rubric.map((item) => ({
             criterion: item.criterion,
             maxScore: item.maxScore,
@@ -120,8 +120,8 @@ export default function SubmissionReviewPage({
           setRubricScores(scores);
         }
 
-        if (reviewRes.ok) {
-          const rd = (await reviewRes.json()) as Review;
+        if (reviewResult.status === 'fulfilled') {
+          const rd = (await reviewResult.value.json()) as Review;
           setReviewData(rd);
           setReviewStatus(rd.status);
           // Pre-fill score from AI result if no manual score yet
@@ -152,6 +152,7 @@ export default function SubmissionReviewPage({
             );
           }
         }
+        // If reviewResult.status === 'rejected', no prior review exists — show blank form
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error.');
       } finally {
