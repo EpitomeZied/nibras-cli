@@ -141,6 +141,15 @@ export default function SubmissionReviewPage({
                 score: item.earned ?? 0,
               }))
             );
+          } else if (rd.aiCriterionScores && rd.aiCriterionScores.length > 0) {
+            // Pre-fill from AI scores when no manual rubric has been saved yet
+            setRubricScores(
+              rd.aiCriterionScores.map((c) => ({
+                criterion: c.id,
+                maxScore: c.points,
+                score: c.earned,
+              }))
+            );
           }
         }
       } catch (err) {

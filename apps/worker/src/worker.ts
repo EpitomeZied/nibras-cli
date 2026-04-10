@@ -9,7 +9,11 @@ import * as Sentry from '@sentry/node';
 import { Worker as BullWorker, type Job } from 'bullmq';
 import {
   gradeSemanticAnswer,
+  gradeMCQ,
+  gradeExam,
+  gradeFile,
   type AiConfig,
+  type GradingConfig,
   type GradingQuestion,
   type AiGradeResult,
 } from '@nibras/grading';
@@ -206,18 +210,31 @@ async function runAiGrading(
         rubric?: Array<{ id: string; description: string; points: number }>;
         examples?: Array<{ label: string; answer: string }>;
         minConfidence?: number;
+        // MCQ fields
+        options?: string[];
+        // Exam fields
+        type?: 'mcq' | 'short_answer' | 'long_answer' | 'true_false';
+        modelAnswer?: string;
+        gradingCriteria?: string;
+        // File fields
+        fileType?: 'pdf' | 'text' | 'code' | 'other';
+        assignmentInstructions?: string;
+        modelAnswerQuestions?: Array<{
+          id: string;
+          question: string;
+          type: 'mcq' | 'short_answer' | 'long_answer' | 'true_false';
+          maxScore: number;
+          modelAnswer: string;
+          gradingCriteria?: string;
+        }>;
       }>;
     };
   };
 
   const manifest = attempt.project.releases[0]?.manifestJson as ManifestJson | null;
-  const gradingConfig = manifest?.grading;
-  if (!gradingConfig) return null;
-
-  const semanticQuestions = gradingConfig.questions.filter(
-    (q) => q.mode === 'semantic' && Array.isArray(q.rubric) && q.rubric.length > 0
-  );
-  if (semanticQuestions.length === 0) return null;
+  const manifestGrading = manifest?.grading;
+  if (!manifestGrading) return null;
+  if (manifestGrading.questions.length === 0) return null;
 
   const cloneUrl = attempt.userProjectRepo.cloneUrl;
   if (!cloneUrl) return null;
@@ -235,6 +252,15 @@ async function runAiGrading(
     const projectKey = manifest?.projectKey ?? attempt.project.slug;
     const minConfidence = aiConfig.minConfidence ?? 0.8;
 
+    const gradingConfig: GradingConfig = {
+      apiKey: aiConfig.apiKey,
+      model: aiConfig.model,
+      baseURL: aiConfig.baseUrl,
+      minConfidence: aiConfig.minConfidence,
+      maxRetries: aiConfig.maxRetries,
+      timeoutMs: aiConfig.timeoutMs,
+    };
+
     let totalEarned = 0;
     let anyNeedsReview = false;
     const allCriterionScores: AiGradeResult['criterionScores'] = [];
@@ -243,7 +269,9 @@ async function runAiGrading(
     const allReasoningSummaries: string[] = [];
     let gradedAny = false;
 
-    for (const q of semanticQuestions) {
+    const allQuestions = manifestGrading.questions;
+
+    for (const q of allQuestions) {
       const answerPath = join(tmpDir, q.answerFile);
       let answerText: string;
       try {
@@ -253,39 +281,158 @@ async function runAiGrading(
           answerFile: q.answerFile,
           questionId: q.id,
         });
+        anyNeedsReview = true;
         continue;
       }
 
-      const question: GradingQuestion = {
-        id: q.id,
-        prompt: q.prompt ?? q.id,
-        points: q.points,
-        rubric: q.rubric ?? [],
-        examples: q.examples,
-        minConfidence: q.minConfidence,
-      };
-
       try {
-        const result = await gradeSemanticAnswer({
-          aiConfig,
-          subject: 'Programming',
-          project: projectKey,
-          question,
-          answerText,
-        });
+        if (q.mode === 'semantic' && Array.isArray(q.rubric) && q.rubric.length > 0) {
+          // ── Semantic path ─────────────────────────────────────────
+          const question: GradingQuestion = {
+            id: q.id,
+            prompt: q.prompt ?? q.id,
+            points: q.points,
+            rubric: q.rubric ?? [],
+            examples: q.examples,
+            minConfidence: q.minConfidence,
+          };
+          const result = await gradeSemanticAnswer({
+            aiConfig,
+            subject: 'Programming',
+            project: projectKey,
+            question,
+            answerText,
+          });
+          totalEarned += result.score;
+          allCriterionScores.push(...result.criterionScores);
+          allEvidenceQuotes.push(...result.evidenceQuotes);
+          allConfidences.push(result.confidence);
+          allReasoningSummaries.push(result.reasoningSummary);
+          if (result.needsReview || result.confidence < (q.minConfidence ?? minConfidence)) {
+            anyNeedsReview = true;
+          }
+          gradedAny = true;
 
-        totalEarned += result.score;
-        allCriterionScores.push(...result.criterionScores);
-        allEvidenceQuotes.push(...result.evidenceQuotes);
-        allConfidences.push(result.confidence);
-        allReasoningSummaries.push(result.reasoningSummary);
-        if (result.needsReview || result.confidence < (q.minConfidence ?? minConfidence)) {
-          anyNeedsReview = true;
+        } else if (q.mode === 'mcq') {
+          // ── MCQ path ──────────────────────────────────────────────
+          const result = await gradeMCQ(
+            [
+              {
+                id: q.id,
+                question: q.prompt ?? q.id,
+                options: q.options ?? [],
+                studentAnswer: answerText.trim(),
+              },
+            ],
+            gradingConfig
+          );
+          const r = result.results[0];
+          if (r) {
+            const earned = r.isCorrect ? q.points : 0;
+            totalEarned += earned;
+            allCriterionScores.push({
+              id: r.questionId,
+              points: q.points,
+              earned,
+              justification: r.explanation,
+            });
+            allConfidences.push(r.confidence);
+            allReasoningSummaries.push(
+              `${q.prompt ?? q.id}: ${r.isCorrect ? 'Correct' : 'Incorrect'} — ${r.explanation}`
+            );
+            if (r.confidence < (q.minConfidence ?? minConfidence)) {
+              anyNeedsReview = true;
+            }
+            gradedAny = true;
+          }
+
+        } else if (q.mode === 'exam') {
+          // ── Exam path ─────────────────────────────────────────────
+          const result = await gradeExam(
+            [
+              {
+                id: q.id,
+                question: q.prompt ?? q.id,
+                type: q.type ?? 'short_answer',
+                maxScore: q.points,
+                modelAnswer: q.modelAnswer ?? '',
+                gradingCriteria: q.gradingCriteria,
+              },
+            ],
+            [{ questionId: q.id, answer: answerText }],
+            gradingConfig
+          );
+          const r = result.results[0];
+          if (r) {
+            totalEarned += r.score;
+            allCriterionScores.push({
+              id: r.questionId,
+              points: r.maxScore,
+              earned: r.score,
+              justification: r.feedback,
+            });
+            allConfidences.push(r.confidence);
+            allReasoningSummaries.push(r.feedback);
+            if (r.needsHumanReview) anyNeedsReview = true;
+            gradedAny = true;
+          }
+
+        } else if (q.mode === 'file') {
+          // ── File path ─────────────────────────────────────────────
+          const modelAnswerQuestions = (q.modelAnswerQuestions ?? []).map((mq) => ({
+            id: mq.id,
+            question: mq.question,
+            type: mq.type,
+            maxScore: mq.maxScore,
+            modelAnswer: mq.modelAnswer,
+            gradingCriteria: mq.gradingCriteria,
+          }));
+
+          if (modelAnswerQuestions.length === 0) {
+            log('warn', 'AI grading: file mode question has no modelAnswerQuestions', {
+              questionId: q.id,
+            });
+            anyNeedsReview = true;
+            continue;
+          }
+
+          const result = await gradeFile(
+            {
+              fileContent: answerText,
+              fileType: q.fileType ?? 'text',
+              modelAnswerQuestions,
+              assignmentInstructions: q.assignmentInstructions,
+            },
+            gradingConfig
+          );
+
+          totalEarned += result.totalScore;
+          for (const r of result.results) {
+            allCriterionScores.push({
+              id: r.questionId,
+              points: r.maxScore,
+              earned: r.score,
+              justification: r.feedback,
+            });
+            allConfidences.push(r.confidence);
+          }
+          const summaryText = result.extractionNotes
+            ? `[File Extraction Notes: ${result.extractionNotes}]\n\n${result.results.map((r) => r.feedback).join('\n')}`
+            : result.results.map((r) => r.feedback).join('\n');
+          allReasoningSummaries.push(summaryText);
+          if (result.needsHumanReview) anyNeedsReview = true;
+          gradedAny = true;
+
+        } else {
+          log('warn', 'AI grading: unknown question mode, skipping', {
+            questionId: q.id,
+            mode: q.mode,
+          });
         }
-        gradedAny = true;
       } catch (err) {
         log('warn', 'AI grading failed for question', {
           questionId: q.id,
+          mode: q.mode,
           error: err instanceof Error ? err.message : String(err),
         });
         anyNeedsReview = true;
