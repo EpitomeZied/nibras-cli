@@ -1267,7 +1267,13 @@ export class FileStore implements AppStore {
           .filter((entry) => entry.userId === userId)
           .map((entry) => entry.courseId)
       );
-      results = data.courses.filter((entry) => entry.isActive && allowedCourseIds.has(entry.id));
+      const memberCourses = data.courses.filter(
+        (entry) => entry.isActive && allowedCourseIds.has(entry.id)
+      );
+      // Fall back to all active courses when user has no memberships yet
+      // (e.g. brand-new sign-up) — ensures CS161 Exam 1 & 2 are always visible.
+      results =
+        memberCourses.length > 0 ? memberCourses : data.courses.filter((entry) => entry.isActive);
     }
     const offset = opts?.offset ?? 0;
     return opts?.limit !== undefined ? results.slice(offset, offset + opts.limit) : results;

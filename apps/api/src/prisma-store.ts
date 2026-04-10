@@ -791,6 +791,22 @@ export class PrismaStore implements AppStore {
         /* non-fatal */
       });
 
+    // Auto-enroll every user in cs161 as a student so that Exam 1 & 2
+    // are always visible to all users (including brand-new sign-ups).
+    await this.prisma.course
+      .findUnique({ where: { slug: 'cs161' } })
+      .then(async (cs161) => {
+        if (!cs161) return;
+        await this.prisma.courseMembership.upsert({
+          where: { courseId_userId: { courseId: cs161.id, userId: user.id } },
+          update: {},
+          create: { courseId: cs161.id, userId: user.id, role: CourseRole.student },
+        });
+      })
+      .catch(() => {
+        /* non-fatal: enrolment runs again next login */
+      });
+
     return {
       user: toUserRecord(hydrated),
       session,
@@ -1634,6 +1650,18 @@ export class PrismaStore implements AppStore {
       take,
       skip,
     });
+    // If the user has no memberships yet (e.g. brand-new sign-up before the
+    // auto-enrol background task ran), fall back to showing all active courses
+    // so CS161 Exam 1 & 2 are always visible to everyone.
+    if (memberships.length === 0) {
+      const allCourses = await this.prisma.course.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+      });
+      return allCourses.map(toCourseRecord);
+    }
     return memberships.map((entry) => toCourseRecord(entry.course));
   }
 
@@ -1643,7 +1671,12 @@ export class PrismaStore implements AppStore {
     if (user.systemRole === SystemRole.admin) {
       return this.prisma.course.count({ where: { isActive: true } });
     }
-    return this.prisma.courseMembership.count({ where: { userId } });
+    const membershipCount = await this.prisma.courseMembership.count({ where: { userId } });
+    // Match the fallback in listTrackingCourses
+    if (membershipCount === 0) {
+      return this.prisma.course.count({ where: { isActive: true } });
+    }
+    return membershipCount;
   }
 
   async createTrackingCourse(
