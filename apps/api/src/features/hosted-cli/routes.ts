@@ -217,16 +217,12 @@ export function registerHostedCliRoutes(
         const account = await store.getGithubAccountForUser(auth.user.id);
         // Only need the user's OAuth token — installationId not required for repo creation
         if (account?.userAccessToken) {
-          try {
-            repo = await store.provisionProjectRepoFromGitHub(
-              requestBaseUrl(request),
-              params.projectKey,
-              auth.user.id,
-              githubConfig
-            );
-          } catch {
-            // Keep the DB-backed fallback record if GitHub template provisioning fails.
-          }
+          repo = await store.provisionProjectRepoFromGitHub(
+            requestBaseUrl(request),
+            params.projectKey,
+            auth.user.id,
+            githubConfig
+          );
         }
       }
       project.manifest.apiBaseUrl = requestBaseUrl(request);

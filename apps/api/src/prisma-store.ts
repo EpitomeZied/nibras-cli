@@ -11,7 +11,11 @@ import {
   SystemRole,
   TrackingSubmissionType,
 } from '@prisma/client';
-import { generateRepositoryFromTemplate, GitHubAppConfig } from '@nibras/github';
+import {
+  createRepositoryForAuthenticatedUser,
+  generateRepositoryFromTemplate,
+  GitHubAppConfig,
+} from '@nibras/github';
 import { encrypt as encryptValue, decrypt as decryptValue } from '@nibras/core';
 import { enqueueVerificationJob } from './lib/queue';
 import {
@@ -83,6 +87,25 @@ function parseGitHubRepoUrl(value: string): { owner: string; name: string } | nu
   } catch {
     return null;
   }
+}
+
+function toRepoRecord(
+  record: {
+    owner: string;
+    name: string;
+    cloneUrl: string | null;
+    defaultBranch: string;
+    visibility: RepoVisibility;
+    installStatus?: string;
+  }
+): RepoRecord {
+  return {
+    owner: record.owner,
+    name: record.name,
+    cloneUrl: record.installStatus === 'bootstrap_pending' ? null : record.cloneUrl,
+    defaultBranch: record.defaultBranch,
+    visibility: record.visibility === RepoVisibility.private ? 'private' : 'public',
+  };
 }
 
 function toUserRecord(user: {
@@ -940,6 +963,16 @@ export class PrismaStore implements AppStore {
         startedAt: new Date(),
       },
     });
+    await this.prisma.userProjectRepo.updateMany({
+      where: {
+        owner: payload.owner,
+        name: payload.repoName,
+      },
+      data: {
+        cloneUrl: payload.repositoryUrl || `https://github.com/${payload.owner}/${payload.repoName}`,
+        installStatus: 'provisioned',
+      },
+    });
   }
 
   async createDeviceCode(apiBaseUrl: string): Promise<DeviceCodeRecord> {
@@ -1265,13 +1298,7 @@ export class PrismaStore implements AppStore {
       },
     });
     if (existing) {
-      return {
-        owner: existing.owner,
-        name: existing.name,
-        cloneUrl: existing.cloneUrl,
-        defaultBranch: existing.defaultBranch,
-        visibility: existing.visibility === RepoVisibility.private ? 'private' : 'public',
-      };
+      return toRepoRecord(existing);
     }
 
     const created = await this.prisma.userProjectRepo.create({
@@ -1285,13 +1312,7 @@ export class PrismaStore implements AppStore {
         installStatus: 'provisioned',
       },
     });
-    return {
-      owner: created.owner,
-      name: created.name,
-      cloneUrl: created.cloneUrl,
-      defaultBranch: created.defaultBranch,
-      visibility: 'private',
-    };
+    return toRepoRecord(created);
   }
 
   async provisionProjectRepoFromGitHub(
@@ -1310,12 +1331,25 @@ export class PrismaStore implements AppStore {
       throw new Error('GitHub account or project is not ready for provisioning.');
     }
     const repoName = `nibras-${projectKey.replace('/', '-')}`;
-    const generated = await generateRepositoryFromTemplate(
-      githubConfig,
-      account.userAccessToken,
-      account.login,
-      repoName
-    );
+    let generated: { cloneUrl: string | null; htmlUrl: string | null; fullName: string };
+    let installStatus = 'provisioned';
+    try {
+      generated = await generateRepositoryFromTemplate(
+        githubConfig,
+        account.userAccessToken,
+        account.login,
+        repoName
+      );
+    } catch {
+      generated = await createRepositoryForAuthenticatedUser(
+        githubConfig,
+        account.userAccessToken,
+        repoName
+      );
+      installStatus = 'bootstrap_pending';
+    }
+    const parsedRepo = parseGitHubRepoUrl(generated.cloneUrl || generated.htmlUrl || '');
+    const owner = parsedRepo?.owner || generated.fullName.split('/')[0] || account.login;
     const record = await this.prisma.userProjectRepo.upsert({
       where: {
         userId_projectId: {
@@ -1324,31 +1358,25 @@ export class PrismaStore implements AppStore {
         },
       },
       update: {
-        owner: account.login,
+        owner,
         name: repoName,
         cloneUrl: generated.cloneUrl,
         defaultBranch: project.defaultBranch,
         visibility: RepoVisibility.private,
-        installStatus: 'provisioned',
+        installStatus,
       },
       create: {
         userId,
         projectId: project.id,
-        owner: account.login,
+        owner,
         name: repoName,
         cloneUrl: generated.cloneUrl,
         defaultBranch: project.defaultBranch,
         visibility: RepoVisibility.private,
-        installStatus: 'provisioned',
+        installStatus,
       },
     });
-    return {
-      owner: record.owner,
-      name: record.name,
-      cloneUrl: record.cloneUrl,
-      defaultBranch: record.defaultBranch,
-      visibility: record.visibility === RepoVisibility.private ? 'private' : 'public',
-    };
+    return toRepoRecord(record);
   }
 
   async createOrReuseSubmission(

@@ -111,24 +111,25 @@ export async function commandSetup(args: string[], plain: boolean): Promise<void
       git(['commit', '-m', 'nibras: add project manifest'], projectDir);
     }
 
-    // Try to create the GitHub repo via `gh` CLI (most reliable cross-platform)
-    spinner.text(`Creating repository ${repoFullName} on GitHub`);
-    const ghCreate = spawnSync(
-      'gh',
-      ['repo', 'create', repoFullName, '--private', '--push', '--source', projectDir],
-      { stdio: 'ignore' }
-    );
+    spinner.text(`Pushing ${repoFullName}`);
+    const pushed = git(['push', '-u', 'origin', defaultBranch], projectDir);
+    if (!pushed) {
+      spinner.text(`Creating repository ${repoFullName} on GitHub`);
+      const ghCreate = spawnSync(
+        'gh',
+        ['repo', 'create', repoFullName, '--private', '--push', '--source', projectDir],
+        { stdio: 'ignore' }
+      );
 
-    if (ghCreate.status !== 0) {
-      // gh CLI not available or failed — try plain git push (works if repo already exists)
-      const pushed = git(['push', '-u', 'origin', defaultBranch], projectDir);
-      if (!pushed) {
-        // Last resort: print instructions
-        spinner.text('');
-        if (!plain) {
-          console.log(
-            `\n  Run: gh repo create ${repoFullName} --private --push --source ${projectDir}\n`
-          );
+      if (ghCreate.status !== 0) {
+        const pushedAfterCreate = git(['push', '-u', 'origin', defaultBranch], projectDir);
+        if (!pushedAfterCreate) {
+          spinner.text('');
+          if (!plain) {
+            console.log(
+              `\n  Run: gh repo create ${repoFullName} --private --push --source ${projectDir}\n`
+            );
+          }
         }
       }
     }

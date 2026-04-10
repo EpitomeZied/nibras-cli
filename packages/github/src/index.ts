@@ -40,6 +40,13 @@ export type GitHubTokenResponse = {
   tokenType?: string;
 };
 
+function getOAuthRedirectUri(config: GitHubAppConfig): string | null {
+  if (!config.webBaseUrl) {
+    return null;
+  }
+  return new URL('/api/auth/callback', config.webBaseUrl).toString();
+}
+
 export type SignedStateOptions = {
   ttlSeconds?: number;
 };
@@ -189,6 +196,10 @@ export async function exchangeGitHubOAuthCode(
     client_secret: config.clientSecret,
     code,
   });
+  const redirectUri = getOAuthRedirectUri(config);
+  if (redirectUri) {
+    params.set('redirect_uri', redirectUri);
+  }
   const response = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
     headers: {
@@ -287,6 +298,10 @@ export function buildGitHubOAuthUrl(config: GitHubAppConfig, state: string): str
   url.searchParams.set('state', state);
   url.searchParams.set('allow_signup', 'true');
   url.searchParams.set('scope', 'repo user:email');
+  const redirectUri = getOAuthRedirectUri(config);
+  if (redirectUri) {
+    url.searchParams.set('redirect_uri', redirectUri);
+  }
   return url.toString();
 }
 
@@ -322,6 +337,31 @@ export async function generateRepositoryFromTemplate(
         name: repoName,
         private: true,
         include_all_branches: false,
+      }),
+    },
+    userToken,
+    config.apiVersion
+  );
+  return {
+    cloneUrl: payload.clone_url ? String(payload.clone_url) : null,
+    htmlUrl: payload.html_url ? String(payload.html_url) : null,
+    fullName: String(payload.full_name),
+  };
+}
+
+export async function createRepositoryForAuthenticatedUser(
+  config: GitHubAppConfig,
+  userToken: string,
+  repoName: string
+): Promise<{ cloneUrl: string | null; htmlUrl: string | null; fullName: string }> {
+  const payload = await githubRequest<Record<string, unknown>>(
+    'https://api.github.com/user/repos',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        name: repoName,
+        private: true,
+        auto_init: false,
       }),
     },
     userToken,

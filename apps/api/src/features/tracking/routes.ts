@@ -716,7 +716,7 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
           return sendReviewSubmittedEmail({
             studentEmail: student.email,
             studentName: student.username,
-            projectName: project?.key ?? submission.projectId,
+            projectName: project?.projectKey ?? submission.projectId,
             reviewStatus: payload.status as 'approved' | 'graded' | 'changes_requested' | 'pending',
             feedback: payload.feedback,
             submissionUrl: `${webBase}/submissions/${params.submissionId}`,

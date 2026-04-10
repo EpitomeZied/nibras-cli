@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 
 const {
+  buildGitHubOAuthUrl,
+  createRepositoryForAuthenticatedUser,
   createAppJwt,
   createSignedState,
   getGitHubUser,
@@ -18,6 +20,28 @@ test('GitHub signed state round-trips and rejects tampering', () => {
   const decoded = verifySignedState(secret, signed);
   assert.deepEqual(decoded, { returnTo: 'http://127.0.0.1:3000/auth/complete' });
   assert.equal(verifySignedState(secret, `${signed}tampered`), null);
+});
+
+test('GitHub OAuth URL targets the web callback when a web base URL is configured', () => {
+  const location = new URL(
+    buildGitHubOAuthUrl(
+      {
+        appId: '1',
+        clientId: 'client-id',
+        clientSecret: 'secret',
+        privateKey: 'private-key',
+        webhookSecret: 'webhook-secret',
+        appName: 'nibras-test',
+        webBaseUrl: 'https://nibras-web.fly.dev',
+      },
+      'signed-state'
+    )
+  );
+
+  assert.equal(
+    location.searchParams.get('redirect_uri'),
+    'https://nibras-web.fly.dev/api/auth/callback'
+  );
 });
 
 test('GitHub signed state expires when its TTL elapses', () => {
@@ -116,6 +140,49 @@ test('GitHub user lookup falls back to the primary email endpoint when profile e
     );
     assert.equal(user.email, 'primary@example.com');
     assert.deepEqual(calls, ['https://api.github.com/user', 'https://api.github.com/user/emails']);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('GitHub repository creation creates a private repo for the authenticated user', async () => {
+  const originalFetch = global.fetch;
+
+  global.fetch = async (url, init) => {
+    assert.equal(String(url), 'https://api.github.com/user/repos');
+    assert.equal(init?.method, 'POST');
+    const body = JSON.parse(String(init?.body));
+    assert.equal(body.name, 'nibras-cs161-exam2');
+    assert.equal(body.private, true);
+    assert.equal(body.auto_init, false);
+    return new Response(
+      JSON.stringify({
+        clone_url: 'https://github.com/demo-user/nibras-cs161-exam2.git',
+        html_url: 'https://github.com/demo-user/nibras-cs161-exam2',
+        full_name: 'demo-user/nibras-cs161-exam2',
+      }),
+      {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }
+    );
+  };
+
+  try {
+    const created = await createRepositoryForAuthenticatedUser(
+      {
+        appId: '1',
+        clientId: 'client',
+        clientSecret: 'secret',
+        privateKey: 'private-key',
+        webhookSecret: 'webhook-secret',
+        appName: 'nibras-test',
+      },
+      'user-token',
+      'nibras-cs161-exam2'
+    );
+    assert.equal(created.fullName, 'demo-user/nibras-cs161-exam2');
+    assert.equal(created.cloneUrl, 'https://github.com/demo-user/nibras-cs161-exam2.git');
   } finally {
     global.fetch = originalFetch;
   }

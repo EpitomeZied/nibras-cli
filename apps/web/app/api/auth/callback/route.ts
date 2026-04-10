@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolveCallbackRedirect, resolvePublicOrigin } from './core.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,15 +20,11 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code');
   const state = searchParams.get('state');
 
-  // Derive the public web origin from headers set by the Fly.io proxy,
-  // falling back to the build-time configured web base URL.
-  // Never use request.url directly — it contains the internal container address.
-  const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
-  const forwardedHost =
-    request.headers.get('x-forwarded-host') ?? request.headers.get('host') ?? '';
-  const publicOrigin = forwardedHost
-    ? `${forwardedProto}://${forwardedHost}`
-    : (process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL ?? 'https://nibras-web.fly.dev');
+  // Never use request.url directly here — it may contain the internal container address.
+  const publicOrigin = resolvePublicOrigin(
+    request.headers,
+    process.env.NEXT_PUBLIC_NIBRAS_WEB_BASE_URL ?? 'https://nibras-web.fly.dev'
+  );
 
   if (!code || !state) {
     return NextResponse.redirect(`${publicOrigin}/?auth=required`);
@@ -52,22 +49,7 @@ export async function GET(request: NextRequest) {
   const setCookie = apiResponse.headers.get('set-cookie');
   const location = apiResponse.headers.get('location');
 
-  // Redirect destination: prefer what the API sent (it contains the return_to),
-  // but always keep it on the public web origin for safety.
-  let redirectTo: string;
-  if (location) {
-    try {
-      const loc = new URL(location);
-      // Only allow redirects to the same public web origin
-      redirectTo = loc.origin === publicOrigin ? loc.href : `${publicOrigin}/auth/complete`;
-    } catch {
-      redirectTo = `${publicOrigin}/auth/complete`;
-    }
-  } else {
-    redirectTo = `${publicOrigin}/auth/complete`;
-  }
-
-  const response = NextResponse.redirect(redirectTo);
+  const response = NextResponse.redirect(resolveCallbackRedirect(location, publicOrigin));
 
   // Forward the session cookie from the API response onto the web domain.
   // Because this response comes from nibras-web.fly.dev, the browser stores

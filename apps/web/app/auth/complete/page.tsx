@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../../lib/session';
+import { discoverApiBaseUrl } from '../../lib/session';
 import styles from './page.module.css';
 
 type LogLine = { text: string; type: 'cmd' | 'info' | 'success' | 'error' | 'muted' };
@@ -23,12 +23,21 @@ export default function AuthCompletePage() {
         // Read the session token from the ?st= redirect param — provided by the
         // API for browsers that block cross-domain cookies (Chrome 3P restrictions).
         const st = new URLSearchParams(window.location.search).get('st');
+        const apiBaseUrl = await discoverApiBaseUrl();
 
-        const response = await apiFetch('/v1/web/session', {
-          auth: true,
-          // Pass token explicitly as accessToken so apiFetchWith sends it as
-          // Authorization: Bearer — bypasses cross-domain cookie restrictions.
-          ...(st ? { accessToken: st } : {}),
+        if (!st) {
+          // Don't let a stale stored bearer token override a fresh cookie-based session.
+          window.localStorage.removeItem('nibras.webSession');
+        }
+
+        const headers = new Headers();
+        if (st) {
+          headers.set('authorization', `Bearer ${st}`);
+        }
+
+        const response = await fetch(new URL('/v1/web/session', `${apiBaseUrl}/`).toString(), {
+          credentials: 'include',
+          headers,
         });
         if (!response.ok) {
           throw new Error('Web session was not established.');

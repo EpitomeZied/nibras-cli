@@ -51,17 +51,17 @@ export function buildApiBaseUrlCandidates({ pageOrigin, storedApiBaseUrl, config
     candidates.push(normalized);
   }
 
-  // Explicitly configured URL wins first — prevents the web app's own origin from
-  // being mistaken for the API when Next.js rewrites proxy /v1/* to the real API.
-  push(configuredApiBaseUrl);
+  // Prefer same-origin first so the browser can reuse first-party web session
+  // cookies through the Next.js /v1/* rewrite in production.
+  push(pageOrigin);
 
   if (storedApiBaseUrl && !shouldIgnoreStoredApiBaseUrlForOrigin(pageOrigin, storedApiBaseUrl)) {
     push(storedApiBaseUrl);
   }
 
-  // Page origin is last-resort for local proxy dev (npm run proxy:dev) where no
-  // NEXT_PUBLIC_NIBRAS_API_BASE_URL is set and the proxy serves both web + API.
-  push(pageOrigin);
+  // Explicitly configured URL is a fallback for environments that don't expose
+  // a same-origin /v1/* proxy.
+  push(configuredApiBaseUrl);
 
   return candidates;
 }
