@@ -122,7 +122,7 @@ exit 0
   );
   fs.chmodSync(fakeNpm, 0o755);
 
-  const result = await runCli(['update', '--version', 'v1.0.1', '--plain'], {
+  const result = await runCli(['update', '--version', 'v1.0.1', '--force', '--plain'], {
     env: {
       PATH: `${fakeBin}:${process.env.PATH}`,
       NIBRAS_TEST_NPM_LOG: npmLog,
