@@ -99,7 +99,44 @@ test('modern CLI help renders the new command surface', async () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /CLI to interact with Nibras/);
   assert.match(result.stdout, /login\s/);
+  assert.match(result.stdout, /update\s/);
   assert.match(result.stdout, /legacy\s/);
+});
+
+test('modern CLI update reinstalls the requested tagged release', async () => {
+  const tmp = makeTempDir();
+  const fakeBin = path.join(tmp, 'bin');
+  const fakeNpm = path.join(fakeBin, 'npm');
+  const npmLog = path.join(tmp, 'npm.log');
+  fs.mkdirSync(fakeBin, { recursive: true });
+  fs.writeFileSync(
+    fakeNpm,
+    `#!/bin/sh
+set -eu
+{
+  printf '%s\\n' "$@"
+  printf '%s\\n' '---'
+} >> "$NIBRAS_TEST_NPM_LOG"
+exit 0
+`
+  );
+  fs.chmodSync(fakeNpm, 0o755);
+
+  const result = await runCli(['update', '--version', 'v1.0.1', '--plain'], {
+    env: {
+      PATH: `${fakeBin}:${process.env.PATH}`,
+      NIBRAS_TEST_NPM_LOG: npmLog,
+    },
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\[SUCCESS\] CLI updated/);
+  const npmCalls = fs.readFileSync(npmLog, 'utf8');
+  assert.match(npmCalls, /uninstall\n-g\nnibras\n@nibras\/cli\n---/);
+  assert.match(
+    npmCalls,
+    /install\n-g\ngit\+https:\/\/github\.com\/NibrasPlatform\/nibras-cli\.git#v1\.0\.1\n---/
+  );
 });
 
 test('API uses forwarded host and protocol when building public URLs', async () => {
