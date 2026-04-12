@@ -13,6 +13,7 @@ type SessionUser = {
   githubLogin: string;
   githubLinked: boolean;
   githubAppInstalled: boolean;
+  systemRole?: string | null;
 };
 
 function Toggle({
@@ -39,6 +40,7 @@ function Toggle({
 
 export default function SettingsPage() {
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [accessibleCourseCount, setAccessibleCourseCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [compact, setCompact] = useState(false);
   const [installUrl, setInstallUrl] = useState<string | null>(null);
@@ -56,6 +58,14 @@ export default function SettingsPage() {
         if (res.ok) {
           const payload = (await res.json()) as { user: SessionUser };
           setUser(payload.user);
+
+          if (payload.user.systemRole === 'admin') {
+            const coursesRes = await apiFetch('/v1/tracking/courses', { auth: true });
+            if (coursesRes.ok) {
+              const courses = (await coursesRes.json()) as Array<{ id: string }>;
+              setAccessibleCourseCount(courses.length);
+            }
+          }
 
           // Fetch install URL regardless — so we always have it ready
           void fetchInstallUrl();
@@ -123,6 +133,7 @@ export default function SettingsPage() {
 
   const identity = user?.username || user?.githubLogin || '—';
   const appInstalled = user?.githubAppInstalled ?? null;
+  const isSuperAdmin = user?.systemRole === 'admin';
 
   return (
     <div className={styles.page}>
@@ -155,6 +166,20 @@ export default function SettingsPage() {
               {user?.githubLogin && (
                 <span className={styles.profileGitHub}>@{user.githubLogin}</span>
               )}
+              <div className={styles.profileMeta}>
+                <span
+                  className={`${styles.roleBadge} ${isSuperAdmin ? styles.roleSuperAdmin : ''}`}
+                >
+                  {isSuperAdmin ? 'Super Admin' : 'Member'}
+                </span>
+                {isSuperAdmin && (
+                  <span className={styles.profileAccess}>
+                    {accessibleCourseCount === null
+                      ? 'Full access across all active courses.'
+                      : `Full access across ${accessibleCourseCount} active course${accessibleCourseCount === 1 ? '' : 's'}.`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </section>

@@ -85,6 +85,7 @@ export const UserSchema = z.object({
   githubLogin: z.string().min(1),
   githubLinked: z.boolean(),
   githubAppInstalled: z.boolean(),
+  systemRole: z.enum(['user', 'admin']).optional(),
 });
 
 export const DevicePollSuccessSchema = z.object({
@@ -238,9 +239,7 @@ export type GitHubInstallationCompleteRequest = z.infer<
 export type GitHubInstallationCompleteResponse = z.infer<
   typeof GitHubInstallationCompleteResponseSchema
 >;
-export type GitHubRepositoryValidateRequest = z.infer<
-  typeof GitHubRepositoryValidateRequestSchema
->;
+export type GitHubRepositoryValidateRequest = z.infer<typeof GitHubRepositoryValidateRequestSchema>;
 export type GitHubRepositoryValidateResponse = z.infer<
   typeof GitHubRepositoryValidateResponseSchema
 >;

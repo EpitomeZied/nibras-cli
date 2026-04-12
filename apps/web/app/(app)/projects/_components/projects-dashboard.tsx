@@ -1,12 +1,15 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type {
   CreateTrackingSubmissionRequest,
   StudentProjectsDashboardResponse,
+  TrackingCourseSummary,
   TrackingMilestone,
   TrackingProjectSummary,
 } from '@nibras/contracts';
+import { prefs } from '../../../lib/prefs';
 import { apiFetch } from '../../../lib/session';
 import { daysUntil } from '../../../lib/utils';
 import SubmissionModal from './submission-modal';
@@ -154,11 +157,18 @@ export default function ProjectsDashboard({
 }: {
   initialCourseId?: string | null;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const courseIdFromUrl = searchParams.get('courseId');
   const [dashboard, setDashboard] = useState<StudentProjectsDashboardResponse | null>(null);
+  const [courses, setCourses] = useState<TrackingCourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [selectionReady, setSelectionReady] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<TrackingMilestone | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -170,6 +180,22 @@ export default function ProjectsDashboard({
     installUrl: '',
     statusMessage: 'GitHub status is temporarily unavailable.',
   });
+
+  function replaceCourseQuery(courseId: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (courseId) {
+      params.set('courseId', courseId);
+    } else {
+      params.delete('courseId');
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  function syncCourseSelection(courseId: string | null) {
+    prefs.setSelectedCourseId(courseId);
+    replaceCourseQuery(courseId);
+  }
 
   async function loadGitHubStatus(): Promise<GitHubStatus> {
     try {
@@ -256,22 +282,38 @@ export default function ProjectsDashboard({
     setError('');
     try {
       const query = courseId ? `?courseId=${encodeURIComponent(courseId)}` : '';
-      const [response, nextGitHubStatus] = await Promise.all([
+      const [response, coursesResponse, nextGitHubStatus] = await Promise.all([
         apiFetch(`/v1/tracking/dashboard/student${query}`, { auth: true }),
+        apiFetch('/v1/tracking/courses', { auth: true }),
         loadGitHubStatus(),
       ]);
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error || `Failed to load dashboard (${response.status}).`);
       }
+      if (!coursesResponse.ok) {
+        const body = (await coursesResponse.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `Failed to load courses (${coursesResponse.status}).`);
+      }
       const payload = (await response.json()) as StudentProjectsDashboardResponse;
+      const nextCourses = (await coursesResponse.json()) as TrackingCourseSummary[];
       setDashboard(payload);
+      setCourses(nextCourses);
       setGitHubStatus(nextGitHubStatus);
       setSelectedProjectId((current) =>
         payload.projects.some((p) => p.id === current)
           ? current
           : (payload.activeProjectId ?? payload.projects[0]?.id ?? '')
       );
+      const resolvedCourseId = payload.course?.id ?? nextCourses[0]?.id ?? null;
+      if (resolvedCourseId !== activeCourseId) {
+        setActiveCourseId(resolvedCourseId);
+      }
+      if (resolvedCourseId !== courseIdFromUrl) {
+        syncCourseSelection(resolvedCourseId);
+      } else if (resolvedCourseId) {
+        prefs.setSelectedCourseId(resolvedCourseId);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -280,8 +322,18 @@ export default function ProjectsDashboard({
   }
 
   useEffect(() => {
-    void loadDashboard(initialCourseId);
-  }, [initialCourseId]);
+    const preferredCourseId = courseIdFromUrl || initialCourseId || prefs.getSelectedCourseId();
+    setActiveCourseId(preferredCourseId || null);
+    setSelectionReady(true);
+  }, [courseIdFromUrl, initialCourseId]);
+
+  useEffect(() => {
+    if (!selectionReady) {
+      return;
+    }
+    void loadDashboard(activeCourseId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCourseId, selectionReady]);
 
   const activeProject = useMemo<TrackingProjectSummary | null>(
     () =>
@@ -302,6 +354,16 @@ export default function ProjectsDashboard({
   );
 
   const finalMilestone = activeMilestones.find((m) => m.isFinal) ?? null;
+
+  function handleCourseChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const nextCourseId = event.target.value || null;
+    setActiveCourseId(nextCourseId);
+    syncCourseSelection(nextCourseId);
+  }
+
+  function courseLabel(course: TrackingCourseSummary): string {
+    return `${course.courseCode} · ${course.title}`;
+  }
 
   function openSubmit(milestone: TrackingMilestone) {
     setActiveMilestone(milestone);
@@ -353,11 +415,30 @@ export default function ProjectsDashboard({
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderText}>
-          <p className={styles.eyebrow}>
-            {dashboard?.course
-              ? `${dashboard.course.courseCode} · ${dashboard.course.termLabel}`
-              : 'Project Tracking'}
-          </p>
+          <div className={styles.headerTopRow}>
+            <p className={styles.eyebrow}>
+              {dashboard?.course
+                ? `${dashboard.course.courseCode} · ${dashboard.course.termLabel}`
+                : 'Project Tracking'}
+            </p>
+            {courses.length > 0 && (
+              <label className={styles.courseSelectWrap}>
+                <span className={styles.courseSelectLabel}>Course</span>
+                <select
+                  className={styles.courseSelect}
+                  value={activeCourseId ?? dashboard?.course?.id ?? ''}
+                  onChange={handleCourseChange}
+                  disabled={loading || courses.length <= 1}
+                >
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {courseLabel(course)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
           <h1 className={styles.pageTitle}>
             {loading ? <Skeleton w="260px" h={32} /> : (dashboard?.course?.title ?? 'Projects')}
           </h1>

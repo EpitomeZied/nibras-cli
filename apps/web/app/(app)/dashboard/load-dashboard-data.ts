@@ -1,4 +1,4 @@
-import type { StudentProjectsDashboardResponse } from '@nibras/contracts';
+import type { StudentProjectsDashboardResponse, TrackingCourseSummary } from '@nibras/contracts';
 
 const GITHUB_APP_UNCONFIGURED_MESSAGE =
   'GitHub App installation is not configured for this deployment.';
@@ -31,6 +31,7 @@ type MePayload = {
 
 export type LoadDashboardDataResult = {
   me: MePayload;
+  courses: TrackingCourseSummary[];
   dashboard: StudentProjectsDashboardResponse;
   githubConfig: GithubConfig | null;
   installUrl: string;
@@ -40,9 +41,14 @@ export type LoadDashboardDataResult = {
 
 export async function loadDashboardData({
   fetchJson,
+  courseId,
 }: {
   fetchJson: FetchJson;
+  courseId?: string | null;
 }): Promise<LoadDashboardDataResult> {
+  const dashboardPath = courseId
+    ? `/v1/tracking/dashboard/student?courseId=${encodeURIComponent(courseId)}`
+    : '/v1/tracking/dashboard/student';
   const githubConfigResultPromise = fetchJson('/v1/github/config')
     .then((githubConfig) => ({
       status: 'fulfilled' as const,
@@ -50,9 +56,10 @@ export async function loadDashboardData({
     }))
     .catch((error: unknown) => ({ status: 'rejected' as const, error }));
 
-  const [me, dashboard] = await Promise.all([
+  const [me, courses, dashboard] = await Promise.all([
     fetchJson('/v1/web/session', { auth: true }),
-    fetchJson('/v1/tracking/dashboard/student', { auth: true }),
+    fetchJson('/v1/tracking/courses', { auth: true }),
+    fetchJson(dashboardPath, { auth: true }),
   ]);
 
   const githubConfigResult = await githubConfigResultPromise;
@@ -60,6 +67,7 @@ export async function loadDashboardData({
   if (githubConfigResult.status === 'rejected') {
     return {
       me: me as MePayload,
+      courses: courses as TrackingCourseSummary[],
       dashboard: dashboard as StudentProjectsDashboardResponse,
       githubConfig: null,
       installUrl: '',
@@ -73,6 +81,7 @@ export async function loadDashboardData({
   if (!githubConfig.configured) {
     return {
       me: me as MePayload,
+      courses: courses as TrackingCourseSummary[],
       dashboard: dashboard as StudentProjectsDashboardResponse,
       githubConfig,
       installUrl: '',
@@ -87,6 +96,7 @@ export async function loadDashboardData({
     })) as InstallPayload;
     return {
       me: me as MePayload,
+      courses: courses as TrackingCourseSummary[],
       dashboard: dashboard as StudentProjectsDashboardResponse,
       githubConfig,
       installUrl: installPayload.installUrl || '',
@@ -96,6 +106,7 @@ export async function loadDashboardData({
   } catch (error) {
     return {
       me: me as MePayload,
+      courses: courses as TrackingCourseSummary[],
       dashboard: dashboard as StudentProjectsDashboardResponse,
       githubConfig,
       installUrl: '',

@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import type { TrackingMilestone } from '@nibras/contracts';
+import type { TrackingCourseSummary, TrackingMilestone } from '@nibras/contracts';
 import { apiFetch } from '../../lib/session';
+import { prefs } from '../../lib/prefs';
 import { formatShortDate, daysUntil, getGreeting } from '../../lib/utils';
 import { loadDashboardData } from './load-dashboard-data';
 import type { LoadDashboardDataResult } from './load-dashboard-data';
@@ -91,18 +93,63 @@ export default function DashboardPage() {
   const [data, setData] = useState<LoadDashboardDataResult | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [selectionReady, setSelectionReady] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const courseIdFromUrl = searchParams.get('courseId');
+
+  function replaceCourseQuery(courseId: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (courseId) {
+      params.set('courseId', courseId);
+    } else {
+      params.delete('courseId');
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  function syncCourseSelection(courseId: string | null) {
+    prefs.setSelectedCourseId(courseId);
+    replaceCourseQuery(courseId);
+  }
 
   useEffect(() => {
+    const preferredCourseId = courseIdFromUrl || prefs.getSelectedCourseId() || null;
+    setActiveCourseId(preferredCourseId);
+    setSelectionReady(true);
+  }, [courseIdFromUrl]);
+
+  useEffect(() => {
+    if (!selectionReady) {
+      return;
+    }
     let alive = true;
+    setLoading(true);
+    setError('');
     void (async () => {
+      const requestedCourseId = activeCourseId;
       try {
         const payload = await loadDashboardData({
+          courseId: requestedCourseId,
           fetchJson: async (path: string, init?: RequestInit & { auth?: boolean }) => {
             const res = await apiFetch(path, init);
             return res.json() as Promise<unknown>;
           },
         });
-        if (alive) setData(payload);
+        if (!alive) {
+          return;
+        }
+        setData(payload);
+        const resolvedCourseId = payload.dashboard.course?.id ?? payload.courses[0]?.id ?? null;
+        if (resolvedCourseId !== requestedCourseId) {
+          setActiveCourseId(resolvedCourseId);
+          syncCourseSelection(resolvedCourseId);
+        } else if (resolvedCourseId) {
+          prefs.setSelectedCourseId(resolvedCourseId);
+        }
       } catch (err) {
         if (alive) setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -112,13 +159,16 @@ export default function DashboardPage() {
     return () => {
       alive = false;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCourseId, selectionReady]);
 
   const me = data?.me ?? null;
+  const courses = data?.courses ?? [];
   const dashboard = data?.dashboard ?? null;
   const installUrl = data?.installUrl ?? '';
   const githubAppInstalled = me?.user?.githubAppInstalled;
   const showInstallBanner = !loading && (installUrl || githubAppInstalled === false);
+  const isSuperAdmin = me?.user?.systemRole === 'admin';
 
   const displayName = me?.user?.username || me?.user?.githubLogin || 'Developer';
   const firstName = displayName.split(/[\s_-]+/)[0]?.replace(/[^a-zA-Z]/g, '') || 'Developer';
@@ -192,6 +242,16 @@ export default function DashboardPage() {
     return '🚀 Start by exploring your projects below.';
   }, [loading, overdueMilestones, upcomingMilestones, totals, completionPct]);
 
+  function handleCourseChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const nextCourseId = event.target.value || null;
+    setActiveCourseId(nextCourseId);
+    syncCourseSelection(nextCourseId);
+  }
+
+  function courseLabel(course: TrackingCourseSummary): string {
+    return `${course.courseCode} · ${course.title}`;
+  }
+
   return (
     <main className={styles.page}>
       {/* ── GitHub App install banner ─────────────────────────────── */}
@@ -228,10 +288,30 @@ export default function DashboardPage() {
           )}
         </div>
         <div className={styles.bannerMeta}>
-          {dashboard?.course && (
-            <span className={styles.courseChip}>
-              🎓 {dashboard.course.courseCode} — {dashboard.course.title}
-            </span>
+          <div className={styles.bannerBadges}>
+            {dashboard?.course && (
+              <span className={styles.courseChip}>
+                🎓 {dashboard.course.courseCode} — {dashboard.course.title}
+              </span>
+            )}
+            {isSuperAdmin && <span className={styles.superAdminChip}>Super Admin</span>}
+          </div>
+          {courses.length > 0 && (
+            <label className={styles.courseSelectWrap}>
+              <span className={styles.courseSelectLabel}>Course</span>
+              <select
+                className={styles.courseSelect}
+                value={activeCourseId ?? dashboard?.course?.id ?? ''}
+                onChange={handleCourseChange}
+                disabled={loading || courses.length <= 1}
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {courseLabel(course)}
+                  </option>
+                ))}
+              </select>
+            </label>
           )}
           <div className={styles.bannerActions}>
             <Link href="/projects" className={styles.quickActionBtn}>

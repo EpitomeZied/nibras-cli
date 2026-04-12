@@ -6,14 +6,18 @@ function toErrorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
 
-export async function loadDashboardData({ fetchJson }) {
+export async function loadDashboardData({ fetchJson, courseId }) {
+  const dashboardPath = courseId
+    ? `/v1/tracking/dashboard/student?courseId=${encodeURIComponent(courseId)}`
+    : '/v1/tracking/dashboard/student';
   const githubConfigResultPromise = fetchJson('/v1/github/config')
     .then((githubConfig) => ({ status: 'fulfilled', githubConfig }))
     .catch((error) => ({ status: 'rejected', error }));
 
-  const [me, dashboard] = await Promise.all([
+  const [me, courses, dashboard] = await Promise.all([
     fetchJson('/v1/web/session', { auth: true }),
-    fetchJson('/v1/tracking/dashboard/student', { auth: true }),
+    fetchJson('/v1/tracking/courses', { auth: true }),
+    fetchJson(dashboardPath, { auth: true }),
   ]);
 
   const githubConfigResult = await githubConfigResultPromise;
@@ -21,6 +25,7 @@ export async function loadDashboardData({ fetchJson }) {
   if (githubConfigResult.status === 'rejected') {
     return {
       me,
+      courses,
       dashboard,
       githubConfig: null,
       installUrl: '',
@@ -34,6 +39,7 @@ export async function loadDashboardData({ fetchJson }) {
   if (!githubConfig.configured) {
     return {
       me,
+      courses,
       dashboard,
       githubConfig,
       installUrl: '',
@@ -46,6 +52,7 @@ export async function loadDashboardData({ fetchJson }) {
     const installPayload = await fetchJson('/v1/github/install-url', { auth: true });
     return {
       me,
+      courses,
       dashboard,
       githubConfig,
       installUrl: installPayload.installUrl || '',
@@ -55,6 +62,7 @@ export async function loadDashboardData({ fetchJson }) {
   } catch (error) {
     return {
       me,
+      courses,
       dashboard,
       githubConfig,
       installUrl: '',

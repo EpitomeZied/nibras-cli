@@ -12,6 +12,9 @@ test('dashboard data loading skips install-url when GitHub App is not configured
       if (path === '/v1/web/session') {
         return { user: { username: 'student', githubAppInstalled: false } };
       }
+      if (path === '/v1/tracking/courses') {
+        return [{ id: 'course-1', courseCode: 'CS161', title: 'Intro', termLabel: 'Spring 2026' }];
+      }
       if (path === '/v1/tracking/dashboard/student') {
         return { projects: [], milestonesByProject: {}, statsByProject: {}, activity: [] };
       }
@@ -29,6 +32,7 @@ test('dashboard data loading skips install-url when GitHub App is not configured
   );
   assert.equal(payload.githubAppStatus, 'unconfigured');
   assert.equal(calls.includes('/v1/web/session'), true);
+  assert.equal(calls.includes('/v1/tracking/courses'), true);
   assert.equal(calls.includes('/v1/tracking/dashboard/student'), true);
   assert.equal(calls.includes('/v1/github/config'), true);
   assert.equal(calls.includes('/v1/github/install-url'), false);
@@ -42,6 +46,9 @@ test('dashboard data loading returns install-url when GitHub App is configured',
     fetchJson: async (path) => {
       if (path === '/v1/web/session') {
         return { user: { username: 'student', githubAppInstalled: false } };
+      }
+      if (path === '/v1/tracking/courses') {
+        return [{ id: 'course-1', courseCode: 'CS161', title: 'Intro', termLabel: 'Spring 2026' }];
       }
       if (path === '/v1/tracking/dashboard/student') {
         return {
@@ -64,6 +71,7 @@ test('dashboard data loading returns install-url when GitHub App is configured',
   assert.equal(payload.installUrl, 'https://github.com/apps/nibras/installations/new');
   assert.equal(payload.githubAppMessage, '');
   assert.equal(payload.githubAppStatus, 'configured');
+  assert.equal(payload.courses.length, 1);
 });
 
 test('dashboard data loading preserves the dashboard when install-url fails', async () => {
@@ -74,6 +82,9 @@ test('dashboard data loading preserves the dashboard when install-url fails', as
     fetchJson: async (path) => {
       if (path === '/v1/web/session') {
         return { user: { username: 'student', githubAppInstalled: false } };
+      }
+      if (path === '/v1/tracking/courses') {
+        return [{ id: 'course-1', courseCode: 'CS161', title: 'Intro', termLabel: 'Spring 2026' }];
       }
       if (path === '/v1/tracking/dashboard/student') {
         return {
@@ -107,6 +118,9 @@ test('dashboard data loading preserves the dashboard when GitHub config fails', 
     fetchJson: async (path) => {
       if (path === '/v1/web/session') {
         return { user: { username: 'student', githubAppInstalled: false } };
+      }
+      if (path === '/v1/tracking/courses') {
+        return [{ id: 'course-1', courseCode: 'CS161', title: 'Intro', termLabel: 'Spring 2026' }];
       }
       if (path === '/v1/tracking/dashboard/student') {
         return {
@@ -143,6 +157,9 @@ test('dashboard data loading fails when the session request fails', async () => 
         if (path === '/v1/web/session') {
           throw new Error('Unauthorized');
         }
+        if (path === '/v1/tracking/courses') {
+          return [];
+        }
         if (path === '/v1/tracking/dashboard/student') {
           return { projects: [], milestonesByProject: {}, statsByProject: {}, activity: [] };
         }
@@ -166,6 +183,9 @@ test('dashboard data loading fails when the dashboard request fails', async () =
         if (path === '/v1/web/session') {
           return { user: { username: 'student', githubAppInstalled: false } };
         }
+        if (path === '/v1/tracking/courses') {
+          return [];
+        }
         if (path === '/v1/tracking/dashboard/student') {
           throw new Error('Dashboard unavailable');
         }
@@ -177,4 +197,34 @@ test('dashboard data loading fails when the dashboard request fails', async () =
     }),
     /Dashboard unavailable/
   );
+});
+
+test('dashboard data loading forwards the selected course id', async () => {
+  const { loadDashboardData } =
+    await import('../apps/web/app/(app)/dashboard/load-dashboard-data.js');
+
+  const calls = [];
+  await loadDashboardData({
+    courseId: 'course-42',
+    fetchJson: async (path) => {
+      calls.push(path);
+      if (path === '/v1/web/session') {
+        return { user: { username: 'student', githubAppInstalled: false } };
+      }
+      if (path === '/v1/tracking/courses') {
+        return [
+          { id: 'course-42', courseCode: 'CS42', title: 'Algorithms', termLabel: 'Fall 2026' },
+        ];
+      }
+      if (path === '/v1/tracking/dashboard/student?courseId=course-42') {
+        return { projects: [], milestonesByProject: {}, statsByProject: {}, activity: [] };
+      }
+      if (path === '/v1/github/config') {
+        return { configured: false };
+      }
+      throw new Error(`Unexpected path: ${path}`);
+    },
+  });
+
+  assert.equal(calls.includes('/v1/tracking/dashboard/student?courseId=course-42'), true);
 });
