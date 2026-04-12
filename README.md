@@ -478,11 +478,14 @@ For the full manual validation sequence, see `TEST.md`.
 
 **`.github/workflows/release.yml`** — triggers on `v*` tags:
 
-1. Build all packages
-2. Publish `@nibras/cli` to npm (public)
-3. Create a GitHub Release with auto-generated notes
+1. Verify the tag matches the root and CLI package versions
+2. Verify `NPM_TOKEN` is configured and can authenticate to npm
+3. Build all packages
+4. Dry-run the CLI publish tarball
+5. Publish `@nibras/cli` to npm (public)
+6. Create a GitHub Release with auto-generated notes
 
-Requires `NPM_TOKEN` secret in repo settings.
+Requires an `NPM_TOKEN` Actions secret that can publish `@nibras/cli`. If your npm account enforces 2FA for writes, this should be a granular token that can bypass 2FA for publishing.
 
 ---
 

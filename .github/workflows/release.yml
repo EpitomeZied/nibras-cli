@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -21,6 +25,36 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Verify release metadata
+        run: |
+          TAG="${GITHUB_REF_NAME#refs/tags/}"
+          ROOT_VERSION="$(node -p "require('./package.json').version")"
+          CLI_VERSION="$(node -p "require('./apps/cli/package.json').version")"
+
+          if [ "$TAG" != "v$ROOT_VERSION" ]; then
+            echo "Tag $TAG does not match root package version v$ROOT_VERSION." >&2
+            exit 1
+          fi
+
+          if [ "$CLI_VERSION" != "$ROOT_VERSION" ]; then
+            echo "apps/cli version $CLI_VERSION does not match root version $ROOT_VERSION." >&2
+            exit 1
+          fi
+
+      - name: Verify npm token is configured
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN is not configured for this repository." >&2
+            exit 1
+          fi
+
+      - name: Verify npm authentication
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami
+
       - name: Install dependencies
         run: npm ci
 
@@ -29,6 +63,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify publish tarball
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --workspace apps/cli --access public --dry-run
 
       - name: Publish CLI to npm
         run: npm publish --workspace apps/cli --access public
