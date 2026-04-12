@@ -1,6 +1,6 @@
-import { spawnSync } from 'node:child_process';
 import { createSpinner } from '../ui/spinner';
 import { printBox } from '../ui/box';
+import { runGlobalNpm, uninstallGlobalCli } from './global-install';
 
 const DEFAULT_RELEASE_API_URL = 'https://api.github.com/repos/NibrasPlatform/nibras-cli/releases/latest';
 const DEFAULT_GIT_INSTALL_URL = 'git+https://github.com/NibrasPlatform/nibras-cli.git';
@@ -13,10 +13,6 @@ function parseOption(args: string[], name: string): string | null {
 
 function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
-}
-
-function npmCommand(): string {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
 function normalizeTag(value: string): string {
@@ -58,15 +54,6 @@ async function resolveTargetTag(args: string[]): Promise<string> {
   return normalizeTag(payload.tag_name.trim());
 }
 
-function runNpm(args: string[], plain: boolean): void {
-  const result = spawnSync(npmCommand(), args, {
-    stdio: plain ? 'inherit' : 'ignore',
-  });
-  if (result.status !== 0) {
-    throw new Error(`npm ${args[0]} failed.`);
-  }
-}
-
 export async function commandUpdate(args: string[], plain: boolean): Promise<void> {
   const spinner = createSpinner('Checking for the latest CLI release', plain);
   const targetTag = await resolveTargetTag(args);
@@ -99,19 +86,22 @@ export async function commandUpdate(args: string[], plain: boolean): Promise<voi
   const installUrl = `${process.env.NIBRAS_UPDATE_GIT_URL || DEFAULT_GIT_INSTALL_URL}#${targetTag}`;
 
   spinner.text('Removing any existing global CLI install');
-  try {
-    runNpm(['uninstall', '-g', 'nibras', '@nibras/cli'], plain);
-  } catch {
-    // Best effort only: users may be running a linked checkout or a partial install.
-  }
+  const removedArtifacts = uninstallGlobalCli(plain);
 
   spinner.text(`Installing ${targetTag}`);
-  runNpm(['install', '-g', installUrl], plain);
+  runGlobalNpm(['install', '-g', installUrl], plain);
   spinner.succeed(`Updated to ${targetTag}`);
 
   printBox(
     'CLI updated',
-    [`Installed: ${targetTag}`, `Source:    ${installUrl}`, 'Next:      run `nibras --version` to confirm the active binary.'],
+    [
+      `Installed: ${targetTag}`,
+      `Source:    ${installUrl}`,
+      removedArtifacts.length > 0
+        ? `Cleanup:   removed ${removedArtifacts.length} stale global install path(s).`
+        : 'Cleanup:   no stale global install paths were left behind.',
+      'Next:      run `nibras --version` to confirm the active binary.',
+    ],
     'success',
     plain
   );

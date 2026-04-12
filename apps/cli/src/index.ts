@@ -11,6 +11,7 @@ import { commandTask } from './commands/task';
 import { commandTest } from './commands/test';
 import { commandSetup } from './commands/setup';
 import { commandUpdate } from './commands/update';
+import { commandUninstall } from './commands/uninstall';
 import { commandUpdateBuildpack } from './commands/update-buildpack';
 import { commandSubmit } from './commands/submit';
 import picocolors from 'picocolors';
@@ -47,6 +48,7 @@ function printHelp(plain: boolean): void {
       { name: 'task', description: 'View current task instructions' },
       { name: 'setup', description: 'Bootstrap a local project manifest from the API' },
       { name: 'update', description: 'Update the installed CLI to the latest release' },
+      { name: 'uninstall', description: 'Remove the global CLI install from this machine' },
       { name: 'ping', description: 'Verify API, auth, GitHub linkage, and repo state' },
       { name: 'update-buildpack', description: 'Update Node version in .nibras/project.json' },
       { name: 'legacy', description: 'Run the existing subject/project CLI' },
@@ -81,6 +83,7 @@ function isLegacyInvocation(args: string[]): boolean {
     'task',
     'setup',
     'update',
+    'uninstall',
     'ping',
     'update-buildpack',
     'help',
@@ -177,6 +180,10 @@ export async function runCli(argv: string[]): Promise<void> {
     }
     if (command === 'update') {
       await commandUpdate(rest, plain);
+      return;
+    }
+    if (command === 'uninstall') {
+      await commandUninstall(rest, plain);
       return;
     }
     if (command === 'submit') {

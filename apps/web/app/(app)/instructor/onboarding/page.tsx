@@ -404,6 +404,44 @@ export default function OnboardingPage() {
               Verify the install: <code className={styles.inlineCode}>nibras --version</code> should
               show <code className={styles.inlineCode}>v1.0.1</code>.
             </p>
+            <p className={styles.bodyText}>
+              To reinstall the pinned release later, run{' '}
+              <code className={styles.inlineCode}>nibras update --version v1.0.1</code>.
+            </p>
+            <p className={styles.bodyText}>
+              To remove the CLI from this machine later, run{' '}
+              <code className={styles.inlineCode}>nibras uninstall</code>.
+            </p>
+            <p className={styles.hint}>
+              Avoid <code className={styles.inlineCode}>nibras update --check</code> for now. The
+              latest-release lookup is not configured yet.
+            </p>
+            <div className={`${styles.callout} ${styles.calloutInfo}`}>
+              <span className={styles.calloutIcon}>⚠</span>
+              <div>
+                <p>
+                  If the install fails with <code className={styles.inlineCode}>EEXIST</code> or{' '}
+                  <code className={styles.inlineCode}>ENOTDIR</code>, you probably have an older
+                  global <code className={styles.inlineCode}>nibras</code> link. Remove it and
+                  reinstall:
+                </p>
+                <OsCode
+                  os={os}
+                  mac={`npm uninstall -g nibras @nibras/cli || true
+rm -f "$(npm config get prefix)/bin/nibras"
+rm -rf "$(npm root -g)/nibras"
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+                  linux={`npm uninstall -g nibras @nibras/cli || true
+rm -f "$(npm config get prefix)/bin/nibras"
+rm -rf "$(npm root -g)/nibras"
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+                  windows={`npm uninstall -g nibras @nibras/cli
+Remove-Item "$env:APPDATA\\npm\\nibras.cmd" -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:APPDATA\\npm\\node_modules\\nibras" -Recurse -Force -ErrorAction SilentlyContinue
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+                />
+              </div>
+            </div>
           </Section>
 
           {/* 03 Authenticate */}
