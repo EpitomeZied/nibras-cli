@@ -135,10 +135,7 @@ export default function SubmissionModal({
   }
 
   function handleSubmissionValueChange(nextValue: string) {
-    if (
-      verifiedRepository &&
-      shouldClearVerifiedRepo(verifiedRepository.repoUrl, nextValue)
-    ) {
+    if (verifiedRepository && shouldClearVerifiedRepo(verifiedRepository.repoUrl, nextValue)) {
       setVerifiedRepository(null);
       setRepoValidationState('idle');
       setRepoValidationMessage('');
@@ -314,7 +311,9 @@ export default function SubmissionModal({
               </label>
 
               <div className={`${styles.card} ${repoStatusTone}`}>
-                <strong>{repoValidationState === 'valid' ? 'Repository verified' : 'Repository status'}</strong>
+                <strong>
+                  {repoValidationState === 'valid' ? 'Repository verified' : 'Repository status'}
+                </strong>
                 <p>{repoStatusText}</p>
               </div>
 
@@ -409,7 +408,9 @@ export default function SubmissionModal({
             </label>
 
             {showLinkError && (
-              <p className={styles.inlineError}>Enter a valid absolute URL starting with http:// or https://.</p>
+              <p className={styles.inlineError}>
+                Enter a valid absolute URL starting with http:// or https://.
+              </p>
             )}
             {showTextError && (
               <p className={styles.inlineError}>Add a short write-up before submitting.</p>

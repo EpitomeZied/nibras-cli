@@ -50,10 +50,7 @@ export function canSubmitSubmission({
   if (isSubmitting) return false;
   if (submissionType === 'github') {
     return (
-      !isVerifyingRepo &&
-      githubLinked &&
-      githubAppInstalled &&
-      repoValidationState === 'valid'
+      !isVerifyingRepo && githubLinked && githubAppInstalled && repoValidationState === 'valid'
     );
   }
   if (submissionType === 'link') {

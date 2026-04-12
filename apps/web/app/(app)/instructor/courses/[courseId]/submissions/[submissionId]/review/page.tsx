@@ -292,12 +292,6 @@ export default function SubmissionReviewPage({
                     })}
                   </td>
                 </tr>
-                {submission.notes && (
-                  <tr>
-                    <td className={styles.muted}>Notes</td>
-                    <td>{submission.notes}</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>

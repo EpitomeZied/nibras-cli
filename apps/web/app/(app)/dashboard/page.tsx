@@ -252,6 +252,11 @@ export default function DashboardPage() {
     return `${course.courseCode} · ${course.title}`;
   }
 
+  const selectedCourse =
+    courses.find((course) => course.id === (activeCourseId ?? dashboard?.course?.id ?? '')) ??
+    dashboard?.course ??
+    null;
+
   return (
     <main className={styles.page}>
       {/* ── GitHub App install banner ─────────────────────────────── */}
@@ -297,20 +302,53 @@ export default function DashboardPage() {
             {isSuperAdmin && <span className={styles.superAdminChip}>Super Admin</span>}
           </div>
           {courses.length > 0 && (
-            <label className={styles.courseSelectWrap}>
-              <span className={styles.courseSelectLabel}>Course</span>
-              <select
-                className={styles.courseSelect}
-                value={activeCourseId ?? dashboard?.course?.id ?? ''}
-                onChange={handleCourseChange}
-                disabled={loading || courses.length <= 1}
-              >
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {courseLabel(course)}
-                  </option>
-                ))}
-              </select>
+            <label className={styles.courseSwitcher}>
+              <div className={styles.courseSwitcherHeader}>
+                <span className={styles.courseSelectLabel}>Course</span>
+                <span className={styles.courseSwitcherHint}>
+                  {courses.length > 1 ? `${courses.length} available` : 'Current workspace'}
+                </span>
+              </div>
+              <div className={styles.courseSelectShell}>
+                <div className={styles.courseSelectCurrent} aria-hidden="true">
+                  <span className={styles.courseCodeBadge}>
+                    {selectedCourse?.courseCode ?? 'Course'}
+                  </span>
+                  <span className={styles.courseSelectText}>
+                    <strong className={styles.courseSelectTitle}>
+                      {selectedCourse?.title ?? 'Select a course'}
+                    </strong>
+                    <span className={styles.courseSelectMeta}>
+                      {selectedCourse?.termLabel ?? 'Choose the course you want to work in'}
+                    </span>
+                  </span>
+                </div>
+                <select
+                  className={styles.courseSelectNative}
+                  aria-label="Choose course"
+                  title={selectedCourse ? courseLabel(selectedCourse) : 'Choose course'}
+                  value={activeCourseId ?? dashboard?.course?.id ?? ''}
+                  onChange={handleCourseChange}
+                  disabled={loading || courses.length <= 1}
+                >
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {courseLabel(course)}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.courseSelectChevron} aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M4 6.5 8 10l4-3.5"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </div>
             </label>
           )}
           <div className={styles.bannerActions}>
