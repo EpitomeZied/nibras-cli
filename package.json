@@ -1,6 +1,6 @@
 {
   "name": "nibras",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Hosted, GitHub-linked CLI for project setup, testing, and submission.",
   "bin": {
     "nibras": "bin/nibras.js"

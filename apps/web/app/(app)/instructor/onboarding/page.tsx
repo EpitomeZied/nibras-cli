@@ -369,7 +369,7 @@ export default function OnboardingPage() {
           <Section id="step-02" number="02" title="Install the CLI">
             <p className={styles.bodyText}>
               Install the current CLI release directly from GitHub. This pins the onboarding flow to{' '}
-              <code className={styles.inlineCode}>v1.0.1</code> and makes the{' '}
+              <code className={styles.inlineCode}>v1.0.2</code> and makes the{' '}
               <code className={styles.inlineCode}>nibras</code> command available anywhere.
             </p>
 
@@ -396,17 +396,17 @@ export default function OnboardingPage() {
 
             <OsCode
               os={os}
-              mac="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1"
-              linux="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1"
-              windows="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1"
+              mac="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2"
+              linux="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2"
+              windows="npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2"
             />
             <p className={styles.hint}>
               Verify the install: <code className={styles.inlineCode}>nibras --version</code> should
-              show <code className={styles.inlineCode}>v1.0.1</code>.
+              show <code className={styles.inlineCode}>v1.0.2</code>.
             </p>
             <p className={styles.bodyText}>
               To reinstall the pinned release later, run{' '}
-              <code className={styles.inlineCode}>nibras update --version v1.0.1</code>.
+              <code className={styles.inlineCode}>nibras update --version v1.0.2</code>.
             </p>
             <p className={styles.bodyText}>
               To remove the CLI from this machine later, run{' '}
@@ -430,15 +430,15 @@ export default function OnboardingPage() {
                   mac={`npm uninstall -g nibras @nibras/cli || true
 rm -f "$(npm config get prefix)/bin/nibras"
 rm -rf "$(npm root -g)/nibras"
-npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2`}
                   linux={`npm uninstall -g nibras @nibras/cli || true
 rm -f "$(npm config get prefix)/bin/nibras"
 rm -rf "$(npm root -g)/nibras"
-npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2`}
                   windows={`npm uninstall -g nibras @nibras/cli
 Remove-Item "$env:APPDATA\\npm\\nibras.cmd" -Force -ErrorAction SilentlyContinue
 Remove-Item "$env:APPDATA\\npm\\node_modules\\nibras" -Recurse -Force -ErrorAction SilentlyContinue
-npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
+npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2`}
                 />
               </div>
             </div>
@@ -575,7 +575,7 @@ npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1`}
             <div className={styles.shareCard}>
               <div className={styles.shareCardTitle}>Student quick-start</div>
               <CliCodeBlock
-                code={`npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.1\nnibras --version\nnibras login\nnibras setup --project cs101/assignment-1\nnibras test\nnibras submit`}
+                code={`npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2\nnibras --version\nnibras login\nnibras setup --project cs101/assignment-1\nnibras test\nnibras submit`}
               />
             </div>
             <p className={styles.hint}>

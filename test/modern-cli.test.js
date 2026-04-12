@@ -137,7 +137,7 @@ exit 0
   fs.writeFileSync(path.join(fakePrefix, 'bin', 'nibras'), '#!/bin/sh\n');
   fs.mkdirSync(path.join(fakeRoot, 'nibras'), { recursive: true });
 
-  const result = await runCli(['update', '--version', 'v1.0.1', '--force', '--plain'], {
+  const result = await runCli(['update', '--version', 'v1.0.2', '--force', '--plain'], {
     env: {
       PATH: `${fakeBin}:${process.env.PATH}`,
       NIBRAS_TEST_NPM_LOG: npmLog,
@@ -153,7 +153,7 @@ exit 0
   assert.match(npmCalls, /uninstall\n-g\nnibras\n@nibras\/cli\n---/);
   assert.match(
     npmCalls,
-    /install\n-g\ngit\+https:\/\/github\.com\/NibrasPlatform\/nibras-cli\.git#v1\.0\.1\n---/
+    /install\n-g\ngit\+https:\/\/github\.com\/NibrasPlatform\/nibras-cli\.git#v1\.0\.2\n---/
   );
   assert.equal(fs.existsSync(path.join(fakePrefix, 'bin', 'nibras')), false);
   assert.equal(fs.existsSync(path.join(fakeRoot, 'nibras')), false);
