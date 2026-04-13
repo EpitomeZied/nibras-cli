@@ -572,8 +572,7 @@ export default function ProjectsDashboard({
                     </span>
                   </div>
                   <span className={styles.tabMeta}>
-                    {dashboard!.milestonesByProject[project.id]?.length ?? 0}{' '}
-                    milestone
+                    {(dashboard!.milestonesByProject[project.id]?.length ?? 0) + ' milestone'}
                     {(dashboard!.milestonesByProject[project.id]?.length ?? 0) !== 1 ? 's' : ''}
                   </span>
                   <div className={styles.tabProgress}>
