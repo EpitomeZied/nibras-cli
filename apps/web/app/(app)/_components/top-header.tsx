@@ -47,7 +47,14 @@ export default function TopHeader({
     <header className="topHeader">
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-soft)' }}>Nibras</span>
+        <Image
+          src="/branding/nibras-icon.svg"
+          alt="Nibras"
+          width={18}
+          height={18}
+          priority
+          style={{ display: 'block' }}
+        />
         <span style={{ fontSize: 12, color: 'var(--text-soft)' }}>/</span>
         <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
           {breadcrumb}
