@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Red_Hat_Display, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({
+const redHatDisplay = Red_Hat_Display({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
+  weight: ['400', '500', '600', '700', '800', '900'],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className={`${redHatDisplay.variable} ${geistMono.variable}`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.setAttribute("data-theme","dark");`,

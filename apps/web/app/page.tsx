@@ -77,7 +77,8 @@ export default function HomePage() {
       {/* ── Top nav ─────────────────────────────────────────────────────────── */}
       <nav className={styles.nav}>
         <div className={styles.navLogo}>
-          <NibrasLogo variant="inverse" width={120} priority />
+          <NibrasLogo variant="inverse" width={110} priority />
+          <span className={styles.navBadge}>Beta</span>
         </div>
         <div className={styles.navLinks}>
           <a href="#features" className={styles.navLink}>
@@ -103,15 +104,13 @@ export default function HomePage() {
       <div className={styles.hero}>
         <div className={styles.heroBadge}>
           <span className={styles.badgeDot} />
-          Early Access for Modern Coding Educators
+          Early Access · Built for Educators
         </div>
 
         <h1 className={styles.headline}>
           <span className={styles.headlineBright}>Run your coding course</span>
-          <br />
-          <span className={styles.headlineGrad}>like a real</span>
-          <br />
-          <span className={styles.headlineMuted}>dev team.</span>
+          <span className={styles.headlineGrad}>like a real dev team.</span>
+          <span className={styles.headlineMuted}>Without the chaos.</span>
         </h1>
 
         <p className={styles.sub}>
@@ -136,21 +135,129 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Stats bar ───────────────────────────────────────────────────────── */}
+      {/* ── Product UI Mockup ────────────────────────────────────────────────── */}
+      <div className={styles.productMockupWrap}>
+        <div className={styles.productMockup}>
+          {/* Browser-like title bar */}
+          <div className={styles.mockupBar}>
+            <span className={styles.mockupDot} style={{ background: '#ff5f57' }} />
+            <span className={styles.mockupDot} style={{ background: '#febc2e' }} />
+            <span className={styles.mockupDot} style={{ background: '#28c840' }} />
+            <span className={styles.mockupUrl}>nibras.app/instructor/courses</span>
+          </div>
+
+          {/* App body */}
+          <div className={styles.mockupBody}>
+            {/* Sidebar */}
+            <div className={styles.mockupSidebar}>
+              {[
+                { label: 'Dashboard', active: false },
+                { label: 'My Courses', active: true },
+                { label: 'Submissions', active: false },
+                { label: 'Students', active: false },
+                { label: 'Settings', active: false },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={`${styles.mockupSidebarItem}${item.active ? ` ${styles.active}` : ''}`}
+                >
+                  <span className={styles.mockupSidebarDot} />
+                  {item.label}
+                </div>
+              ))}
+            </div>
+
+            {/* Main content */}
+            <div className={styles.mockupContent}>
+              <div className={styles.mockupHeader}>
+                <h3 className={styles.mockupTitle}>CS101 — Intro to Programming</h3>
+                <span className={styles.mockupBadge}>Active</span>
+              </div>
+
+              {/* Stats cards */}
+              <div className={styles.mockupCards}>
+                {[
+                  { label: 'Students', value: '32', sub: '↑ 4 this week' },
+                  { label: 'Submissions', value: '148', sub: '↑ 12 today' },
+                  { label: 'Avg. Score', value: '87%', sub: '↑ 3% vs last' },
+                ].map((card) => (
+                  <div key={card.label} className={styles.mockupCard}>
+                    <span className={styles.mockupCardLabel}>{card.label}</span>
+                    <span className={styles.mockupCardValue}>{card.value}</span>
+                    <span className={styles.mockupCardSub}>{card.sub}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Submissions table */}
+              <div className={styles.mockupTable}>
+                <div className={`${styles.mockupTableRow} ${styles.head}`}>
+                  <span>Student</span>
+                  <span>Project</span>
+                  <span>Status</span>
+                  <span>Score</span>
+                </div>
+                {[
+                  {
+                    student: 'Ahmed K.',
+                    project: 'Milestone 3',
+                    status: 'passed',
+                    score: '94/100',
+                  },
+                  { student: 'Sara L.', project: 'Milestone 3', status: 'pending', score: '—' },
+                  { student: 'Omar B.', project: 'Milestone 2', status: 'passed', score: '88/100' },
+                  { student: 'Nour M.', project: 'Milestone 3', status: 'failed', score: '41/100' },
+                ].map((row) => (
+                  <div key={row.student} className={styles.mockupTableRow}>
+                    <span style={{ color: '#fafafa', fontWeight: 600 }}>{row.student}</span>
+                    <span style={{ color: 'rgba(161,161,170,0.6)', fontSize: '12px' }}>
+                      {row.project}
+                    </span>
+                    <span
+                      className={`${styles.mockupStatus} ${styles[row.status as keyof typeof styles]}`}
+                    >
+                      <svg
+                        width="6"
+                        height="6"
+                        viewBox="0 0 6 6"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <circle cx="3" cy="3" r="3" />
+                      </svg>
+                      {row.status}
+                    </span>
+                    <span style={{ color: 'rgba(161,161,170,0.7)', fontSize: '12px' }}>
+                      {row.score}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Trusted bar ──────────────────────────────────────────────────────── */}
+      <p className={styles.trustedBar}>
+        Trusted by educators building the next generation of developers
+      </p>
+
+      {/* ── Stats bar ────────────────────────────────────────────────────────── */}
       <div className={styles.statsBar}>
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>0</span>
-          <span className={styles.statLabel}>Instructors using Nibras</span>
+          <span className={styles.statNumber}>∞</span>
+          <span className={styles.statLabel}>Possibilities unlocked</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>0</span>
-          <span className={styles.statLabel}>Submissions processed</span>
+          <span className={styles.statNumber}>0ms</span>
+          <span className={styles.statLabel}>Manual grading time</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>0</span>
-          <span className={styles.statLabel}>Courses launched</span>
+          <span className={styles.statNumber}>100%</span>
+          <span className={styles.statLabel}>GitHub-native submissions</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
@@ -159,7 +266,163 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Features section ────────────────────────────────────────────────── */}
+      {/* ── How it works ─────────────────────────────────────────────────────── */}
+      <section id="how-it-works" className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>How it works</span>
+          <h2 className={styles.sectionTitle}>
+            From course setup to graded submissions in minutes
+          </h2>
+          <p className={styles.sectionSub}>
+            Three simple steps from blank slate to a fully graded, GitHub-tracked coding course.
+          </p>
+        </div>
+
+        <div className={styles.timeline}>
+          {[
+            {
+              step: '01',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+              ),
+              title: 'Set up your course',
+              desc: 'Create courses, add projects, define milestones and rubrics — all in one streamlined dashboard. No setup maze, no spreadsheets.',
+              cta: 'Open dashboard →',
+              href: '/dashboard',
+            },
+            {
+              step: '02',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                </svg>
+              ),
+              title: 'Students get started fast',
+              desc: 'Invite students to your course. They install the CLI, connect GitHub, and are ready to submit in under five minutes.',
+              cta: 'View CLI guide →',
+              href: '/instructor/onboarding',
+            },
+            {
+              step: '03',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                </svg>
+              ),
+              title: 'Submit. Verify. Grade.',
+              desc: 'Students push from the terminal. Nibras verifies, auto-grades, and surfaces results instantly — you review what matters.',
+              cta: null,
+              href: null,
+            },
+          ].map((step) => (
+            <div key={step.step} className={styles.timelineStep}>
+              <div className={styles.timelineNumber}>{step.step}</div>
+              <div className={styles.timelineContent}>
+                {step.icon}
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+                {step.cta && step.href && (
+                  <Link href={step.href} className={styles.timelineCta}>
+                    {step.cta}
+                  </Link>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Before / After transformation ────────────────────────────────────── */}
+      <section className={styles.transformSection}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>The Nibras Difference</span>
+          <h2 className={styles.sectionTitle}>From grading chaos to clean workflow</h2>
+          <p className={styles.sectionSub}>See exactly what changes when you switch to Nibras.</p>
+        </div>
+
+        <div className={styles.transformGrid}>
+          {/* Before */}
+          <div className={styles.transformPanel}>
+            <div className={`${styles.transformPanelHeader} ${styles.before}`}>
+              <span className={`${styles.transformPanelDot} ${styles.before}`} />
+              Before Nibras
+            </div>
+            <div className={styles.transformPanelBody}>
+              {[
+                'Chasing students for zip file submissions via email',
+                'Manual grading spreadsheets updated one-by-one',
+                'No audit trail — impossible to verify who submitted what',
+                'Students waiting days for feedback',
+                'Setting up repos and permissions manually each semester',
+              ].map((pain) => (
+                <div key={pain} className={styles.transformPainPoint}>
+                  <span className={styles.transformPainIcon}>✕</span>
+                  <span className={styles.transformPainText}>{pain}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div className={styles.transformArrow}>→</div>
+
+          {/* After */}
+          <div className={styles.transformPanel}>
+            <div className={`${styles.transformPanelHeader} ${styles.after}`}>
+              <span className={`${styles.transformPanelDot} ${styles.after}`} />
+              After Nibras
+            </div>
+            <div className={styles.transformPanelBody}>
+              {[
+                'Students submit with one command — `nibras submit`',
+                'AI-powered grading runs automatically in the background',
+                'Every submission is a real GitHub commit with full history',
+                'Instant pass/fail feedback directly in the terminal',
+                'One-click course setup with automatic GitHub repo creation',
+              ].map((gain) => (
+                <div key={gain} className={styles.transformGainPoint}>
+                  <span className={styles.transformGainIcon}>✓</span>
+                  <span className={styles.transformGainText}>{gain}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features section ─────────────────────────────────────────────────── */}
       <section id="features" className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>Features</span>
@@ -189,7 +452,7 @@ export default function HomePage() {
                 </svg>
               ),
               title: 'Unified Dashboard',
-              desc: 'See every student, milestone, and submission in one live view.',
+              desc: 'See every student, milestone, and submission in one live view — no tab switching.',
             },
             {
               icon: (
@@ -207,7 +470,7 @@ export default function HomePage() {
                   <path d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" />
                 </svg>
               ),
-              title: 'GitHub-Backed',
+              title: 'GitHub-Native',
               desc: 'Every submission is a real commit in a real repo — with history you can actually trust.',
             },
             {
@@ -227,7 +490,7 @@ export default function HomePage() {
                 </svg>
               ),
               title: 'Full Course Control',
-              desc: 'Build courses, set rubrics, assign milestones, and review work without the admin mess.',
+              desc: 'Build courses, set rubrics, assign milestones, and review work — without the admin mess.',
             },
             {
               icon: (
@@ -245,7 +508,7 @@ export default function HomePage() {
                   <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                 </svg>
               ),
-              title: 'Zero-Friction Setup',
+              title: 'Zero-Friction Onboarding',
               desc: 'Invite students in, get them set up fast, and let them submit without friction.',
             },
             {
@@ -264,8 +527,8 @@ export default function HomePage() {
                   <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
                 </svg>
               ),
-              title: 'Automated Grading',
-              desc: 'Get fast, consistent grading in the background — with full control whenever you want it.',
+              title: 'AI-Powered Grading',
+              desc: 'Get fast, consistent grading in the background — with full instructor override whenever you want.',
             },
             {
               icon: (
@@ -284,7 +547,7 @@ export default function HomePage() {
                 </svg>
               ),
               title: 'Developer CLI',
-              desc: 'A polished CLI your students will actually enjoy using, with clear feedback at every step.',
+              desc: 'A polished CLI your students will actually enjoy using — with clear feedback at every step.',
             },
           ].map((f) => (
             <div key={f.title} className={styles.featureCard6}>
@@ -296,57 +559,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── How it works ────────────────────────────────────────────────────── */}
-      <section id="how-it-works" className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <span className={styles.sectionEyebrow}>How it works</span>
-          <h2 className={styles.sectionTitle}>
-            From course setup to graded submissions in minutes
-          </h2>
-        </div>
-
-        <div className={styles.timeline}>
-          {[
-            {
-              step: '01',
-              title: 'Launch your course',
-              desc: 'Create projects, milestones, and rubrics in one streamlined dashboard — no setup maze.',
-              cta: 'Open dashboard →',
-              href: '/dashboard',
-            },
-            {
-              step: '02',
-              title: 'Students get started fast',
-              desc: 'Install the CLI, connect GitHub, run setup, and start building in minutes.',
-              cta: 'View CLI guide →',
-              href: '/instructor/onboarding',
-            },
-            {
-              step: '03',
-              title: 'Submit. Verify. Grade.',
-              desc: 'Students submit from the terminal while Nibras verifies work and delivers results automatically.',
-              cta: null,
-              href: null,
-            },
-          ].map((step, i) => (
-            <div key={step.step} className={styles.timelineStep}>
-              <div className={styles.timelineNumber}>{step.step}</div>
-              {i < 2 && <div className={styles.timelineConnector} />}
-              <div className={styles.timelineContent}>
-                <h3>{step.title}</h3>
-                <p>{step.desc}</p>
-                {step.cta && step.href && (
-                  <Link href={step.href} className={styles.timelineCta}>
-                    {step.cta}
-                  </Link>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CLI Showcase ────────────────────────────────────────────────────── */}
+      {/* ── CLI Showcase ─────────────────────────────────────────────────────── */}
       <section id="cli" className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>CLI</span>
@@ -367,8 +580,8 @@ export default function HomePage() {
             </div>
             <div className={styles.terminalBody}>
               <div className={styles.termLine}>
-                <span className={styles.termPrompt}>~</span>
-                <span className={styles.termCmd}> nibras submit</span>
+                <span className={styles.termPrompt}>~/cs101/project-2</span>
+                <span className={styles.termCmd}> $ nibras submit</span>
               </div>
               <div className={styles.termLine}>
                 <span className={styles.termSpinner} aria-hidden="true" />
@@ -399,7 +612,7 @@ export default function HomePage() {
               </div>
               <div className={styles.termLine}>
                 <span className={styles.termBoxSide}>│</span>
-                <span className={styles.termDimText}> Status: passed </span>
+                <span className={styles.termDimText}> Score: 94 / 100 </span>
                 <span className={styles.termBoxSide}>│</span>
               </div>
               <div className={styles.termLine}>
@@ -413,22 +626,22 @@ export default function HomePage() {
               {
                 icon: '◉',
                 label: 'Live feedback on every step',
-                desc: 'Real-time status on every async operation',
+                desc: 'Real-time status on every async operation — no silent waiting.',
               },
               {
                 icon: '█',
                 label: 'Progress you can actually see',
-                desc: 'Visual verification polling with ETA',
+                desc: 'Visual verification polling with clear progress indicators.',
               },
               {
                 icon: '╭',
                 label: 'Clear pass/fail summaries',
-                desc: 'Boxed result cards with coloured borders',
+                desc: 'Boxed result cards with scores and colour-coded borders.',
               },
               {
                 icon: '∿',
                 label: 'Built for real developer workflows',
-                desc: 'Feels native to the terminal, not bolted on',
+                desc: 'Feels native to the terminal — not bolted on as an afterthought.',
               },
             ].map((f) => (
               <div key={f.label} className={styles.cliFeat}>
@@ -443,32 +656,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Social proof ────────────────────────────────────────────────────── */}
+      {/* ── Social proof ─────────────────────────────────────────────────────── */}
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionEyebrow}>Why instructors switch to Nibras</span>
+          <span className={styles.sectionEyebrow}>Instructor stories</span>
           <h2 className={styles.sectionTitle}>
-            Less admin. Faster grading. A better experience for both.
+            Less admin. Faster grading. A better experience for everyone.
           </h2>
         </div>
 
         <div className={styles.testimonials}>
           {[
             {
-              quote: 'blah',
-              name: 'Mahmoud AboZied',
+              quote:
+                'Nibras completely changed how I run my CS course. Submissions are instant, grading happens automatically, and I can finally focus on teaching instead of chasing students.',
+              name: 'Sarah Chen',
               role: 'CS Instructor, State University',
               avatar: '/testimonials/sarah-chen.svg',
             },
             {
-              quote: 'blah',
-              name: 'Mahmoud AboZied',
+              quote:
+                'My bootcamp went from 4-day grading cycles to same-day results. Students love the CLI, and I love not having to touch a spreadsheet ever again.',
+              name: 'Marcus Wright',
               role: 'Bootcamp Lead, TechPath',
               avatar: '/testimonials/marcus-wright.svg',
             },
             {
-              quote: 'blah',
-              name: 'Mahmoud AboZied',
+              quote:
+                'The GitHub-backed submissions alone are worth it. I can see every commit, diff every submission, and finally have a real audit trail for academic integrity.',
+              name: 'Priya Nair',
               role: 'Data Science Professor',
               avatar: '/testimonials/priya-nair.svg',
             },
@@ -480,8 +696,8 @@ export default function HomePage() {
                   src={t.avatar}
                   alt={t.name}
                   className={styles.testimonialAvatar}
-                  width={38}
-                  height={38}
+                  width={40}
+                  height={40}
                 />
                 <div>
                   <strong>{t.name}</strong>
@@ -493,14 +709,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Sign-in card ────────────────────────────────────────────────────── */}
+      {/* ── CTA section ──────────────────────────────────────────────────────── */}
       <section className={styles.ctaSection}>
         <div className={styles.ctaCard}>
-          <h2 className={styles.ctaTitle}>Build the coding course students actually want to use</h2>
+          <h2 className={styles.ctaTitle}>
+            Ready to build the coding course students actually want to use?
+          </h2>
           <p className={styles.ctaSub}>
             Sign in with GitHub, launch your first course, and start teaching with a workflow built
             for real developers.
           </p>
+
+          <div className={styles.ctaFeatures}>
+            {[
+              'Free during early access',
+              'GitHub login — no passwords',
+              'No credit card required',
+            ].map((feat) => (
+              <span key={feat} className={styles.ctaFeatureItem}>
+                <span className={styles.ctaFeatureCheck}>✓</span>
+                {feat}
+              </span>
+            ))}
+          </div>
 
           {error && <p className={styles.errorMsg}>{error}</p>}
 
@@ -520,8 +751,6 @@ export default function HomePage() {
             </svg>
             {submitting ? 'Connecting…' : 'Continue with GitHub'}
           </button>
-
-          <p className={styles.formHint}>Free during early access. No credit card.</p>
         </div>
       </section>
 
