@@ -19,7 +19,9 @@ type ShellSessionPayload = {
   memberships?: Array<{ courseId: string; role: string; level: number }>;
 };
 
-export type ShellUser = ShellSessionPayload['user'];
+type ShellUser = ShellSessionPayload['user'] & {
+  memberships?: ShellSessionPayload['memberships'];
+};
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<ShellUser | null>(null);
