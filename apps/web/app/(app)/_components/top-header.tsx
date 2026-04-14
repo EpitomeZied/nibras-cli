@@ -153,10 +153,14 @@ function UserDropdown({
   }, [open]);
 
   const menuItems = [
-    { label: 'Builder', icon: <IconBuilder />, href: '/instructor/onboarding' },
+    { label: 'Builder', icon: <IconBuilder />, href: '/instructor' },
     { label: 'Profile', icon: <IconProfile />, href: '/settings' },
     { label: 'Settings', icon: <IconSettings />, href: '/settings' },
-    { label: 'Send Feedback', icon: <IconFeedback />, href: 'mailto:feedback@nibras.app' },
+    {
+      label: 'Send Feedback',
+      icon: <IconFeedback />,
+      href: 'mailto:support@nibras.app?subject=Feedback',
+    },
   ];
 
   return (

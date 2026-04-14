@@ -18,8 +18,8 @@ type Course = {
 function BookIcon() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="15"
+      height="15"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -34,17 +34,54 @@ function BookIcon() {
   );
 }
 
+function ArrowIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="12" cy="19" r="1.5" />
+    </svg>
+  );
+}
+
 function SkeletonCard() {
   return (
     <div className={styles.skeletonCard}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span className={styles.skeleton} style={{ width: 34, height: 34, borderRadius: 9 }} />
-        <span className={styles.skeleton} style={{ width: '55%', height: 14 }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span className={styles.skeleton} style={{ width: 32, height: 32, borderRadius: 8 }} />
+        <div style={{ display: 'flex', gap: 4 }}>
+          <span className={styles.skeleton} style={{ width: 24, height: 24, borderRadius: 6 }} />
+          <span className={styles.skeleton} style={{ width: 24, height: 24, borderRadius: 6 }} />
+        </div>
       </div>
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '4px 0' }} />
-      <span className={styles.skeleton} style={{ width: '45%', height: 12 }} />
-      <span className={styles.skeleton} style={{ width: '100%', height: 4, borderRadius: 999 }} />
-      <span className={styles.skeleton} style={{ width: '30%', height: 11 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
+        <span className={styles.skeleton} style={{ width: '70%', height: 16 }} />
+        <span className={styles.skeleton} style={{ width: '40%', height: 12 }} />
+      </div>
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '14px 0 12px' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <span className={styles.skeleton} style={{ width: '55%', height: 12 }} />
+        <span className={styles.skeleton} style={{ width: '100%', height: 4, borderRadius: 999 }} />
+        <span className={styles.skeleton} style={{ width: '30%', height: 11 }} />
+      </div>
     </div>
   );
 }
@@ -183,6 +220,8 @@ export default function DashboardPage() {
             const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
             const projects = course.projectCount ?? 0;
             const students = course.studentCount ?? 0;
+            const needsSetup = students === 0 && projects === 0;
+            const courseName = course.name || 'Untitled Course';
 
             return (
               <Link
@@ -190,44 +229,29 @@ export default function DashboardPage() {
                 href={`/instructor/courses/${course.id}`}
                 className={styles.courseCard}
               >
-                {/* Top: icon + title + actions */}
+                {/* Top row: icon + action buttons */}
                 <div className={styles.courseCardTop}>
-                  <div className={styles.courseCardLeft}>
-                    <span className={styles.courseIcon}>
-                      <BookIcon />
-                    </span>
-                    <span className={styles.courseTitle}>{course.name}</span>
-                  </div>
+                  <span className={styles.courseIcon}>
+                    <BookIcon />
+                  </span>
                   <div className={styles.courseCardActions}>
                     <span className={styles.courseArrow}>
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M5 12h14M13 6l6 6-6 6" />
-                      </svg>
+                      <ArrowIcon />
                     </span>
                     <span className={styles.courseMenu}>
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="5" r="1.5" />
-                        <circle cx="12" cy="12" r="1.5" />
-                        <circle cx="12" cy="19" r="1.5" />
-                      </svg>
+                      <MenuIcon />
                     </span>
                   </div>
+                </div>
+
+                {/* Title block */}
+                <div className={styles.courseTitleBlock}>
+                  <span className={styles.courseTitle}>{courseName}</span>
+                  {course.code ? (
+                    <span className={styles.courseCode}>{course.code}</span>
+                  ) : needsSetup ? (
+                    <span className={styles.courseSetupHint}>Setup needed</span>
+                  ) : null}
                 </div>
 
                 {/* Divider */}
@@ -235,15 +259,21 @@ export default function DashboardPage() {
 
                 {/* Bottom: meta + progress */}
                 <div className={styles.courseCardBottom}>
-                  <span className={styles.courseMeta}>
-                    {projects} project{projects !== 1 ? 's' : ''} &bull; {students} student
-                    {students !== 1 ? 's' : ''}
-                  </span>
+                  {needsSetup ? (
+                    <span className={styles.courseMetaSetup}>
+                      No students or projects yet &mdash; get started →
+                    </span>
+                  ) : (
+                    <span className={styles.courseMeta}>
+                      {projects} project{projects !== 1 ? 's' : ''} &bull; {students} student
+                      {students !== 1 ? 's' : ''}
+                    </span>
+                  )}
                   <div className={styles.courseProgressBar}>
                     <div className={styles.courseProgressFill} style={{ width: `${pct}%` }} />
                   </div>
                   <span className={styles.courseProgressText}>
-                    {approved}/{total} approved
+                    {total === 0 ? 'No submissions yet' : `${approved}/${total} approved`}
                   </span>
                 </div>
               </Link>
