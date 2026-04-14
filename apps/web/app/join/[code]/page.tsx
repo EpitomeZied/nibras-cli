@@ -91,6 +91,11 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
     ? new Date(invite.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : '—';
 
+  function formatRole(role: string) {
+    if (role === 'ta') return 'TA';
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.window}>
@@ -149,8 +154,13 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoKey}>Role</span>
-                <span className={styles.infoValueGreen}>{invite.role}</span>
+                <span className={styles.infoValueGreen}>{formatRole(invite.role)}</span>
               </div>
+              {invite.role === 'ta' && (
+                <div className={styles.muted}>
+                  # TAs have elevated access — grade submissions &amp; support students.
+                </div>
+              )}
               <div className={styles.infoRow}>
                 <span className={styles.infoKey}>Expires</span>
                 <span className={styles.infoValue}>{expiryLabel}</span>
@@ -180,7 +190,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
                     onClick={() => void handleJoin()}
                     disabled={joining}
                   >
-                    {joining ? 'Joining…' : `Join as ${invite.role}`}
+                    {joining ? 'Joining…' : `Join as ${formatRole(invite.role)}`}
                     {!joining && <span style={{ opacity: 0.4 }}>↵</span>}
                   </button>
                 ) : (
