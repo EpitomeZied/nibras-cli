@@ -74,12 +74,12 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 16px 20px;
+  padding: 16px 24px;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   flex: 1;
-  min-width: 100px;
+  min-width: 90px;
   transition: border-color 0.15s;
 }
 
@@ -136,6 +136,7 @@
   transform: translateY(-1px);
 }
 
+/* Top row: icon + action buttons */
 .courseCardTop {
   display: flex;
   align-items: center;
@@ -153,38 +154,6 @@
   place-items: center;
   color: #4ade80;
   flex-shrink: 0;
-}
-
-/* Title block — own dedicated row below icon/actions */
-.courseTitleBlock {
-  padding: 12px 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.courseTitle {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #fafafa;
-  line-height: 1.35;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.courseCode {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(161, 161, 170, 0.45);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.courseSetupHint {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: rgba(234, 179, 8, 0.65);
 }
 
 .courseCardActions {
@@ -225,47 +194,70 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* Title block — own dedicated row */
+.courseTitleBlock {
+  padding: 12px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+
+.courseTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fafafa;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.courseMeta {
+  font-size: 12px;
+  color: rgba(161, 161, 170, 0.5);
+  font-weight: 500;
+}
+
+/* Divider */
 .courseDivider {
   height: 1px;
   background: rgba(255, 255, 255, 0.06);
   margin: 0 16px;
 }
 
+/* Footer row */
 .courseCardBottom {
-  padding: 12px 16px 16px;
+  padding: 12px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
 }
 
-.courseMeta {
-  font-size: 12.5px;
-  color: rgba(161, 161, 170, 0.6);
-}
-
-.courseMetaSetup {
-  font-size: 12px;
-  color: rgba(161, 161, 170, 0.38);
-  font-style: italic;
-}
-
-.courseProgressBar {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.courseProgressFill {
-  height: 100%;
-  border-radius: 999px;
-  background: #22c55e;
-  transition: width 0.5s ease;
-}
-
-.courseProgressText {
+/* Status badges */
+.statusBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11.5px;
-  color: rgba(161, 161, 170, 0.55);
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.18);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.statusBadgeInactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(161, 161, 170, 0.5);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  padding: 3px 10px;
 }
 
 /* ── Skeleton ───────────────────────────────────────────────────────────────── */
@@ -299,8 +291,8 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 138px;
+  gap: 0;
+  min-height: 148px;
 }
 
 /* ── Empty state ────────────────────────────────────────────────────────────── */
@@ -408,6 +400,6 @@
 
   .statsRow {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }

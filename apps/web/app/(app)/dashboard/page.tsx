@@ -5,16 +5,17 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/session';
 import styles from './page.module.css';
 
+/* ── API type matching TrackingCourseSummarySchema ───────────────────────── */
 type Course = {
   id: string;
-  name: string;
-  code?: string;
-  projectCount?: number;
-  studentCount?: number;
-  submissionCount?: number;
-  approvedCount?: number;
+  slug: string;
+  title: string;
+  termLabel: string;
+  courseCode: string;
+  isActive: boolean;
 };
 
+/* ── Icons ───────────────────────────────────────────────────────────────── */
 function BookIcon() {
   return (
     <svg
@@ -62,6 +63,7 @@ function MenuIcon() {
   );
 }
 
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
 function SkeletonCard() {
   return (
     <div className={styles.skeletonCard}>
@@ -72,20 +74,17 @@ function SkeletonCard() {
           <span className={styles.skeleton} style={{ width: 24, height: 24, borderRadius: 6 }} />
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 12 }}>
-        <span className={styles.skeleton} style={{ width: '70%', height: 16 }} />
-        <span className={styles.skeleton} style={{ width: '40%', height: 12 }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 14 }}>
+        <span className={styles.skeleton} style={{ width: '72%', height: 17 }} />
+        <span className={styles.skeleton} style={{ width: '48%', height: 12 }} />
       </div>
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '14px 0 12px' }} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span className={styles.skeleton} style={{ width: '55%', height: 12 }} />
-        <span className={styles.skeleton} style={{ width: '100%', height: 4, borderRadius: 999 }} />
-        <span className={styles.skeleton} style={{ width: '30%', height: 11 }} />
-      </div>
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '16px 0 12px' }} />
+      <span className={styles.skeleton} style={{ width: '36%', height: 20, borderRadius: 999 }} />
     </div>
   );
 }
 
+/* ── Page ────────────────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,9 +108,8 @@ export default function DashboardPage() {
     })();
   }, []);
 
-  const totalStudents = courses.reduce((s, c) => s + (c.studentCount ?? 0), 0);
-  const totalSubmissions = courses.reduce((s, c) => s + (c.submissionCount ?? 0), 0);
-  const totalApproved = courses.reduce((s, c) => s + (c.approvedCount ?? 0), 0);
+  const active = courses.filter((c) => c.isActive).length;
+  const inactive = courses.length - active;
 
   return (
     <div className={styles.page}>
@@ -143,24 +141,24 @@ export default function DashboardPage() {
       {/* ── Error ── */}
       {error && <p className={styles.errorBar}>{error}</p>}
 
-      {/* ── Stats row ── */}
+      {/* ── Stats row — only when loaded and courses exist ── */}
       {!loading && courses.length > 0 && (
         <div className={styles.statsRow}>
           <div className={styles.statChip}>
             <span className={styles.statValue}>{courses.length}</span>
-            <span className={styles.statLabel}>Courses</span>
+            <span className={styles.statLabel}>Total</span>
           </div>
           <div className={styles.statChip}>
-            <span className={styles.statValue}>{totalStudents}</span>
-            <span className={styles.statLabel}>Students</span>
+            <span className={styles.statValue} style={{ color: '#4ade80' }}>
+              {active}
+            </span>
+            <span className={styles.statLabel}>Active</span>
           </div>
           <div className={styles.statChip}>
-            <span className={styles.statValue}>{totalSubmissions}</span>
-            <span className={styles.statLabel}>Submissions</span>
-          </div>
-          <div className={styles.statChip}>
-            <span className={styles.statValue}>{totalApproved}</span>
-            <span className={styles.statLabel}>Approved</span>
+            <span className={styles.statValue} style={{ color: 'rgba(161,161,170,0.6)' }}>
+              {inactive}
+            </span>
+            <span className={styles.statLabel}>Inactive</span>
           </div>
         </div>
       )}
@@ -214,71 +212,61 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          courses.map((course) => {
-            const approved = course.approvedCount ?? 0;
-            const total = course.submissionCount ?? 0;
-            const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
-            const projects = course.projectCount ?? 0;
-            const students = course.studentCount ?? 0;
-            const needsSetup = students === 0 && projects === 0;
-            const courseName = course.name || 'Untitled Course';
-
-            return (
-              <Link
-                key={course.id}
-                href={`/instructor/courses/${course.id}`}
-                className={styles.courseCard}
-              >
-                {/* Top row: icon + action buttons */}
-                <div className={styles.courseCardTop}>
-                  <span className={styles.courseIcon}>
-                    <BookIcon />
+          courses.map((course) => (
+            <Link
+              key={course.id}
+              href={`/instructor/courses/${course.id}`}
+              className={styles.courseCard}
+            >
+              {/* Top row: icon + action buttons */}
+              <div className={styles.courseCardTop}>
+                <span className={styles.courseIcon}>
+                  <BookIcon />
+                </span>
+                <div className={styles.courseCardActions}>
+                  <span className={styles.courseArrow}>
+                    <ArrowIcon />
                   </span>
-                  <div className={styles.courseCardActions}>
-                    <span className={styles.courseArrow}>
-                      <ArrowIcon />
-                    </span>
-                    <span className={styles.courseMenu}>
-                      <MenuIcon />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Title block */}
-                <div className={styles.courseTitleBlock}>
-                  <span className={styles.courseTitle}>{courseName}</span>
-                  {course.code ? (
-                    <span className={styles.courseCode}>{course.code}</span>
-                  ) : needsSetup ? (
-                    <span className={styles.courseSetupHint}>Setup needed</span>
-                  ) : null}
-                </div>
-
-                {/* Divider */}
-                <div className={styles.courseDivider} />
-
-                {/* Bottom: meta + progress */}
-                <div className={styles.courseCardBottom}>
-                  {needsSetup ? (
-                    <span className={styles.courseMetaSetup}>
-                      No students or projects yet &mdash; get started →
-                    </span>
-                  ) : (
-                    <span className={styles.courseMeta}>
-                      {projects} project{projects !== 1 ? 's' : ''} &bull; {students} student
-                      {students !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                  <div className={styles.courseProgressBar}>
-                    <div className={styles.courseProgressFill} style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className={styles.courseProgressText}>
-                    {total === 0 ? 'No submissions yet' : `${approved}/${total} approved`}
+                  <span className={styles.courseMenu}>
+                    <MenuIcon />
                   </span>
                 </div>
-              </Link>
-            );
-          })
+              </div>
+
+              {/* Title block */}
+              <div className={styles.courseTitleBlock}>
+                <span className={styles.courseTitle}>{course.title}</span>
+                <span className={styles.courseMeta}>
+                  {course.courseCode}
+                  {course.termLabel ? ` · ${course.termLabel}` : ''}
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div className={styles.courseDivider} />
+
+              {/* Footer: status badge */}
+              <div className={styles.courseCardBottom}>
+                <span
+                  className={
+                    course.isActive ? styles.statusBadgeActive : styles.statusBadgeInactive
+                  }
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: 'currentColor',
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                  {course.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </Link>
+          ))
         )}
       </div>
     </div>
