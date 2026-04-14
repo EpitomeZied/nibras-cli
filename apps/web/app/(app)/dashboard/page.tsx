@@ -1,843 +1,216 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import type { TrackingCourseSummary, TrackingMilestone } from '@nibras/contracts';
+import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/session';
-import { prefs } from '../../lib/prefs';
-import { formatShortDate, daysUntil, getGreeting } from '../../lib/utils';
-import { loadDashboardData } from './load-dashboard-data';
-import type { LoadDashboardDataResult } from './load-dashboard-data';
+import { useSession } from '../_components/session-context';
 import styles from './page.module.css';
 
-function sortByDueDate(a: TrackingMilestone, b: TrackingMilestone): number {
-  if (!a.dueAt && !b.dueAt) return 0;
-  if (!a.dueAt) return 1;
-  if (!b.dueAt) return -1;
-  return a.dueAt.localeCompare(b.dueAt);
-}
+type Course = {
+  id: string;
+  name: string;
+  code?: string;
+  projectCount?: number;
+  studentCount?: number;
+  submissionCount?: number;
+  approvedCount?: number;
+};
 
-function actionEmoji(action: string): string {
-  if (action.includes('approve')) return '✅';
-  if (action.includes('review')) return '👀';
-  if (action.includes('submit')) return '📤';
-  if (action.includes('comment')) return '💬';
-  if (action.includes('create')) return '🆕';
-  if (action.includes('fail') || action.includes('reject')) return '❌';
-  if (action.includes('push') || action.includes('commit')) return '📦';
-  return '⚡';
-}
-
-/* ── sub-components ───────────────────────────────────────────────────────── */
-
-function SkeletonLine({ w = '100%', h = 14 }: { w?: string; h?: number }) {
+function FileIcon() {
   return (
-    <div
-      className={styles.skeleton}
-      style={{ width: w, height: h, borderRadius: 6 }}
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
-    />
+    >
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
   );
 }
 
-function MilestoneBar({
-  approved,
-  underReview,
-  total,
-}: {
-  approved: number;
-  underReview: number;
-  total: number;
-}) {
-  if (total === 0) {
-    return (
-      <div className={styles.milestoneBar}>
-        <div className={styles.milestoneSegEmpty} style={{ width: '100%' }} />
-      </div>
-    );
-  }
-  const pctApproved = (approved / total) * 100;
-  const pctReview = (underReview / total) * 100;
-  const pctOpen = Math.max(0, 100 - pctApproved - pctReview);
+function SkeletonCard() {
   return (
-    <div className={styles.milestoneBar}>
-      {pctApproved > 0 && (
-        <div
-          className={`${styles.milestoneSegment} ${styles.segGreen}`}
-          style={{ width: `${pctApproved}%` }}
-          title={`Approved: ${approved}`}
-        />
-      )}
-      {pctReview > 0 && (
-        <div
-          className={`${styles.milestoneSegment} ${styles.segPurple}`}
-          style={{ width: `${pctReview}%` }}
-          title={`Under review: ${underReview}`}
-        />
-      )}
-      {pctOpen > 0 && (
-        <div
-          className={`${styles.milestoneSegment} ${styles.segGray}`}
-          style={{ width: `${pctOpen}%` }}
-          title={`Open: ${total - approved - underReview}`}
-        />
-      )}
+    <div className={styles.skeletonCard}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span className={styles.skeleton} style={{ width: 30, height: 30, borderRadius: 7 }} />
+        <span className={styles.skeleton} style={{ width: '55%', height: 14 }} />
+      </div>
+      <span className={styles.skeleton} style={{ width: '40%', height: 12 }} />
+      <span className={styles.skeleton} style={{ width: '30%', height: 10 }} />
     </div>
   );
 }
 
-/* ── main page ────────────────────────────────────────────────────────────── */
-
 export default function DashboardPage() {
-  const [data, setData] = useState<LoadDashboardDataResult | null>(null);
-  const [error, setError] = useState('');
+  const { user, loading: sessionLoading } = useSession();
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
-  const [selectionReady, setSelectionReady] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const courseIdFromUrl = searchParams.get('courseId');
-
-  function replaceCourseQuery(courseId: string | null) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (courseId) {
-      params.set('courseId', courseId);
-    } else {
-      params.delete('courseId');
-    }
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }
-
-  function syncCourseSelection(courseId: string | null) {
-    prefs.setSelectedCourseId(courseId);
-    replaceCourseQuery(courseId);
-  }
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const preferredCourseId = courseIdFromUrl || prefs.getSelectedCourseId() || null;
-    setActiveCourseId(preferredCourseId);
-    setSelectionReady(true);
-  }, [courseIdFromUrl]);
-
-  useEffect(() => {
-    if (!selectionReady) {
-      return;
-    }
-    let alive = true;
-    setLoading(true);
-    setError('');
     void (async () => {
-      const requestedCourseId = activeCourseId;
       try {
-        const payload = await loadDashboardData({
-          courseId: requestedCourseId,
-          fetchJson: async (path: string, init?: RequestInit & { auth?: boolean }) => {
-            const res = await apiFetch(path, init);
-            return res.json() as Promise<unknown>;
-          },
-        });
-        if (!alive) {
+        const res = await apiFetch('/v1/tracking/courses', { auth: true });
+        if (!res.ok) {
+          setError('Failed to load courses.');
           return;
         }
-        setData(payload);
-        const resolvedCourseId = payload.dashboard.course?.id ?? payload.courses[0]?.id ?? null;
-        if (resolvedCourseId !== requestedCourseId) {
-          setActiveCourseId(resolvedCourseId);
-          syncCourseSelection(resolvedCourseId);
-        } else if (resolvedCourseId) {
-          prefs.setSelectedCourseId(resolvedCourseId);
-        }
-      } catch (err) {
-        if (alive) setError(err instanceof Error ? err.message : String(err));
+        const data = (await res.json()) as Course[];
+        setCourses(data);
+      } catch {
+        setError('Could not connect to the API.');
       } finally {
-        if (alive) setLoading(false);
+        setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCourseId, selectionReady]);
+  }, []);
 
-  const me = data?.me ?? null;
-  const courses = data?.courses ?? [];
-  const dashboard = data?.dashboard ?? null;
-  const installUrl = data?.installUrl ?? '';
-  const githubAppInstalled = me?.user?.githubAppInstalled;
-  const showInstallBanner = !loading && (installUrl || githubAppInstalled === false);
-  const isSuperAdmin = me?.user?.systemRole === 'admin';
-
-  const displayName = me?.user?.username || me?.user?.githubLogin || 'Developer';
-  const firstName = displayName.split(/[\s_-]+/)[0]?.replace(/[^a-zA-Z]/g, '') || 'Developer';
-
-  /* derived stats */
-  const totals = useMemo(() => {
-    if (!dashboard) return { approved: 0, underReview: 0, open: 0, total: 0 };
-    return Object.values(dashboard.statsByProject).reduce(
-      (acc, s) => ({
-        approved: acc.approved + s.approved,
-        underReview: acc.underReview + s.underReview,
-        open: acc.open + Math.max(0, s.total - s.approved - s.underReview),
-        total: acc.total + s.total,
-      }),
-      { approved: 0, underReview: 0, open: 0, total: 0 }
-    );
-  }, [dashboard]);
-
-  const completionPct = totals.total > 0 ? Math.round((totals.approved / totals.total) * 100) : 0;
-
-  const allMilestones = useMemo(
-    () => (dashboard ? Object.values(dashboard.milestonesByProject).flat() : []),
-    [dashboard]
-  );
-
-  const datedMilestones = useMemo(
-    () => [...allMilestones].filter((m) => m.dueAt).sort(sortByDueDate),
-    [allMilestones]
-  );
-
-  const overdueMilestones = useMemo(
-    () =>
-      datedMilestones.filter((m) => {
-        const d = daysUntil(m.dueAt);
-        return d !== null && d < 0 && m.statusLabel !== 'approved';
-      }),
-    [datedMilestones]
-  );
-
-  const upcomingMilestones = useMemo(
-    () =>
-      datedMilestones
-        .filter((m) => {
-          const d = daysUntil(m.dueAt);
-          return d !== null && d >= 0 && m.statusLabel !== 'approved';
-        })
-        .slice(0, 5),
-    [datedMilestones]
-  );
-
-  const activeProjects = useMemo(
-    () =>
-      (dashboard?.projects ?? []).slice(0, 5).map((p) => ({
-        project: p,
-        stats: dashboard!.statsByProject[p.id],
-      })),
-    [dashboard]
-  );
-
-  /* welcome sub-text */
-  const welcomeSub = useMemo(() => {
-    if (loading) return null;
-    if (overdueMilestones.length > 0)
-      return `⚠️ You have ${overdueMilestones.length} overdue milestone${overdueMilestones.length > 1 ? 's' : ''} — check deadlines below.`;
-    if (upcomingMilestones.length > 0) {
-      const next = upcomingMilestones[0];
-      const days = daysUntil(next.dueAt) ?? 0;
-      return `📅 Next deadline: ${next.title} — ${days === 0 ? 'today!' : days === 1 ? 'tomorrow' : `in ${days} days`}`;
-    }
-    if (totals.total > 0) return `🎉 All caught up! ${completionPct}% of milestones approved.`;
-    return '🚀 Start by exploring your projects below.';
-  }, [loading, overdueMilestones, upcomingMilestones, totals, completionPct]);
-
-  function handleCourseChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    const nextCourseId = event.target.value || null;
-    setActiveCourseId(nextCourseId);
-    syncCourseSelection(nextCourseId);
-  }
-
-  function courseLabel(course: TrackingCourseSummary): string {
-    return `${course.courseCode} · ${course.title}`;
-  }
-
-  const selectedCourse =
-    courses.find((course) => course.id === (activeCourseId ?? dashboard?.course?.id ?? '')) ??
-    dashboard?.course ??
-    null;
+  const identity = user?.username || user?.githubLogin || 'Your';
+  const workspaceInitial = identity.slice(0, 1).toUpperCase();
 
   return (
-    <main className={styles.page}>
-      {/* ── GitHub App install banner ─────────────────────────────── */}
-      {showInstallBanner && (
-        <div className={styles.installBanner}>
-          <span className={styles.installIcon}>🔗</span>
-          <div className={styles.installText}>
-            <strong>Connect GitHub App</strong>
-            <span>Install the Nibras GitHub App to enable automatic submission tracking.</span>
-          </div>
-          {installUrl ? (
-            <a href={installUrl} className={styles.installBtn}>
-              Install now →
-            </a>
-          ) : (
-            <Link href="/settings" className={styles.installBtn}>
-              Go to Settings →
-            </Link>
-          )}
+    <div className={styles.page}>
+      {/* ── Header ── */}
+      <div className={styles.pageHeader}>
+        <div className={styles.pageTitleGroup}>
+          <h1 className={styles.pageTitle}>Your Courses</h1>
+          <p className={styles.pageSubtitle}>
+            {loading ? '—' : `${courses.length} course${courses.length === 1 ? '' : 's'}`}
+          </p>
         </div>
-      )}
-
-      {error && <div className={styles.errorBar}>{error}</div>}
-
-      {/* ── Welcome banner ────────────────────────────────────────── */}
-      <section className={styles.welcomeBanner}>
-        <div className={styles.welcomeText}>
-          <p className={styles.welcomeGreeting}>{getGreeting()},</p>
-          <h1 className={styles.welcomeName}>{firstName.toUpperCase()}</h1>
-          {loading ? (
-            <SkeletonLine w="260px" h={13} />
-          ) : (
-            <p className={styles.welcomeSub}>{welcomeSub}</p>
-          )}
-        </div>
-        <div className={styles.bannerMeta}>
-          <div className={styles.bannerBadges}>
-            {dashboard?.course && (
-              <span className={styles.courseChip}>
-                🎓 {dashboard.course.courseCode} — {dashboard.course.title}
-              </span>
-            )}
-            {isSuperAdmin && <span className={styles.superAdminChip}>Super Admin</span>}
-          </div>
-          {courses.length > 0 && (
-            <label className={styles.courseSwitcher}>
-              <div className={styles.courseSwitcherHeader}>
-                <span className={styles.courseSelectLabel}>Course</span>
-                <span className={styles.courseSwitcherHint}>
-                  {courses.length > 1 ? `${courses.length} available` : 'Current workspace'}
-                </span>
-              </div>
-              <div className={styles.courseSelectShell}>
-                <div className={styles.courseSelectCurrent} aria-hidden="true">
-                  <span className={styles.courseCodeBadge}>
-                    {selectedCourse?.courseCode ?? 'Course'}
-                  </span>
-                  <span className={styles.courseSelectText}>
-                    <strong className={styles.courseSelectTitle}>
-                      {selectedCourse?.title ?? 'Select a course'}
-                    </strong>
-                    <span className={styles.courseSelectMeta}>
-                      {selectedCourse?.termLabel ?? 'Choose the course you want to work in'}
-                    </span>
-                  </span>
-                </div>
-                <select
-                  className={styles.courseSelectNative}
-                  aria-label="Choose course"
-                  title={selectedCourse ? courseLabel(selectedCourse) : 'Choose course'}
-                  value={activeCourseId ?? dashboard?.course?.id ?? ''}
-                  onChange={handleCourseChange}
-                  disabled={loading || courses.length <= 1}
-                >
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {courseLabel(course)}
-                    </option>
-                  ))}
-                </select>
-                <span className={styles.courseSelectChevron} aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M4 6.5 8 10l4-3.5"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-            </label>
-          )}
-          <div className={styles.bannerActions}>
-            <Link href="/projects" className={styles.quickActionBtn}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                <rect
-                  x="0.5"
-                  y="0.5"
-                  width="5"
-                  height="5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-                <rect
-                  x="7.5"
-                  y="0.5"
-                  width="5"
-                  height="5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-                <rect
-                  x="0.5"
-                  y="7.5"
-                  width="5"
-                  height="5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-                <rect
-                  x="7.5"
-                  y="7.5"
-                  width="5"
-                  height="5"
-                  rx="1.2"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-              </svg>
-              Projects
-            </Link>
-            <Link href="/instructor/onboarding" className={styles.quickActionBtn}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.2" />
-                <path
-                  d="M6.5 5.5v4"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                />
-                <circle cx="6.5" cy="3.5" r="0.7" fill="currentColor" />
-              </svg>
-              CLI Guide
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stat cards ───────────────────────────────────────────── */}
-      <section className={styles.statsRow}>
-        {/* Approved */}
-        <article className={styles.statCard}>
-          <div
-            className={styles.statIcon}
-            style={{ background: 'rgba(52,211,153,0.12)', color: 'var(--success)' }}
+        <Link href="/instructor/courses/new" className={styles.newCourseBtn}>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path
-                d="M3 9l4 4 8-8"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div className={styles.statBody}>
-            <span className={styles.statLabel}>Approved</span>
-            <strong className={styles.statValue}>
-              {loading ? <SkeletonLine w="40px" h={30} /> : totals.approved}
-            </strong>
-            <span className={`${styles.statBadge} ${styles.badgeGreen}`}>
-              {completionPct}% done
-            </span>
-          </div>
-        </article>
-
-        {/* Under Review */}
-        <article className={styles.statCard}>
-          <div
-            className={styles.statIcon}
-            style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--purple)' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.5" />
-              <path
-                d="M9 5v4l2.5 2.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-          <div className={styles.statBody}>
-            <span className={styles.statLabel}>Under Review</span>
-            <strong className={styles.statValue}>
-              {loading ? <SkeletonLine w="40px" h={30} /> : totals.underReview}
-            </strong>
-            <span className={`${styles.statBadge} ${styles.badgePurple}`}>In queue</span>
-          </div>
-        </article>
-
-        {/* Total milestones */}
-        <article className={styles.statCard}>
-          <div
-            className={styles.statIcon}
-            style={{ background: 'rgba(59,130,246,0.12)', color: 'var(--primary-strong)' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <rect
-                x="2"
-                y="2"
-                width="6"
-                height="6"
-                rx="1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="10"
-                y="2"
-                width="6"
-                height="6"
-                rx="1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="2"
-                y="10"
-                width="6"
-                height="6"
-                rx="1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="10"
-                y="10"
-                width="6"
-                height="6"
-                rx="1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className={styles.statBody}>
-            <span className={styles.statLabel}>Total Milestones</span>
-            <strong className={styles.statValue}>
-              {loading ? <SkeletonLine w="40px" h={30} /> : totals.total}
-            </strong>
-            <span className={`${styles.statBadge} ${styles.badgeBlue}`}>
-              {loading ? '—' : `${totals.open} open`}
-            </span>
-          </div>
-        </article>
-      </section>
-
-      {/* ── Main grid ────────────────────────────────────────────── */}
-      <div className={styles.mainGrid}>
-        {/* LEFT column */}
-        <div className={styles.leftCol}>
-          {/* Milestone progress */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeadRow}>
-              <div>
-                <h2 className={styles.panelTitle}>Milestone Progress</h2>
-                <span className={styles.panelSub}>
-                  {loading
-                    ? 'Loading…'
-                    : `${totals.approved} approved · ${totals.underReview} in review · ${totals.open} open`}
-                </span>
-              </div>
-              <span className={styles.filterChip}>{completionPct}% complete</span>
-            </div>
-
-            {loading ? (
-              <div className={styles.skeletonList}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className={styles.skeletonProjectRow}>
-                    <SkeletonLine w="120px" h={12} />
-                    <SkeletonLine w="100%" h={10} />
-                    <SkeletonLine w="36px" h={12} />
-                  </div>
-                ))}
-              </div>
-            ) : activeProjects.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyEmoji}>📂</span>
-                <p>No projects yet.</p>
-                <Link href="/projects" className={styles.emptyLink}>
-                  Browse projects →
-                </Link>
-              </div>
-            ) : (
-              <div className={styles.projectProgressList}>
-                {/* Overall bar */}
-                <div className={styles.overallBar}>
-                  <div className={styles.overallBarLabel}>
-                    <span>Overall</span>
-                    <span>{completionPct}%</span>
-                  </div>
-                  <MilestoneBar
-                    approved={totals.approved}
-                    underReview={totals.underReview}
-                    total={totals.total}
-                  />
-                  <div className={styles.barLegend}>
-                    <span className={styles.legendDot} style={{ background: 'var(--success)' }} />
-                    <span>Approved</span>
-                    <span className={styles.legendDot} style={{ background: 'var(--purple)' }} />
-                    <span>Review</span>
-                    <span
-                      className={styles.legendDot}
-                      style={{ background: 'var(--surface-muted)' }}
-                    />
-                    <span>Open</span>
-                  </div>
-                </div>
-
-                {/* Per-project rows */}
-                {activeProjects.map(({ project, stats }) => {
-                  const pct = stats?.completion ?? 0;
-                  const dotColor =
-                    pct >= 80
-                      ? 'var(--success)'
-                      : pct >= 40
-                        ? 'var(--warning)'
-                        : 'var(--primary-strong)';
-                  return (
-                    <div key={project.id} className={styles.projectProgressRow}>
-                      <span
-                        className={styles.projectDot}
-                        style={{ background: dotColor }}
-                        title={`${pct}% complete`}
-                      />
-                      <span className={styles.projectName}>{project.title}</span>
-                      <div className={styles.locationBar}>
-                        <div
-                          className={styles.locationFill}
-                          style={{ width: `${pct}%`, background: dotColor }}
-                        />
-                      </div>
-                      <span className={styles.locationPct}>{pct}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Activity feed */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeadRow}>
-              <div>
-                <h2 className={styles.panelTitle}>Activity</h2>
-                <span className={styles.panelSub}>
-                  {loading
-                    ? 'Loading…'
-                    : dashboard?.activity?.length
-                      ? `${dashboard.activity.length} recent events`
-                      : 'No recent activity'}
-                </span>
-              </div>
-              <Link href="/projects" className={styles.viewAll}>
-                View all
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className={styles.skeletonList}>
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className={styles.activityRow}>
-                    <SkeletonLine w="28px" h={28} />
-                    <div style={{ flex: 1, display: 'grid', gap: 6 }}>
-                      <SkeletonLine w="60%" h={12} />
-                      <SkeletonLine w="40%" h={10} />
-                    </div>
-                    <SkeletonLine w="50px" h={11} />
-                  </div>
-                ))}
-              </div>
-            ) : !dashboard?.activity?.length ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyEmoji}>🌱</span>
-                <p>No activity yet. Submit your first milestone!</p>
-              </div>
-            ) : (
-              <div className={styles.activityList}>
-                {dashboard.activity.slice(0, 6).map((entry) => (
-                  <div key={entry.id} className={styles.activityRow}>
-                    <span className={styles.activityEmoji} aria-hidden="true">
-                      {actionEmoji(entry.action)}
-                    </span>
-                    <div className={styles.activityBody}>
-                      <strong>{entry.summary}</strong>
-                      <span>{entry.action.replace(/_/g, ' ')}</span>
-                    </div>
-                    <time className={styles.activityTime}>{formatShortDate(entry.createdAt)}</time>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* RIGHT column */}
-        <div className={styles.rightCol}>
-          {/* My Projects */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeadRow}>
-              <h2 className={styles.panelTitle}>My Projects</h2>
-              <Link href="/projects" className={styles.viewAll}>
-                View all
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className={styles.skeletonList}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className={styles.courseCard}>
-                    <SkeletonLine w="38px" h={38} />
-                    <div style={{ flex: 1, display: 'grid', gap: 6 }}>
-                      <SkeletonLine w="70%" h={12} />
-                      <SkeletonLine w="50%" h={10} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : !activeProjects.length ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyEmoji}>📋</span>
-                <p>No projects assigned yet.</p>
-              </div>
-            ) : (
-              <div className={styles.courseList}>
-                {activeProjects.map(({ project, stats }) => {
-                  const pct = stats?.completion ?? 0;
-                  const dotColor =
-                    pct >= 80
-                      ? 'var(--success)'
-                      : pct >= 40
-                        ? 'var(--warning)'
-                        : 'var(--primary-strong)';
-                  return (
-                    <div key={project.id} className={styles.courseCard}>
-                      <div
-                        className={styles.courseThumbnail}
-                        style={{ background: `${dotColor}1a`, border: `1px solid ${dotColor}40` }}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 18 18"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <rect
-                            x="1"
-                            y="1"
-                            width="16"
-                            height="16"
-                            rx="3.5"
-                            fill={`${dotColor}30`}
-                            stroke={dotColor}
-                            strokeWidth="1.2"
-                          />
-                          <path
-                            d="M5 9l3 3 5-5"
-                            stroke={dotColor}
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                      <div className={styles.courseInfo}>
-                        <strong className={styles.courseTitle}>{project.title}</strong>
-                        <span className={styles.courseMeta}>
-                          {stats?.total ?? 0} milestones · {stats?.approved ?? 0} approved
-                        </span>
-                      </div>
-                      <div className={styles.courseStats}>
-                        <span className={styles.coursePercent} style={{ color: dotColor }}>
-                          {pct}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Deadlines */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeadRow}>
-              <div>
-                <h2 className={styles.panelTitle}>Deadlines</h2>
-                <span className={styles.panelSub}>
-                  {loading
-                    ? 'Loading…'
-                    : overdueMilestones.length > 0
-                      ? `${overdueMilestones.length} overdue`
-                      : upcomingMilestones.length > 0
-                        ? `${upcomingMilestones.length} upcoming`
-                        : 'All clear 🎉'}
-                </span>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className={styles.skeletonList}>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className={styles.deadlineRow}>
-                    <SkeletonLine w="7px" h={7} />
-                    <div style={{ flex: 1, display: 'grid', gap: 5 }}>
-                      <SkeletonLine w="70%" h={12} />
-                      <SkeletonLine w="40%" h={10} />
-                    </div>
-                    <SkeletonLine w="48px" h={11} />
-                  </div>
-                ))}
-              </div>
-            ) : overdueMilestones.length === 0 && upcomingMilestones.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyEmoji}>✅</span>
-                <p>No upcoming deadlines — you&apos;re all caught up!</p>
-              </div>
-            ) : (
-              <div className={styles.deadlineList}>
-                {overdueMilestones.slice(0, 3).map((m) => {
-                  const d = daysUntil(m.dueAt) ?? 0;
-                  return (
-                    <div key={m.id} className={`${styles.deadlineRow} ${styles.deadlineOverdue}`}>
-                      <span className={`${styles.deadlineDot} ${styles.dotRed}`} />
-                      <div className={styles.deadlineBody}>
-                        <strong>{m.title}</strong>
-                        <span>
-                          {Math.abs(d)} day{Math.abs(d) !== 1 ? 's' : ''} overdue
-                        </span>
-                      </div>
-                      <time className={`${styles.deadlineDate} ${styles.dateRed}`}>
-                        {formatShortDate(m.dueAt)}
-                      </time>
-                    </div>
-                  );
-                })}
-                {upcomingMilestones.map((m) => {
-                  const d = daysUntil(m.dueAt) ?? 0;
-                  const urgent = d <= 2;
-                  return (
-                    <div key={m.id} className={styles.deadlineRow}>
-                      <span
-                        className={styles.deadlineDot}
-                        style={{ background: urgent ? 'var(--warning)' : 'var(--primary)' }}
-                      />
-                      <div className={styles.deadlineBody}>
-                        <strong>{m.title}</strong>
-                        <span>{m.statusLabel}</span>
-                      </div>
-                      <time
-                        className={styles.deadlineDate}
-                        style={{ color: urgent ? 'var(--warning)' : undefined }}
-                      >
-                        {d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : formatShortDate(m.dueAt)}
-                      </time>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New Course
+        </Link>
       </div>
-    </main>
+
+      {/* ── Workspace row ── */}
+      <div className={styles.workspaceRow}>
+        <span className={styles.workspaceAvatar}>{sessionLoading ? '…' : workspaceInitial}</span>
+        <span className={styles.workspaceName}>
+          {sessionLoading ? 'Loading…' : `${identity}'s Workspace`}
+        </span>
+        <span className={styles.workspaceBadge}>Your Workspace</span>
+        <span className={styles.workspaceCount}>
+          {loading ? '' : `${courses.length} course${courses.length === 1 ? '' : 's'}`}
+        </span>
+      </div>
+
+      {/* ── Error ── */}
+      {error && <p className={styles.errorBar}>{error}</p>}
+
+      {/* ── Course grid ── */}
+      <div className={styles.courseGrid}>
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : courses.length === 0 ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>📚</span>
+            <p className={styles.emptyTitle}>No courses yet</p>
+            <p className={styles.emptyDesc}>
+              Create your first course and invite students to get started.
+            </p>
+            <Link href="/instructor/courses/new" className={styles.emptyLink}>
+              Create your first course →
+            </Link>
+          </div>
+        ) : (
+          courses.map((course) => {
+            const approved = course.approvedCount ?? 0;
+            const total = course.submissionCount ?? 0;
+            const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
+            const projects = course.projectCount ?? 0;
+            const students = course.studentCount ?? 0;
+
+            return (
+              <Link
+                key={course.id}
+                href={`/instructor/courses/${course.id}`}
+                className={styles.courseCard}
+              >
+                {/* Top: icon + title + actions */}
+                <div className={styles.courseCardTop}>
+                  <div className={styles.courseCardLeft}>
+                    <span className={styles.courseIcon}>
+                      <FileIcon />
+                    </span>
+                    <span className={styles.courseTitle}>{course.name}</span>
+                  </div>
+                  <div className={styles.courseCardActions}>
+                    <span className={styles.courseArrow}>
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </span>
+                    <span className={styles.courseMenu}>
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="5" r="1.5" />
+                        <circle cx="12" cy="12" r="1.5" />
+                        <circle cx="12" cy="19" r="1.5" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className={styles.courseDivider} />
+
+                {/* Bottom: meta + progress */}
+                <div className={styles.courseCardBottom}>
+                  <span className={styles.courseMeta}>
+                    {projects} project{projects !== 1 ? 's' : ''} • {students} student
+                    {students !== 1 ? 's' : ''}
+                  </span>
+                  <div className={styles.courseProgressBar}>
+                    <div className={styles.courseProgressFill} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className={styles.courseProgressText}>
+                    {approved}/{total} approved
+                  </span>
+                </div>
+              </Link>
+            );
+          })
+        )}
+      </div>
+    </div>
   );
 }

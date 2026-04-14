@@ -1,341 +1,398 @@
+/* ── Page ───────────────────────────────────────────────────────────────────── */
+
 .page {
-  padding: 28px 32px;
-  max-width: 680px;
+  padding: 40px;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
-.pageHeader {
+.settingsTitle {
+  margin: 0 0 32px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #fafafa;
+}
+
+/* ── Two-panel layout ───────────────────────────────────────────────────────── */
+
+.settingsWrap {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+/* ── Left nav ───────────────────────────────────────────────────────────────── */
+
+.settingsNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 72px;
+}
+
+.settingsNavItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(161, 161, 170, 0.65);
+  cursor: pointer;
+  border: none;
+  border-left: 2px solid transparent;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  transition:
+    color 0.15s,
+    background 0.15s;
+  font-family: inherit;
+}
+
+.settingsNavItem:hover {
+  color: #fafafa;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.settingsNavItemActive {
+  color: #fafafa;
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: #22c55e;
+  font-weight: 600;
+}
+
+.settingsNavItemDanger {
+  color: rgba(252, 165, 165, 0.65);
+}
+
+.settingsNavItemDanger:hover {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.navIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ── Right content ──────────────────────────────────────────────────────────── */
+
+.settingsContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.contentSection {
+  padding-bottom: 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.contentSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sectionHeading {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+}
+
+.sectionSub {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: rgba(161, 161, 170, 0.55);
+  line-height: 1.6;
+}
+
+/* ── Profile avatar ─────────────────────────────────────────────────────────── */
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   margin-bottom: 28px;
 }
 
-.pageTitle {
-  margin: 0 0 6px;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
-
-.pageSubtitle {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-soft);
-}
-
-.sections {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.section {
-  padding: 22px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.sectionTitle {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--primary);
-}
-
-/* Profile */
-.profileRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.avatar {
+.avatarImg {
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: block;
   flex-shrink: 0;
 }
 
 .avatarFallback {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fafafa;
   flex-shrink: 0;
 }
 
-.profileInfo {
+.avatarInfo {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
-.profileName {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
+.avatarName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fafafa;
 }
 
-.profileEmail {
-  font-size: 12px;
-  color: var(--text-muted);
+.avatarEmail {
+  font-size: 13px;
+  color: rgba(161, 161, 170, 0.6);
 }
 
-.profileGitHub {
-  font-size: 12px;
-  color: var(--text-soft);
-}
+/* ── Form fields ────────────────────────────────────────────────────────────── */
 
-.profileMeta {
+.formFields {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(250, 250, 250, 0.8);
+}
+
+.formInput {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fafafa;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  max-width: 440px;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.formInput:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: #fafafa;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
   margin-top: 4px;
 }
 
-.roleBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-soft);
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
+.saveBtn:hover {
+  background: rgba(255, 255, 255, 0.11);
 }
 
-.roleSuperAdmin {
-  color: #b45309;
-  background: rgba(251, 191, 36, 0.16);
-  border-color: rgba(251, 191, 36, 0.32);
-}
+/* ── Connected accounts ─────────────────────────────────────────────────────── */
 
-.profileAccess {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Preferences */
-.prefRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.prefInfo {
+.connectedList {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 480px;
 }
 
-.prefLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  cursor: default;
-}
-
-.prefDesc {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-soft);
-  line-height: 1.5;
-}
-
-/* Toggle */
-.toggle {
-  position: relative;
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-muted);
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.toggleOn {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-.toggleThumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.18s ease;
-  display: block;
-}
-
-.toggleOn .toggleThumb {
-  transform: translateX(18px);
-}
-
-/* Account */
-.accountRow {
+.connectedRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.connectedRow:last-child {
+  border-bottom: none;
+}
+
+.connectedIcon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: rgba(161, 161, 170, 0.65);
+}
+
+.connectedName {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.connectedBadgeGreen {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.connectedBadgeGray {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(161, 161, 170, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.connectedBtn {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(161, 161, 170, 0.35);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
+  padding: 4px 12px;
+  cursor: not-allowed;
+  font-family: inherit;
+}
+
+/* ── GitHub App section ─────────────────────────────────────────────────────── */
+
+.githubAppCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 480px;
+}
+
+.githubAppIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  color: rgba(161, 161, 170, 0.7);
+  flex-shrink: 0;
+}
+
+.githubAppInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.githubAppLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fafafa;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.githubAppDesc {
+  font-size: 12px;
+  color: rgba(161, 161, 170, 0.5);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.installBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #0a0a0a;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.installBtn:hover {
+  opacity: 0.88;
 }
 
 .badge {
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-/* GitHub App install row */
-.appInstallRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-}
+/* ── Manual install ─────────────────────────────────────────────────────────── */
 
-.appInstallLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.appInstallIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  display: grid;
-  place-items: center;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.appInstallRight {
-  flex-shrink: 0;
-}
-
-.installAppBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 14px;
-  border-radius: 9px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  transition:
-    background 0.15s,
-    transform 0.13s;
-}
-
-.installAppBtn:hover {
-  background: var(--primary-strong);
-  transform: translateY(-1px);
-}
-
-/* Install callout banner */
-.installCallout {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: rgba(59, 130, 246, 0.07);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-.installCalloutIcon {
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.installCallout > div {
-  flex: 1;
-  min-width: 0;
-}
-
-.installCallout strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 3px;
-}
-
-.installCallout p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.installCalloutBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-radius: 10px;
-  background: var(--primary);
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition:
-    background 0.15s,
-    transform 0.13s;
-}
-
-.installCalloutBtn:hover {
-  background: var(--primary-strong);
-  transform: translateY(-1px);
-}
-
-/* Manual installation ID entry */
 .manualInstall {
+  margin-top: 16px;
   padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-width: 480px;
 }
 
 .manualInstallLabel {
   margin: 0;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--text-soft);
+  color: rgba(161, 161, 170, 0.55);
 }
 
 .manualInstallForm {
@@ -346,9 +403,41 @@
 
 .manualInstallInput {
   flex: 1;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fafafa;
   font-size: 13px;
   font-family: var(--font-mono, monospace);
-  min-width: 0;
+  outline: none;
+}
+
+.manualInstallInput:focus {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.manualInstallBtn {
+  padding: 8px 16px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fafafa;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.manualInstallBtn:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.manualInstallBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .manualInstallStatus {
@@ -360,43 +449,153 @@
 .manualInstallHint {
   margin: 0;
   font-size: 11.5px;
-  color: var(--text-muted);
+  color: rgba(161, 161, 170, 0.4);
   line-height: 1.5;
 }
 
 .manualInstallLink {
-  color: var(--primary);
+  color: #22c55e;
   text-decoration: none;
 }
 
-.manualInstallLink:hover {
-  text-decoration: underline;
+/* ── Preferences ────────────────────────────────────────────────────────────── */
+
+.prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  max-width: 480px;
 }
 
-.signOutRow {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+.prefRow:last-child {
+  border-bottom: none;
+}
+
+.prefInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prefLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.prefDesc {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(161, 161, 170, 0.5);
+}
+
+.toggle {
+  position: relative;
+  width: 38px;
+  height: 21px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.toggleOn {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+  display: block;
+}
+
+.toggleOn .toggleThumb {
+  transform: translateX(17px);
+}
+
+/* ── Danger zone ────────────────────────────────────────────────────────────── */
+
+.dangerHeading {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.dangerDesc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: rgba(161, 161, 170, 0.5);
+  line-height: 1.6;
 }
 
 .signOutBtn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-radius: var(--radius-xs);
-  background: rgba(248, 113, 113, 0.1);
-  color: var(--danger);
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-  cursor: pointer;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 9px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  font-size: 13.5px;
+  font-weight: 700;
   text-decoration: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .signOutBtn:hover {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.38);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .page {
+    padding: 24px 20px;
+  }
+
+  .settingsWrap {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .settingsNav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    gap: 4px;
+  }
+
+  .settingsNavItem {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    flex: none;
+    width: auto;
+  }
+
+  .settingsNavItemActive {
+    border-left-color: transparent;
+    border-bottom-color: #22c55e;
+  }
 }
