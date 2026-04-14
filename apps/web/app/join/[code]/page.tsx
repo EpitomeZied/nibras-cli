@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { apiFetch, discoverApiBaseUrl } from '../../lib/session';
 import { useFormSubmit } from '../../lib/use-form-submit';
-import NibrasLogo from '../../_components/nibras-logo';
+import styles from './page.module.css';
 
 type InvitePreview = {
   code: string;
@@ -25,6 +25,8 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
+  const [dotsPhase, setDotsPhase] = useState(0);
+
   const {
     submitting: joining,
     error: joinError,
@@ -33,6 +35,13 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
     url: `/v1/tracking/invites/${code}/join`,
     onSuccess: () => router.push('/projects'),
   });
+
+  // Animate loading dots while invite is fetching
+  useEffect(() => {
+    if (!loadingInvite) return;
+    const id = setInterval(() => setDotsPhase((p) => (p + 1) % 4), 400);
+    return () => clearInterval(id);
+  }, [loadingInvite]);
 
   useEffect(() => {
     void (async () => {
@@ -76,145 +85,122 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
     await joinSubmit({});
   }
 
+  const dots = ['', '.', '..', '...'][dotsPhase];
+
+  const expiryLabel = invite?.expiresAt
+    ? new Date(invite.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '—';
+
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        background: 'var(--background, #0d0d0d)',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 440,
-          width: '100%',
-          background: 'var(--surface, #1a1a1a)',
-          border: '1px solid var(--border, #2a2a2a)',
-          borderRadius: 12,
-          padding: '32px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-        }}
-      >
-        <div>
-          <NibrasLogo variant="theme" width={110} priority />
+    <main className={styles.page}>
+      <div className={styles.window}>
+        {/* Title bar */}
+        <div className={styles.titleBar}>
+          <span className={styles.dot} style={{ background: '#ff5f57' }} />
+          <span className={styles.dot} style={{ background: '#febc2e' }} />
+          <span className={styles.dot} style={{ background: '#28c840' }} />
+          <span className={styles.title}>nibras — zsh</span>
         </div>
 
-        {loadingInvite && (
-          <p style={{ color: 'var(--text-muted, #666)', fontSize: 14 }}>Loading invite…</p>
-        )}
-
-        {inviteError && (
-          <div>
-            <h2 style={{ margin: '0 0 8px' }}>Invalid Invite</h2>
-            <p style={{ color: 'var(--error, #e53e3e)', margin: 0 }}>{inviteError}</p>
+        {/* Body */}
+        <div className={styles.body}>
+          {/* Command line */}
+          <div className={styles.blank} />
+          <div className={styles.line}>
+            <span className={styles.prompt}>❯</span>
+            <span className={styles.cmd}>nibras join {code}</span>
           </div>
-        )}
+          <div className={styles.blank} />
 
-        {!loadingInvite && !inviteError && invite && (
-          <>
-            <div>
-              <p
-                style={{
-                  color: 'var(--text-muted, #888)',
-                  fontSize: 12,
-                  margin: '0 0 6px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Course Invite
-              </p>
-              <h2 style={{ margin: '0 0 4px', fontSize: '1.4rem' }}>{invite.courseTitle}</h2>
-              <p style={{ color: 'var(--text-muted, #888)', margin: '0 0 16px', fontSize: 14 }}>
-                {invite.courseCode} &middot; {invite.termLabel}
-              </p>
+          {/* ── Loading state ── */}
+          {loadingInvite && (
+            <>
+              <div className={styles.output}>Resolving invite{dots}</div>
+              <div className={styles.blank} />
+              <span className={styles.cursor} />
+            </>
+          )}
 
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    padding: '3px 10px',
-                    background: 'var(--accent-dim, rgba(99,102,241,0.15))',
-                    color: 'var(--accent, #6366f1)',
-                    borderRadius: 20,
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
-                >
-                  {invite.role}
+          {/* ── Error state ── */}
+          {!loadingInvite && inviteError && (
+            <>
+              <div className={styles.error}>✗ {inviteError}</div>
+              <div className={styles.blank} />
+              <div className={styles.line}>
+                <span className={styles.prompt}>❯</span>
+                <span className={styles.cursor} style={{ marginLeft: 0 }} />
+              </div>
+            </>
+          )}
+
+          {/* ── Invite loaded ── */}
+          {!loadingInvite && !inviteError && invite && (
+            <>
+              {/* Course info rows */}
+              <div className={styles.infoRow}>
+                <span className={styles.infoKey}>Course</span>
+                <span className={styles.infoValue}>{invite.courseTitle}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoKey}>Code</span>
+                <span className={styles.infoValue}>
+                  {invite.courseCode} · {invite.termLabel}
                 </span>
-                {invite.expiresAt && (
-                  <span
-                    style={{
-                      padding: '3px 10px',
-                      background: 'var(--surface-2, #222)',
-                      color: 'var(--text-muted, #888)',
-                      borderRadius: 20,
-                      fontSize: 12,
-                    }}
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoKey}>Role</span>
+                <span className={styles.infoValueGreen}>{invite.role}</span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoKey}>Expires</span>
+                <span className={styles.infoValue}>{expiryLabel}</span>
+              </div>
+              <div className={styles.blank} />
+
+              {/* Auth prompt for unauthenticated users */}
+              {!isAuthenticated && (
+                <>
+                  <div className={styles.output}>Authentication required.</div>
+                  <div className={styles.muted}>Sign in with GitHub to continue.</div>
+                  <div className={styles.blank} />
+                </>
+              )}
+
+              {/* Second prompt + cursor */}
+              <div className={styles.line}>
+                <span className={styles.prompt}>❯</span>
+                <span className={styles.cursor} style={{ marginLeft: 0 }} />
+              </div>
+
+              {/* Action button */}
+              <div className={styles.actionRow}>
+                {isAuthenticated ? (
+                  <button
+                    className={styles.btn}
+                    onClick={() => void handleJoin()}
+                    disabled={joining}
                   >
-                    Expires{' '}
-                    {new Date(invite.expiresAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
+                    {joining ? 'Joining…' : `Join as ${invite.role}`}
+                    {!joining && <span style={{ opacity: 0.4 }}>↵</span>}
+                  </button>
+                ) : (
+                  <button
+                    className={`${styles.btn} ${styles.btnGhost}`}
+                    onClick={() => void handleSignIn()}
+                  >
+                    Sign in with GitHub
+                    <span style={{ opacity: 0.4 }}>↵</span>
+                  </button>
                 )}
-              </div>
-            </div>
 
-            {(joinError || signInError) && (
-              <p style={{ color: 'var(--error, #e53e3e)', fontSize: 13, margin: 0 }}>
-                {joinError ?? signInError}
-              </p>
-            )}
-
-            {isAuthenticated ? (
-              <button
-                onClick={() => void handleJoin()}
-                disabled={joining}
-                style={{
-                  padding: '12px 20px',
-                  background: 'var(--accent, #6366f1)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontSize: 15,
-                  fontWeight: 600,
-                  cursor: joining ? 'not-allowed' : 'pointer',
-                  opacity: joining ? 0.7 : 1,
-                }}
-              >
-                {joining ? 'Joining…' : `Join as ${invite.role}`}
-              </button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ color: 'var(--text-muted, #888)', fontSize: 14, margin: 0 }}>
-                  Sign in with GitHub to join this course.
-                </p>
-                <button
-                  onClick={() => void handleSignIn()}
-                  style={{
-                    padding: '12px 20px',
-                    background: 'var(--accent, #6366f1)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 8,
-                    fontSize: 15,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Sign in with GitHub
-                </button>
+                {(joinError || signInError) && (
+                  <span className={styles.actionError}>{joinError ?? signInError}</span>
+                )}
+                <span className={styles.enterHint}>press Enter to confirm</span>
               </div>
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </main>
   );
