@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/session';
-import { useSession } from '../_components/session-context';
 import styles from './page.module.css';
 
 type Course = {
@@ -16,21 +15,21 @@ type Course = {
   approvedCount?: number;
 };
 
-function FileIcon() {
+function BookIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-      <polyline points="14 2 14 8 20 8" />
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </svg>
   );
 }
@@ -39,17 +38,21 @@ function SkeletonCard() {
   return (
     <div className={styles.skeletonCard}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span className={styles.skeleton} style={{ width: 30, height: 30, borderRadius: 7 }} />
+        <span className={styles.skeleton} style={{ width: 34, height: 34, borderRadius: 9 }} />
         <span className={styles.skeleton} style={{ width: '55%', height: 14 }} />
       </div>
-      <span className={styles.skeleton} style={{ width: '40%', height: 12 }} />
-      <span className={styles.skeleton} style={{ width: '30%', height: 10 }} />
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '4px 0' }} />
+      <span className={styles.skeleton} style={{ width: '45%', height: 12 }} />
+      <span
+        className={styles.skeleton}
+        style={{ width: '100%', height: 4, borderRadius: 999 }}
+      />
+      <span className={styles.skeleton} style={{ width: '30%', height: 11 }} />
     </div>
   );
 }
 
 export default function DashboardPage() {
-  const { user, loading: sessionLoading } = useSession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -72,8 +75,9 @@ export default function DashboardPage() {
     })();
   }, []);
 
-  const identity = user?.username || user?.githubLogin || 'Your';
-  const workspaceInitial = identity.slice(0, 1).toUpperCase();
+  const totalStudents = courses.reduce((s, c) => s + (c.studentCount ?? 0), 0);
+  const totalSubmissions = courses.reduce((s, c) => s + (c.submissionCount ?? 0), 0);
+  const totalApproved = courses.reduce((s, c) => s + (c.approvedCount ?? 0), 0);
 
   return (
     <div className={styles.page}>
@@ -82,13 +86,15 @@ export default function DashboardPage() {
         <div className={styles.pageTitleGroup}>
           <h1 className={styles.pageTitle}>Your Courses</h1>
           <p className={styles.pageSubtitle}>
-            {loading ? '—' : `${courses.length} course${courses.length === 1 ? '' : 's'}`}
+            {loading
+              ? 'Loading…'
+              : `${courses.length} course${courses.length === 1 ? '' : 's'}`}
           </p>
         </div>
         <Link href="/instructor/courses/new" className={styles.newCourseBtn}>
           <svg
-            width="14"
-            height="14"
+            width="13"
+            height="13"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -102,20 +108,30 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* ── Workspace row ── */}
-      <div className={styles.workspaceRow}>
-        <span className={styles.workspaceAvatar}>{sessionLoading ? '…' : workspaceInitial}</span>
-        <span className={styles.workspaceName}>
-          {sessionLoading ? 'Loading…' : `${identity}'s Workspace`}
-        </span>
-        <span className={styles.workspaceBadge}>Your Workspace</span>
-        <span className={styles.workspaceCount}>
-          {loading ? '' : `${courses.length} course${courses.length === 1 ? '' : 's'}`}
-        </span>
-      </div>
-
       {/* ── Error ── */}
       {error && <p className={styles.errorBar}>{error}</p>}
+
+      {/* ── Stats row ── */}
+      {!loading && courses.length > 0 && (
+        <div className={styles.statsRow}>
+          <div className={styles.statChip}>
+            <span className={styles.statValue}>{courses.length}</span>
+            <span className={styles.statLabel}>Courses</span>
+          </div>
+          <div className={styles.statChip}>
+            <span className={styles.statValue}>{totalStudents}</span>
+            <span className={styles.statLabel}>Students</span>
+          </div>
+          <div className={styles.statChip}>
+            <span className={styles.statValue}>{totalSubmissions}</span>
+            <span className={styles.statLabel}>Submissions</span>
+          </div>
+          <div className={styles.statChip}>
+            <span className={styles.statValue}>{totalApproved}</span>
+            <span className={styles.statLabel}>Approved</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Course grid ── */}
       <div className={styles.courseGrid}>
@@ -127,13 +143,42 @@ export default function DashboardPage() {
           </>
         ) : courses.length === 0 ? (
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>📚</span>
+            <span className={styles.emptyIconWrap}>
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                <line x1="12" y1="7" x2="12" y2="13" />
+                <line x1="9" y1="10" x2="15" y2="10" />
+              </svg>
+            </span>
             <p className={styles.emptyTitle}>No courses yet</p>
             <p className={styles.emptyDesc}>
-              Create your first course and invite students to get started.
+              Create your first course and invite students to start tracking progress.
             </p>
-            <Link href="/instructor/courses/new" className={styles.emptyLink}>
-              Create your first course →
+            <Link href="/instructor/courses/new" className={styles.emptyCta}>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Create your first course
             </Link>
           </div>
         ) : (
@@ -154,7 +199,7 @@ export default function DashboardPage() {
                 <div className={styles.courseCardTop}>
                   <div className={styles.courseCardLeft}>
                     <span className={styles.courseIcon}>
-                      <FileIcon />
+                      <BookIcon />
                     </span>
                     <span className={styles.courseTitle}>{course.name}</span>
                   </div>
@@ -196,11 +241,14 @@ export default function DashboardPage() {
                 {/* Bottom: meta + progress */}
                 <div className={styles.courseCardBottom}>
                   <span className={styles.courseMeta}>
-                    {projects} project{projects !== 1 ? 's' : ''} • {students} student
-                    {students !== 1 ? 's' : ''}
+                    {projects} project{projects !== 1 ? 's' : ''} &bull;{' '}
+                    {students} student{students !== 1 ? 's' : ''}
                   </span>
                   <div className={styles.courseProgressBar}>
-                    <div className={styles.courseProgressFill} style={{ width: `${pct}%` }} />
+                    <div
+                      className={styles.courseProgressFill}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                   <span className={styles.courseProgressText}>
                     {approved}/{total} approved

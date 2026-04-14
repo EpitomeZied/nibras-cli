@@ -80,7 +80,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div ref={shellRef} className={styles.appShell}>
         <div className={styles.mainArea}>
           <TopHeader user={session} loading={loading} />
-          <div className={styles.pageBody}>{children}</div>
+          <div className={styles.pageBody}>
+            <div className={styles.pageInner}>{children}</div>
+          </div>
         </div>
       </div>
     </SessionProvider>

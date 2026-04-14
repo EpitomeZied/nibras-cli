@@ -16,3 +16,25 @@
   flex: 1;
   width: 100%;
 }
+
+/* ── Centered content wrapper ───────────────────────────────────────────── */
+
+.pageInner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .pageInner {
+    padding: 0 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .pageInner {
+    padding: 0 16px;
+  }
+}

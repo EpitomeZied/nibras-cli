@@ -1,19 +1,17 @@
 /* ── Page shell ─────────────────────────────────────────────────────────────── */
 
 .page {
-  padding: 40px;
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 40px 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
 /* ── Page header ────────────────────────────────────────────────────────────── */
 
 .pageHeader {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
@@ -26,16 +24,17 @@
 
 .pageTitle {
   margin: 0;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: #fafafa;
+  line-height: 1;
 }
 
 .pageSubtitle {
   margin: 0;
   font-size: 13.5px;
-  color: rgba(161, 161, 170, 0.6);
+  color: rgba(161, 161, 170, 0.55);
   font-weight: 400;
 }
 
@@ -45,65 +44,61 @@
   gap: 7px;
   padding: 9px 18px;
   border-radius: 9px;
-  background: #fafafa;
+  background: #22c55e;
   color: #0a0a0a;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition:
-    opacity 0.15s,
-    box-shadow 0.2s;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: opacity 0.15s, box-shadow 0.18s;
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.28);
 }
 
 .newCourseBtn:hover {
   opacity: 0.88;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.38);
 }
 
-/* ── Workspace row ──────────────────────────────────────────────────────────── */
+/* ── Stats row ──────────────────────────────────────────────────────────────── */
 
-.workspaceRow {
+.statsRow {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.workspaceAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
+.statChip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  flex: 1;
+  min-width: 100px;
+  transition: border-color 0.15s;
+}
+
+.statChip:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.statValue {
+  font-size: 26px;
   font-weight: 800;
-  color: #4ade80;
-  flex-shrink: 0;
-}
-
-.workspaceName {
-  font-size: 13.5px;
-  font-weight: 600;
+  letter-spacing: -0.04em;
   color: #fafafa;
+  line-height: 1;
 }
 
-.workspaceBadge {
-  font-size: 11px;
+.statLabel {
+  font-size: 11.5px;
   font-weight: 600;
-  color: rgba(161, 161, 170, 0.65);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-  padding: 2px 9px;
-}
-
-.workspaceCount {
-  font-size: 12.5px;
-  color: rgba(161, 161, 170, 0.4);
-  margin-left: 4px;
+  color: rgba(161, 161, 170, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 /* ── Course grid ────────────────────────────────────────────────────────────── */
@@ -118,20 +113,21 @@
 
 .courseCard {
   background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   overflow: hidden;
-  transition:
-    border-color 0.18s,
-    background 0.18s;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.16s;
   text-decoration: none;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .courseCard:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.15);
   background: #161616;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
 }
 
 .courseCardTop {
@@ -151,24 +147,25 @@
 }
 
 .courseIcon {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.16);
   display: grid;
   place-items: center;
-  color: rgba(161, 161, 170, 0.55);
+  color: #4ade80;
   flex-shrink: 0;
 }
 
 .courseTitle {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #fafafa;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .courseCardActions {
@@ -183,15 +180,13 @@
   height: 26px;
   display: grid;
   place-items: center;
-  color: rgba(161, 161, 170, 0.35);
+  color: rgba(161, 161, 170, 0.3);
   border-radius: 6px;
-  transition:
-    color 0.15s,
-    background 0.15s;
+  transition: color 0.15s;
 }
 
 .courseCard:hover .courseArrow {
-  color: #fafafa;
+  color: #4ade80;
 }
 
 .courseMenu {
@@ -201,9 +196,7 @@
   place-items: center;
   color: rgba(161, 161, 170, 0.3);
   border-radius: 6px;
-  transition:
-    color 0.15s,
-    background 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .courseMenu:hover {
@@ -225,13 +218,13 @@
 }
 
 .courseMeta {
-  font-size: 12px;
-  color: rgba(161, 161, 170, 0.5);
+  font-size: 12.5px;
+  color: rgba(161, 161, 170, 0.6);
 }
 
 .courseProgressBar {
-  height: 3px;
-  background: rgba(255, 255, 255, 0.07);
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -245,7 +238,7 @@
 
 .courseProgressText {
   font-size: 11.5px;
-  color: rgba(161, 161, 170, 0.4);
+  color: rgba(161, 161, 170, 0.55);
 }
 
 /* ── Skeleton ───────────────────────────────────────────────────────────────── */
@@ -254,7 +247,7 @@
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.08) 50%,
     rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 200% 100%;
@@ -275,12 +268,12 @@
 .skeletonCard {
   background: #111111;
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  min-height: 130px;
+  min-height: 138px;
 }
 
 /* ── Empty state ────────────────────────────────────────────────────────────── */
@@ -291,40 +284,59 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 10px;
-  padding: 72px 24px;
-  background: rgba(255, 255, 255, 0.015);
+  gap: 12px;
+  padding: 80px 24px;
+  background: rgba(255, 255, 255, 0.012);
   border: 1px dashed rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border-radius: 16px;
 }
 
-.emptyIcon {
-  font-size: 32px;
-  opacity: 0.35;
+.emptyIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(34, 197, 94, 0.07);
+  border: 1px solid rgba(34, 197, 94, 0.14);
+  display: grid;
+  place-items: center;
+  color: #4ade80;
+  margin-bottom: 4px;
 }
 
 .emptyTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #fafafa;
 }
 
 .emptyDesc {
   margin: 0;
-  font-size: 13px;
+  font-size: 13.5px;
   color: rgba(161, 161, 170, 0.5);
+  max-width: 300px;
+  line-height: 1.6;
 }
 
-.emptyLink {
-  font-size: 13px;
-  font-weight: 600;
-  color: #22c55e;
-  text-decoration: none;
-}
-
-.emptyLink:hover {
+.emptyCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 9px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.22);
   color: #4ade80;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 4px;
+}
+
+.emptyCta:hover {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.32);
 }
 
 /* ── Error bar ──────────────────────────────────────────────────────────────── */
@@ -336,13 +348,14 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: #fca5a5;
   font-size: 13px;
+  margin: 0;
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
   .page {
-    padding: 28px 24px;
+    padding: 28px 0;
   }
 
   .courseGrid {
@@ -352,7 +365,7 @@
 
 @media (max-width: 600px) {
   .page {
-    padding: 20px 16px;
+    padding: 20px 0;
   }
 
   .courseGrid {
@@ -362,5 +375,10 @@
   .pageHeader {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .statsRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 }

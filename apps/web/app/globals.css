@@ -31,7 +31,8 @@
   --error: var(--danger);
   --sidebar-bg: #080808;
   --font-sans: 'Red Hat Display', 'Segoe UI', sans-serif;
-  --font-mono: var(--font-mono, 'Geist Mono', 'JetBrains Mono', monospace);
+  --font-mono-fallback: 'Geist Mono', 'JetBrains Mono', monospace;
+  --header-height: 52px;
 }
 
 * {
@@ -49,6 +50,9 @@ body {
   background: var(--page-bg);
   color: var(--text);
   font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {

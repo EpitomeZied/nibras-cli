@@ -1,25 +1,42 @@
 /* ── Page ───────────────────────────────────────────────────────────────────── */
 
 .page {
-  padding: 40px;
-  max-width: 960px;
-  margin: 0 auto;
+  padding: 40px 0;
+  max-width: 1000px;
+}
+
+/* ── Page heading ───────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .settingsTitle {
-  margin: 0 0 32px;
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: #fafafa;
+  line-height: 1;
+}
+
+.settingsSubtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(161, 161, 170, 0.55);
 }
 
 /* ── Two-panel layout ───────────────────────────────────────────────────────── */
 
 .settingsWrap {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 48px;
+  grid-template-columns: 220px 1fr;
+  gap: 40px;
   align-items: start;
 }
 
@@ -30,7 +47,7 @@
   flex-direction: column;
   gap: 2px;
   position: sticky;
-  top: 72px;
+  top: calc(52px + 20px);
 }
 
 .settingsNavItem {
@@ -79,7 +96,7 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 /* ── Right content ──────────────────────────────────────────────────────────── */
@@ -312,7 +329,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  max-width: 480px;
+  max-width: 520px;
 }
 
 .githubAppIcon {
@@ -385,7 +402,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 480px;
+  max-width: 520px;
 }
 
 .manualInstallLabel {
@@ -467,7 +484,7 @@
   gap: 24px;
   padding: 14px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  max-width: 480px;
+  max-width: 520px;
 }
 
 .prefRow:last-child {
@@ -572,7 +589,7 @@
 
 @media (max-width: 720px) {
   .page {
-    padding: 24px 20px;
+    padding: 24px 0;
   }
 
   .settingsWrap {
