@@ -2514,10 +2514,34 @@ export class PrismaStore implements AppStore {
     }
   ): Promise<SubmissionRecord> {
     await this.seed(apiBaseUrl);
-    const milestone = await this.prisma.milestone.findUniqueOrThrow({
+    let milestone = await this.prisma.milestone.findUniqueOrThrow({
       where: { id: milestoneId },
       include: { project: { include: { releases: latestReleaseInclude } } },
     });
+    // Auto-create a default release if the project has none yet.
+    // This guards against projects created before releases were required.
+    if (milestone.project.releases.length === 0) {
+      await this.prisma.projectRelease.create({
+        data: {
+          projectId: milestone.projectId,
+          version: `tracking-${Date.now()}`,
+          taskText: `# ${milestone.project.name}\n`,
+          manifestJson: {
+            ...defaultManifest(apiBaseUrl),
+            projectKey: milestone.project.slug,
+          },
+          publicAssetRef: 'public://tracking',
+          privateAssetRef: 'private://tracking',
+        },
+      });
+      // Reload with the new release
+      const refreshed = await this.prisma.milestone.findUniqueOrThrow({
+        where: { id: milestoneId },
+        include: { project: { include: { releases: latestReleaseInclude } } },
+      });
+      milestone = refreshed;
+    }
+
     const parsedRepo = parseGitHubRepoUrl(payload.repoUrl || payload.submissionValue);
     let repo = await this.prisma.userProjectRepo.findFirst({
       where: {
