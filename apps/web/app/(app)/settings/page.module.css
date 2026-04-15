@@ -585,6 +585,104 @@
   border-color: rgba(239, 68, 68, 0.38);
 }
 
+/* ── Admin Year Tab ─────────────────────────────────────────────────────────── */
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 18px;
+}
+
+.adminTable th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(161, 161, 170, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.adminTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e4e4e7;
+  vertical-align: middle;
+}
+
+.adminTable tr:last-child td {
+  border-bottom: none;
+}
+
+.adminTable tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.levelBadge {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(161, 161, 170, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.yearSelect {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e4e4e7;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.yearSelect:focus {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.adminUpdateBtn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e4e4e7;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.adminUpdateBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.adminUpdateBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.adminOk {
+  color: #4ade80;
+  margin-left: 8px;
+  font-size: 13px;
+}
+
+.adminErr {
+  color: #f87171;
+  margin-left: 8px;
+  font-size: 13px;
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
 
 @media (max-width: 720px) {

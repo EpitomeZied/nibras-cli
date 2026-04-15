@@ -6,9 +6,25 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '../../lib/session';
 import { prefs } from '../../lib/prefs';
 import { useSession } from '../_components/session-context';
+import { getLevelLabel, MAX_LEVEL } from '../../lib/levels';
 import styles from './page.module.css';
 
-type Tab = 'profile' | 'github' | 'preferences' | 'danger';
+type Tab = 'profile' | 'github' | 'preferences' | 'danger' | 'admin';
+
+type Course = {
+  id: string;
+  title: string;
+  courseCode: string;
+};
+
+type Member = {
+  id: string;
+  userId: string;
+  username: string;
+  githubLogin: string | null;
+  role: string;
+  level: number | null;
+};
 
 function Toggle({
   checked,
@@ -103,6 +119,25 @@ function IconShield() {
   );
 }
 
+function IconAdmin() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+    </svg>
+  );
+}
+
 function IconGoogle() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -128,17 +163,192 @@ function IconGoogle() {
 
 /* ── Nav item list ───────────────────────────────────────────────────────── */
 
-const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode; danger?: boolean }[] = [
+type NavItem = { id: Tab; label: string; icon: React.ReactNode; danger?: boolean };
+
+const BASE_NAV_ITEMS: NavItem[] = [
   { id: 'profile', label: 'Profile', icon: <IconUser /> },
   { id: 'github', label: 'GitHub App', icon: <IconGitHub /> },
   { id: 'preferences', label: 'Preferences', icon: <IconSliders /> },
   { id: 'danger', label: 'Danger Zone', icon: <IconShield />, danger: true },
 ];
 
+/* ── Admin Year Tab ──────────────────────────────────────────────────────── */
+
+function AdminYearTab() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [pendingLevels, setPendingLevels] = useState<Record<string, number>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [rowStatus, setRowStatus] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    void fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      void fetchMembers(selectedCourseId);
+    } else {
+      setMembers([]);
+    }
+  }, [selectedCourseId]);
+
+  async function fetchCourses() {
+    try {
+      const res = await apiFetch('/v1/tracking/courses', { auth: true });
+      if (res.ok) {
+        setCourses((await res.json()) as Course[]);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function fetchMembers(courseId: string) {
+    setMembersLoading(true);
+    setMembers([]);
+    setPendingLevels({});
+    setRowStatus({});
+    try {
+      const res = await apiFetch(`/v1/tracking/courses/${courseId}/members`, { auth: true });
+      if (res.ok) {
+        setMembers((await res.json()) as Member[]);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setMembersLoading(false);
+    }
+  }
+
+  async function handleUpdate(userId: string) {
+    const level = pendingLevels[userId];
+    if (level === undefined) return;
+    setUpdatingId(userId);
+    try {
+      const res = await apiFetch(
+        `/v1/tracking/courses/${selectedCourseId}/members/${userId}/level`,
+        {
+          method: 'PATCH',
+          auth: true,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ level }),
+        }
+      );
+      setRowStatus((prev) => ({ ...prev, [userId]: res.ok ? 'ok' : 'err' }));
+      if (res.ok) {
+        setMembers((prev) => prev.map((m) => (m.userId === userId ? { ...m, level } : m)));
+      }
+    } catch {
+      setRowStatus((prev) => ({ ...prev, [userId]: 'err' }));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  const students = members.filter((m) => m.role === 'student');
+
+  return (
+    <section className={styles.contentSection}>
+      <h2 className={styles.sectionHeading}>Student Year Management</h2>
+      <p className={styles.sectionSub}>
+        Set academic year level for any student across any course. Students cannot change their own
+        year.
+      </p>
+
+      <select
+        className={styles.yearSelect}
+        value={selectedCourseId}
+        onChange={(e) => setSelectedCourseId(e.target.value)}
+      >
+        <option value="">— Select a course —</option>
+        {courses.map((c) => (
+          <option key={c.id} value={c.id}>
+            [{c.courseCode}] {c.title}
+          </option>
+        ))}
+      </select>
+
+      {membersLoading && (
+        <p className={styles.sectionSub} style={{ marginTop: 16 }}>
+          Loading members…
+        </p>
+      )}
+
+      {!membersLoading && students.length > 0 && (
+        <table className={styles.adminTable}>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Current Year</th>
+              <th>Set Year</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((m) => {
+              const currentLevel = m.level ?? 1;
+              const pendingLevel = pendingLevels[m.userId] ?? currentLevel;
+              const isDirty = pendingLevel !== currentLevel;
+              return (
+                <tr key={m.userId}>
+                  <td>{m.githubLogin ?? m.username}</td>
+                  <td>
+                    <span className={styles.levelBadge}>{getLevelLabel(currentLevel)}</span>
+                  </td>
+                  <td>
+                    <select
+                      className={styles.yearSelect}
+                      value={pendingLevel}
+                      onChange={(e) =>
+                        setPendingLevels((prev) => ({
+                          ...prev,
+                          [m.userId]: Number(e.target.value),
+                        }))
+                      }
+                    >
+                      {Array.from({ length: MAX_LEVEL }, (_, i) => i + 1).map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          {getLevelLabel(lvl)}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <button
+                      className={styles.adminUpdateBtn}
+                      onClick={() => void handleUpdate(m.userId)}
+                      disabled={updatingId === m.userId || !isDirty}
+                    >
+                      {updatingId === m.userId ? 'Saving…' : 'Set Year'}
+                    </button>
+                    {rowStatus[m.userId] === 'ok' && <span className={styles.adminOk}>✓</span>}
+                    {rowStatus[m.userId] === 'err' && <span className={styles.adminErr}>✗</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+
+      {selectedCourseId && !membersLoading && students.length === 0 && (
+        <p className={styles.sectionSub} style={{ marginTop: 16 }}>
+          No students enrolled in this course.
+        </p>
+      )}
+    </section>
+  );
+}
+
 /* ── Page ────────────────────────────────────────────────────────────────── */
 
 export default function SettingsPage() {
   const { user, loading: sessionLoading } = useSession();
+
+  const isAdmin = user?.systemRole === 'admin';
 
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [compact, setCompact] = useState(false);
@@ -219,7 +429,12 @@ export default function SettingsPage() {
       <div className={styles.settingsWrap}>
         {/* ── Left nav ── */}
         <nav className={styles.settingsNav} aria-label="Settings sections">
-          {NAV_ITEMS.map((item) => {
+          {[
+            ...BASE_NAV_ITEMS,
+            ...(isAdmin
+              ? [{ id: 'admin' as Tab, label: 'Admin', icon: <IconAdmin /> } as NavItem]
+              : []),
+          ].map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
@@ -470,6 +685,9 @@ export default function SettingsPage() {
               </div>
             </section>
           )}
+
+          {/* ── Admin tab ── */}
+          {activeTab === 'admin' && isAdmin && <AdminYearTab />}
 
           {/* ── Danger Zone tab ── */}
           {activeTab === 'danger' && (
