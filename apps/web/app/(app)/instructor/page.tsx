@@ -13,6 +13,19 @@ type Course = {
   isActive: boolean;
 };
 
+/** Group courses by termLabel, sorted by label so "Year 1" < "Year 2" etc. */
+function groupByTerm(courses: Course[]): { term: string; courses: Course[] }[] {
+  const map = new Map<string, Course[]>();
+  for (const c of courses) {
+    const key = c.termLabel || 'Other';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(c);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([term, courses]) => ({ term, courses }));
+}
+
 function QuickStartStep({
   number,
   title,
@@ -42,6 +55,11 @@ function QuickStartStep({
 
 export default function InstructorPage() {
   const { data: courses, loading, error } = useFetch<Course[]>('/v1/tracking/courses');
+
+  const allCourses = courses ?? [];
+  const groups = groupByTerm(allCourses);
+  // Only group visually when more than one distinct term exists
+  const useGroups = groups.length > 1;
 
   return (
     <div className={styles.page}>
@@ -97,7 +115,7 @@ export default function InstructorPage() {
       {error && <p className={styles.errorText}>{error}</p>}
 
       {/* Empty state: rich quick-start */}
-      {!loading && !error && (courses ?? []).length === 0 && (
+      {!loading && !error && allCourses.length === 0 && (
         <div className={styles.emptyStateRich}>
           <div className={styles.emptyStateHeader}>
             <div className={styles.emptyStateIcon}>🎓</div>
@@ -142,29 +160,51 @@ export default function InstructorPage() {
         </div>
       )}
 
-      {/* Course grid */}
-      {(courses ?? []).length > 0 && (
-        <div className={styles.courseGrid}>
-          {(courses ?? []).map((course) => (
-            <Link
-              key={course.id}
-              href={`/instructor/courses/${course.id}`}
-              className={styles.courseCard}
-            >
-              <div className={styles.courseCardTop}>
-                <span className={styles.courseCode}>{course.courseCode}</span>
-                <span
-                  className={`${styles.courseBadge} ${course.isActive ? styles.courseBadgeActive : styles.courseBadgeArchived}`}
-                >
-                  {course.isActive ? 'Active' : 'Archived'}
-                </span>
-              </div>
-              <strong className={styles.courseTitle}>{course.title}</strong>
-              <span className={styles.muted}>{course.termLabel}</span>
-            </Link>
-          ))}
+      {/* Grouped course grid */}
+      {allCourses.length > 0 && (
+        <div className={styles.courseGroups}>
+          {useGroups ? (
+            groups.map(({ term, courses: groupCourses }) => (
+              <section key={term} className={styles.courseGroup}>
+                <div className={styles.courseGroupHeader}>
+                  <span className={styles.courseGroupLabel}>{term}</span>
+                  <span className={styles.courseGroupCount}>
+                    {groupCourses.length} course{groupCourses.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className={styles.courseGrid}>
+                  {groupCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <div className={styles.courseGrid}>
+              {allCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function CourseCard({ course }: { course: Course }) {
+  return (
+    <Link href={`/instructor/courses/${course.id}`} className={styles.courseCard}>
+      <div className={styles.courseCardTop}>
+        <span className={styles.courseCode}>{course.courseCode}</span>
+        <span
+          className={`${styles.courseBadge} ${course.isActive ? styles.courseBadgeActive : styles.courseBadgeArchived}`}
+        >
+          {course.isActive ? 'Active' : 'Archived'}
+        </span>
+      </div>
+      <strong className={styles.courseTitle}>{course.title}</strong>
+      <span className={styles.muted}>{course.termLabel}</span>
+    </Link>
   );
 }
