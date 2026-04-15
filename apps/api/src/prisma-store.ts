@@ -834,27 +834,18 @@ export class PrismaStore implements AppStore {
   }
 
   private async ensureSeededDemoEnrollments(userId: string): Promise<void> {
-    const courses = await this.prisma.course.findMany({
-      where: {
-        slug: { in: ['cs161', 'cs106l'] },
-      },
+    // Auto-enrol every new student in ALL active Year-1 courses so they
+    // immediately see the Freshman curriculum without needing a manual invite.
+    const year1Courses = await this.prisma.course.findMany({
+      where: { isActive: true, termLabel: { startsWith: 'Year 1' } },
       select: { id: true },
     });
     await Promise.all(
-      courses.map((course) =>
+      year1Courses.map((course) =>
         this.prisma.courseMembership.upsert({
-          where: {
-            courseId_userId: {
-              courseId: course.id,
-              userId,
-            },
-          },
+          where: { courseId_userId: { courseId: course.id, userId } },
           update: {},
-          create: {
-            courseId: course.id,
-            userId,
-            role: CourseRole.student,
-          },
+          create: { courseId: course.id, userId, role: CourseRole.student },
         })
       )
     );
@@ -1836,26 +1827,24 @@ export class PrismaStore implements AppStore {
       });
       return courses.map(toCourseRecord);
     }
-    const memberships = await this.prisma.courseMembership.findMany({
-      where: { userId },
-      include: { course: true },
-      orderBy: { createdAt: 'desc' },
+    // Derive the student's current year level from their memberships (default 1).
+    const levelRow = await this.prisma.courseMembership.findFirst({
+      where: { userId, role: CourseRole.student },
+      orderBy: { level: 'desc' },
+      select: { level: true },
+    });
+    const studentLevel = levelRow?.level ?? 1;
+
+    // Show every active course that belongs to the student's current year so
+    // they always see the full curriculum for their level, even if an admin
+    // adds a new course after initial enrolment.
+    const yearCourses = await this.prisma.course.findMany({
+      where: { isActive: true, termLabel: { startsWith: `Year ${studentLevel}` } },
+      orderBy: { createdAt: 'asc' },
       take,
       skip,
     });
-    // If the user has no memberships yet (e.g. brand-new sign-up before the
-    // auto-enrol background task ran), fall back to showing all active courses
-    // so CS161 Exam 1 & 2 are always visible to everyone.
-    if (memberships.length === 0) {
-      const allCourses = await this.prisma.course.findMany({
-        where: { isActive: true },
-        orderBy: { createdAt: 'desc' },
-        take,
-        skip,
-      });
-      return allCourses.map(toCourseRecord);
-    }
-    return memberships.map((entry) => toCourseRecord(entry.course));
+    return yearCourses.map(toCourseRecord);
   }
 
   async countTrackingCourses(apiBaseUrl: string, userId: string): Promise<number> {
@@ -1864,12 +1853,15 @@ export class PrismaStore implements AppStore {
     if (user.systemRole === SystemRole.admin) {
       return this.prisma.course.count({ where: { isActive: true } });
     }
-    const membershipCount = await this.prisma.courseMembership.count({ where: { userId } });
-    // Match the fallback in listTrackingCourses
-    if (membershipCount === 0) {
-      return this.prisma.course.count({ where: { isActive: true } });
-    }
-    return membershipCount;
+    const levelRow = await this.prisma.courseMembership.findFirst({
+      where: { userId, role: CourseRole.student },
+      orderBy: { level: 'desc' },
+      select: { level: true },
+    });
+    const studentLevel = levelRow?.level ?? 1;
+    return this.prisma.course.count({
+      where: { isActive: true, termLabel: { startsWith: `Year ${studentLevel}` } },
+    });
   }
 
   async createTrackingCourse(

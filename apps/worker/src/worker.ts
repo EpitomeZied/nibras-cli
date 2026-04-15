@@ -595,6 +595,22 @@ async function checkAndAutoUpgradeStudentLevel(
     data: { level: nextLevel },
   });
 
+  // Auto-enrol the student in every active Year-N+1 course so they
+  // immediately see the next year's curriculum in their dashboard.
+  const nextYearCourses = await prisma.course.findMany({
+    where: { isActive: true, termLabel: { startsWith: `Year ${nextLevel}` } },
+    select: { id: true },
+  });
+  await Promise.all(
+    nextYearCourses.map((course) =>
+      prisma.courseMembership.upsert({
+        where: { courseId_userId: { courseId: course.id, userId } },
+        update: { level: nextLevel },
+        create: { courseId: course.id, userId, role: 'student', level: nextLevel },
+      })
+    )
+  );
+
   log(
     'info',
     `Student auto-promoted across ${membershipIds.length} course(s): level ${currentLevel} → ${nextLevel}`,
