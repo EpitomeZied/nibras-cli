@@ -230,6 +230,51 @@ export function registerAdminRoutes(app: FastifyInstance, store: AppStore): void
   );
 
   /**
+   * GET /v1/admin/students
+   * List all students with their global year level. Admin only.
+   */
+  app.get(
+    '/v1/admin/students',
+    { schema: { tags: ['admin'], summary: 'List students with year level' } },
+    async (request, reply) => {
+      const auth = await requireUser(request, reply, store);
+      if (!requireAdmin(auth, reply)) return;
+      const students = await store.listStudentsWithYearLevel(requestBaseUrl(request));
+      return { students };
+    }
+  );
+
+  /**
+   * PATCH /v1/admin/students/:userId/year
+   * Set a student's global year level. Admin only.
+   */
+  app.patch(
+    '/v1/admin/students/:userId/year',
+    { schema: { tags: ['admin'], summary: 'Set student global year level' } },
+    async (request, reply) => {
+      const auth = await requireUser(request, reply, store);
+      if (!requireAdmin(auth, reply)) return;
+
+      const params = request.params as { userId: string };
+      if (!validateId(params.userId, reply, 'userId')) return;
+      const body = request.body as { yearLevel?: number };
+      if (
+        typeof body.yearLevel !== 'number' ||
+        !Number.isInteger(body.yearLevel) ||
+        body.yearLevel < 1 ||
+        body.yearLevel > 4
+      ) {
+        return reply
+          .code(400)
+          .send(Errors.validation('yearLevel must be an integer between 1 and 4'));
+      }
+
+      await store.syncStudentYearGlobal(requestBaseUrl(request), params.userId, body.yearLevel);
+      return { ok: true, userId: params.userId, yearLevel: body.yearLevel };
+    }
+  );
+
+  /**
    * POST /v1/admin/projects/:projectId/archive
    * Archive a project. Admin only.
    */

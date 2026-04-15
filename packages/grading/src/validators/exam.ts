@@ -3,14 +3,14 @@
 // يصحح امتحانات mixed (MCQ + short + long answer) مع model answer بـ JSON
 // ============================================================
 
-import { chatCompletion, chunk } from "../client";
+import { chatCompletion, chunk } from '../client';
 import type {
   GradingConfig,
   ExamQuestion,
   StudentAnswer,
   ExamGradingResult,
   ExamQuestionResult,
-} from "../types";
+} from '../types';
 
 const BATCH_SIZE = 5; // أسئلة أقل في الـ batch لأن الـ answers أطول
 
@@ -72,15 +72,15 @@ Respond ONLY with valid JSON:
     maxScore: q.maxScore,
     modelAnswer: q.modelAnswer,
     gradingCriteria: q.gradingCriteria ?? null,
-    studentAnswer: answerMap.get(q.id) ?? "(no answer provided)",
+    studentAnswer: answerMap.get(q.id) ?? '(no answer provided)',
   }));
 
   const userPrompt = `Grade these answers:\n${JSON.stringify(payload, null, 2)}`;
 
   const response = await chatCompletion(
     [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ],
     config,
     true
@@ -89,7 +89,7 @@ Respond ONLY with valid JSON:
   const parsed = response.rawJson as AIExamBatchResponse;
 
   if (!parsed?.results || !Array.isArray(parsed.results)) {
-    throw new Error("Invalid AI response structure for exam batch");
+    throw new Error('Invalid AI response structure for exam batch');
   }
 
   const minConfidence = config.minConfidence ?? 0.8;
@@ -98,15 +98,12 @@ Respond ONLY with valid JSON:
     const question = questions.find((q) => q.id === r.questionId)!;
     const score = Math.max(0, Math.min(question.maxScore, r.score));
     const confidence = Math.max(0, Math.min(1, r.confidence));
-    const percentage =
-      question.maxScore > 0
-        ? Math.round((score / question.maxScore) * 100)
-        : 0;
+    const percentage = question.maxScore > 0 ? Math.round((score / question.maxScore) * 100) : 0;
 
     return {
       questionId: r.questionId,
       question: question.question,
-      studentAnswer: answerMap.get(r.questionId) ?? "(no answer provided)",
+      studentAnswer: answerMap.get(r.questionId) ?? '(no answer provided)',
       modelAnswer: question.modelAnswer,
       score,
       maxScore: question.maxScore,
@@ -126,7 +123,7 @@ export async function gradeExam(
 ): Promise<ExamGradingResult> {
   if (questions.length === 0) {
     return {
-      type: "exam",
+      type: 'exam',
       totalScore: 0,
       maxScore: 0,
       percentage: 0,
@@ -147,8 +144,7 @@ export async function gradeExam(
 
   const totalScore = allResults.reduce((sum, r) => sum + r.score, 0);
   const maxScore = questions.reduce((sum, q) => sum + q.maxScore, 0);
-  const percentage =
-    maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+  const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
   const avgConfidence =
     allResults.length > 0
       ? allResults.reduce((sum, r) => sum + r.confidence, 0) / allResults.length
@@ -156,7 +152,7 @@ export async function gradeExam(
   const needsHumanReview = allResults.some((r) => r.needsHumanReview);
 
   return {
-    type: "exam",
+    type: 'exam',
     totalScore,
     maxScore,
     percentage,

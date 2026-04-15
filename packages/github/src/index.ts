@@ -176,7 +176,9 @@ async function githubRequest<T>(
   return text ? (JSON.parse(text) as T) : ({} as T);
 }
 
-function normalizeRepositoryPermission(payload: Record<string, unknown>): GitHubRepositoryPermission {
+function normalizeRepositoryPermission(
+  payload: Record<string, unknown>
+): GitHubRepositoryPermission {
   const permissions =
     payload.permissions && typeof payload.permissions === 'object'
       ? (payload.permissions as Record<string, unknown>)

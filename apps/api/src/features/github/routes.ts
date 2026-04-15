@@ -379,7 +379,11 @@ export function registerGitHubRoutes(
       if (!parsed) {
         reply
           .code(422)
-          .send(Errors.validation('Enter a valid GitHub repository URL like https://github.com/owner/repo.'));
+          .send(
+            Errors.validation(
+              'Enter a valid GitHub repository URL like https://github.com/owner/repo.'
+            )
+          );
         return;
       }
 
@@ -402,7 +406,9 @@ export function registerGitHubRoutes(
         if (repository.permission === 'read') {
           reply
             .code(422)
-            .send(Errors.validation('You need write access to this repository before submitting it.'));
+            .send(
+              Errors.validation('You need write access to this repository before submitting it.')
+            );
           return;
         }
 
@@ -422,9 +428,7 @@ export function registerGitHubRoutes(
             return;
           }
           if (error.statusCode === 401 || error.statusCode === 403) {
-            reply
-              .code(404)
-              .send(Errors.notFound('Repository'));
+            reply.code(404).send(Errors.notFound('Repository'));
             return;
           }
         }

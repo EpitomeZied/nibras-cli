@@ -3,13 +3,8 @@
 // يصحح MCQ بدون model answer — الـ AI بيحدد الإجابة الصح من السياق
 // ============================================================
 
-import { chatCompletion, chunk } from "../client";
-import type {
-  GradingConfig,
-  MCQQuestion,
-  MCQGradingResult,
-  MCQResult,
-} from "../types";
+import { chatCompletion, chunk } from '../client';
+import type { GradingConfig, MCQQuestion, MCQGradingResult, MCQResult } from '../types';
 
 const BATCH_SIZE = 10; // عدد الأسئلة في كل request
 
@@ -23,10 +18,7 @@ interface AIBatchResponse {
   }>;
 }
 
-async function gradeBatch(
-  questions: MCQQuestion[],
-  config: GradingConfig
-): Promise<MCQResult[]> {
+async function gradeBatch(questions: MCQQuestion[], config: GradingConfig): Promise<MCQResult[]> {
   const systemPrompt = `You are an expert educational assessment AI.
 Your job is to evaluate MCQ answers submitted by students.
 You will determine the correct answer based on your knowledge and the provided lecture context.
@@ -64,8 +56,8 @@ Respond ONLY with valid JSON matching this schema:
 
   const response = await chatCompletion(
     [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ],
     config,
     true
@@ -74,7 +66,7 @@ Respond ONLY with valid JSON matching this schema:
   const parsed = response.rawJson as AIBatchResponse;
 
   if (!parsed?.results || !Array.isArray(parsed.results)) {
-    throw new Error("Invalid AI response structure for MCQ batch");
+    throw new Error('Invalid AI response structure for MCQ batch');
   }
 
   return parsed.results.map((r) => ({
@@ -92,7 +84,7 @@ export async function gradeMCQ(
 ): Promise<MCQGradingResult> {
   if (questions.length === 0) {
     return {
-      type: "mcq",
+      type: 'mcq',
       totalQuestions: 0,
       correctCount: 0,
       score: 0,
@@ -110,13 +102,10 @@ export async function gradeMCQ(
   }
 
   const correctCount = allResults.filter((r) => r.isCorrect).length;
-  const score =
-    questions.length > 0
-      ? Math.round((correctCount / questions.length) * 100)
-      : 0;
+  const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
   return {
-    type: "mcq",
+    type: 'mcq',
     totalQuestions: questions.length,
     correctCount,
     score,

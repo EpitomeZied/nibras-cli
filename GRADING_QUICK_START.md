@@ -90,6 +90,7 @@ curl https://nibras-api.fly.dev/v1/tracking/submissions \
 ## 📊 Grading Types
 
 ### MCQ (Multiple Choice)
+
 ```javascript
 {
   type: 'mcq',
@@ -103,6 +104,7 @@ curl https://nibras-api.fly.dev/v1/tracking/submissions \
 ```
 
 ### Exam (with Model Answer)
+
 ```javascript
 {
   type: 'exam',
@@ -122,6 +124,7 @@ curl https://nibras-api.fly.dev/v1/tracking/submissions \
 ```
 
 ### File Upload
+
 ```javascript
 {
   type: 'file',
@@ -135,12 +138,12 @@ curl https://nibras-api.fly.dev/v1/tracking/submissions \
 
 ## ⚙️ Configuration
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `NIBRAS_AI_API_KEY` | (required) | OpenAI API key |
-| `NIBRAS_AI_MODEL` | gpt-4o-mini | Model to use |
-| `NIBRAS_AI_MIN_CONFIDENCE` | 0.8 | Review threshold (0-1) |
-| `NIBRAS_AI_BASE_URL` | https://api.openai.com/v1 | API endpoint |
+| Variable                   | Default                   | Purpose                |
+| -------------------------- | ------------------------- | ---------------------- |
+| `NIBRAS_AI_API_KEY`        | (required)                | OpenAI API key         |
+| `NIBRAS_AI_MODEL`          | gpt-4o-mini               | Model to use           |
+| `NIBRAS_AI_MIN_CONFIDENCE` | 0.8                       | Review threshold (0-1) |
+| `NIBRAS_AI_BASE_URL`       | https://api.openai.com/v1 | API endpoint           |
 
 ## 🔗 Links
 
@@ -159,23 +162,24 @@ curl https://nibras-api.fly.dev/healthz
 flyctl status -a nibras-worker
 
 # All functions exported
-node -e "const g = require('./packages/grading/dist/index.js'); 
-console.log('✅ grade' + (typeof g.grade) + 
+node -e "const g = require('./packages/grading/dist/index.js');
+console.log('✅ grade' + (typeof g.grade) +
            ' ✅ gradeSemanticAnswer' + (typeof g.gradeSemanticAnswer))"
 ```
 
 ## 🆘 Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
+| Issue               | Fix                                         |
+| ------------------- | ------------------------------------------- |
 | "No module grading" | `npm run build --workspace=@nibras/grading` |
-| "401 Unauthorized" | Check `NIBRAS_AI_API_KEY` is valid |
-| Worker not grading | Check logs: `flyctl logs -a nibras-worker` |
-| Low confidence | Review rubric clarity, use better model |
+| "401 Unauthorized"  | Check `NIBRAS_AI_API_KEY` is valid          |
+| Worker not grading  | Check logs: `flyctl logs -a nibras-worker`  |
+| Low confidence      | Review rubric clarity, use better model     |
 
 ## 📞 Support
 
 Check the full guide:
+
 ```bash
 cat GRADING_SYSTEM_TESTING.md
 ```

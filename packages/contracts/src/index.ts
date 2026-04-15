@@ -97,6 +97,7 @@ export const UserSchema = z.object({
   githubLinked: z.boolean(),
   githubAppInstalled: z.boolean(),
   systemRole: z.enum(['user', 'admin']).optional(),
+  yearLevel: z.number().int().min(1).max(4).default(1),
 });
 
 export const DevicePollSuccessSchema = z.object({

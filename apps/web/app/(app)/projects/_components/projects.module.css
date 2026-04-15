@@ -1031,7 +1031,9 @@
   margin-left: auto;
   color: var(--text-soft);
   font-size: 14px;
-  transition: transform 0.15s, color 0.15s;
+  transition:
+    transform 0.15s,
+    color 0.15s;
 }
 
 .resourceLink:hover .resourceArrow {

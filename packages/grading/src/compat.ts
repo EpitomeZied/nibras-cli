@@ -3,7 +3,7 @@
 // Provides the old semantic grading API for @nibras/worker
 // ============================================================
 
-import { chatCompletion } from "./client";
+import { chatCompletion } from './client';
 
 // ────────────────────────────────────────────────────────────
 // Old API Types (for backwards compatibility)
@@ -87,12 +87,12 @@ export async function gradeSemanticAnswer(input: {
   // Build rubric description
   const rubricDescription = question.rubric
     .map((r) => `- [${r.points} pts] ${r.description}`)
-    .join("\n");
+    .join('\n');
 
   const examplesText =
     question.examples && question.examples.length > 0
-      ? `\n\nExample Answers:\n${question.examples.map((e) => `- "${e.label}": ${e.answer}`).join("\n")}`
-      : "";
+      ? `\n\nExample Answers:\n${question.examples.map((e) => `- "${e.label}": ${e.answer}`).join('\n')}`
+      : '';
 
   const systemPrompt = `You are an expert academic grader specializing in ${subject}.
 Your task is to grade student answers against a rubric and model answer.
@@ -138,8 +138,8 @@ Respond with ONLY this JSON (no markdown, no explanation):
 
   const response = await chatCompletion(
     [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ],
     {
       apiKey: aiConfig.apiKey,

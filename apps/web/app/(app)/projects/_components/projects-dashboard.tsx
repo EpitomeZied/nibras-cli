@@ -19,6 +19,7 @@ import {
   LEVEL_NAMES,
   MAX_LEVEL,
 } from '../../../lib/levels';
+import { useSession } from '../../_components/session-context';
 import SubmissionModal from './submission-modal';
 import styles from './projects.module.css';
 
@@ -172,6 +173,7 @@ export default function ProjectsDashboard({
 }: {
   initialCourseId?: string | null;
 }) {
+  const { user: sessionUser } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -418,9 +420,8 @@ export default function ProjectsDashboard({
     }
   }
 
-  /* student level for the active course */
-  const studentLevel =
-    dashboard?.memberships.find((m) => m.courseId === dashboard.course?.id)?.level ?? 1;
+  /* student level — single global source of truth from User.yearLevel */
+  const studentLevel = sessionUser?.yearLevel ?? 1;
 
   /* progress values */
   const approved = activeStats?.approved ?? 0;

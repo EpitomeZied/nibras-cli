@@ -155,7 +155,9 @@ async function runTest(argv, subject, project, config) {
     const score = computeManualPercentage(earnedPoints, totalPoints);
     const minScore = toNumber(opts.minScore, 100);
 
-    console.log(`Command check: ${result.code === 0 ? 'PASS' : 'FAIL'} (${earnedPoints}/${totalPoints})`);
+    console.log(
+      `Command check: ${result.code === 0 ? 'PASS' : 'FAIL'} (${earnedPoints}/${totalPoints})`
+    );
     console.log(`Score: ${score}% (min ${minScore}%)`);
 
     if (result.code !== 0 || score < minScore) {

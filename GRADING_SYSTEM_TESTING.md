@@ -9,6 +9,7 @@ The grading system in `@nibras/grading` is integrated with the worker service to
 ## ✅ Deployment Status
 
 **Current Status on Fly.io:**
+
 - ✅ API: https://nibras-api.fly.dev (running)
 - ✅ Worker: Processing grading jobs (internal service)
 - ✅ Web: https://nibras-web.fly.dev (running)
@@ -63,11 +64,13 @@ testMCQ().catch(console.error);
 ```
 
 Run:
+
 ```bash
 NIBRAS_AI_API_KEY=sk-... node test-mcq.js
 ```
 
 **Expected Output:**
+
 ```
 Result: { score: 100, correctCount: 1, totalQuestions: 1 }
 ```
@@ -118,6 +121,7 @@ testExam().catch(console.error);
 ```
 
 Run:
+
 ```bash
 NIBRAS_AI_API_KEY=sk-... node test-exam.js
 ```
@@ -189,7 +193,8 @@ async function testCompat() {
         { id: 'r2', description: 'Provides example', points: 5 },
       ],
     },
-    answerText: 'Recursion is when a function calls itself. Example: factorial(n) = n * factorial(n-1).',
+    answerText:
+      'Recursion is when a function calls itself. Example: factorial(n) = n * factorial(n-1).',
   });
 
   console.log('Result:', {
@@ -346,6 +351,7 @@ flyctl secrets set NIBRAS_AI_API_KEY=sk-... -a nibras-worker
 ### Issue: "Cannot find module '@nibras/grading'"
 
 **Solution:**
+
 ```bash
 npm run build --workspace=@nibras/grading
 npm ci
@@ -354,6 +360,7 @@ npm ci
 ### Issue: AI Grading Returns 401 Error
 
 **Solution:**
+
 - Verify `NIBRAS_AI_API_KEY` is set
 - Check key is valid with: `curl https://api.openai.com/v1/models -H "Authorization: Bearer YOUR_KEY"`
 - Use valid OpenAI key or compatible provider
@@ -361,6 +368,7 @@ npm ci
 ### Issue: Worker Not Grading Submissions
 
 **Solution:**
+
 ```bash
 # 1. Check worker is running
 flyctl status -a nibras-worker
@@ -377,6 +385,7 @@ cat .nibras/project.json | jq .grading
 ### Issue: Low Confidence Scores
 
 **Solution:**
+
 - Increase `NIBRAS_AI_MIN_CONFIDENCE` if threshold too strict
 - Review grading rubric clarity
 - Provide better model answers
@@ -452,6 +461,7 @@ export NIBRAS_AI_MODEL=gpt-4o-mini  # ~$0.15 per 1M tokens
 ## Support
 
 For issues:
+
 - Check worker logs: `flyctl logs -a nibras-worker`
 - Check API logs: `flyctl logs -a nibras-api`
 - Verify grading config: Check `.nibras/project.json`

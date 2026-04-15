@@ -6,12 +6,12 @@ This directory contains comprehensive documentation of the Nibras grading system
 
 ### Documents
 
-| Document | Purpose | Audience | Read Time |
-|---|---|---|---|
-| **GRADING_SYSTEM_ANALYSIS.md** | Complete technical analysis | Architects, Senior Devs | 40 min |
-| **GRADING_QUICK_REFERENCE.md** | Code snippets & quick lookup | Developers | 15 min |
-| **GRADING_IMPLEMENTATION_GUIDE.md** | Integration & setup guide | DevOps, Backend Devs | 30 min |
-| **GRADING_INDEX.md** | This file — navigation & overview | Everyone | 5 min |
+| Document                            | Purpose                           | Audience                | Read Time |
+| ----------------------------------- | --------------------------------- | ----------------------- | --------- |
+| **GRADING_SYSTEM_ANALYSIS.md**      | Complete technical analysis       | Architects, Senior Devs | 40 min    |
+| **GRADING_QUICK_REFERENCE.md**      | Code snippets & quick lookup      | Developers              | 15 min    |
+| **GRADING_IMPLEMENTATION_GUIDE.md** | Integration & setup guide         | DevOps, Backend Devs    | 30 min    |
+| **GRADING_INDEX.md**                | This file — navigation & overview | Everyone                | 5 min     |
 
 ---
 
@@ -20,26 +20,31 @@ This directory contains comprehensive documentation of the Nibras grading system
 ### By Role
 
 **🏗️ Software Architect**
+
 1. Read: `GRADING_SYSTEM_ANALYSIS.md` — Architecture Overview section
 2. Review: Database schema section
 3. Understand: Integration points with other systems
 
 **👨‍💻 Backend Developer (Adding Grading)**
+
 1. Read: `GRADING_IMPLEMENTATION_GUIDE.md` — Decision Tree
 2. Find: Example matching your use case
 3. Reference: `GRADING_QUICK_REFERENCE.md` for code snippets
 
 **🔧 DevOps Engineer (Setting Up)**
+
 1. Read: `GRADING_IMPLEMENTATION_GUIDE.md` — Setup Checklist
 2. Configure: Environment variables section
 3. Monitor: Monitoring & Observability section
 
 **👨‍🏫 Course Instructor (Using Grading)**
+
 1. Read: `GRADING_IMPLEMENTATION_GUIDE.md` — Real-World Examples
 2. Configure: Manifest configuration section
 3. Monitor: Dashboard integration section
 
 **🐛 Debugging Issues**
+
 1. Check: `GRADING_SYSTEM_ANALYSIS.md` — Error Handling & Edge Cases
 2. Look up: `GRADING_IMPLEMENTATION_GUIDE.md` — FAQ section
 3. Reference: `GRADING_QUICK_REFERENCE.md` — Troubleshooting
@@ -309,16 +314,16 @@ console.log(`Needs review: ${result.needsHumanReview}`);
 ```json
 {
   "grading": {
-    "questions": [{
-      "id": "q1",
-      "mode": "semantic",
-      "prompt": "Your question",
-      "points": 10,
-      "answerFile": "answers/q1.txt",
-      "rubric": [
-        {"id": "criterion1", "description": "...", "points": 5}
-      ]
-    }]
+    "questions": [
+      {
+        "id": "q1",
+        "mode": "semantic",
+        "prompt": "Your question",
+        "points": 10,
+        "answerFile": "answers/q1.txt",
+        "rubric": [{ "id": "criterion1", "description": "...", "points": 5 }]
+      }
+    ]
   }
 }
 ```
@@ -352,16 +357,16 @@ docker run -e NIBRAS_AI_API_KEY=... nibras-worker
 
 ## 📈 System Statistics
 
-| Metric | Value |
-|---|---|
-| **Grading Modes** | 3 (MCQ, Exam, File) |
-| **Batch Size** | 5–10 questions per API call |
-| **Default Model** | gpt-4o-mini |
-| **Confidence Threshold** | 0.8 (0–1 scale) |
-| **Max Retry Attempts** | 3 |
-| **AI Response Format** | JSON (structured) |
-| **Supported Languages** | 40+ (auto-detected) |
-| **Database Models** | 3 (Review, VerificationJob, VerificationRun) |
+| Metric                   | Value                                        |
+| ------------------------ | -------------------------------------------- |
+| **Grading Modes**        | 3 (MCQ, Exam, File)                          |
+| **Batch Size**           | 5–10 questions per API call                  |
+| **Default Model**        | gpt-4o-mini                                  |
+| **Confidence Threshold** | 0.8 (0–1 scale)                              |
+| **Max Retry Attempts**   | 3                                            |
+| **AI Response Format**   | JSON (structured)                            |
+| **Supported Languages**  | 40+ (auto-detected)                          |
+| **Database Models**      | 3 (Review, VerificationJob, VerificationRun) |
 
 ---
 
@@ -385,17 +390,20 @@ docker run -e NIBRAS_AI_API_KEY=... nibras-worker
 ## 🎓 Learning Path
 
 **Beginner**:
+
 1. Read GRADING_QUICK_REFERENCE.md (15 min)
 2. Copy-paste an example and run it locally
 3. Adjust for your use case
 
 **Intermediate**:
+
 1. Read GRADING_SYSTEM_ANALYSIS.md — Understanding section (20 min)
 2. Review GRADING_IMPLEMENTATION_GUIDE.md — Decision Tree (10 min)
 3. Implement a full assignment with grading
 4. Deploy to staging and test
 
 **Advanced**:
+
 1. Read all three documents thoroughly
 2. Study source code in `packages/grading/src/`
 3. Understand worker job processing
@@ -406,12 +414,12 @@ docker run -e NIBRAS_AI_API_KEY=... nibras-worker
 
 ## 🆘 Getting Help
 
-| Problem | Solution |
-|---|---|
-| "How do I grade MCQs?" | See GRADING_QUICK_REFERENCE.md → Code Examples |
-| "My assignment needs grading" | See GRADING_IMPLEMENTATION_GUIDE.md → Decision Tree |
-| "Grades aren't being created" | See GRADING_SYSTEM_ANALYSIS.md → Troubleshooting |
-| "AI confidence is too low" | See FAQ → "How do I improve confidence?" |
+| Problem                          | Solution                                              |
+| -------------------------------- | ----------------------------------------------------- |
+| "How do I grade MCQs?"           | See GRADING_QUICK_REFERENCE.md → Code Examples        |
+| "My assignment needs grading"    | See GRADING_IMPLEMENTATION_GUIDE.md → Decision Tree   |
+| "Grades aren't being created"    | See GRADING_SYSTEM_ANALYSIS.md → Troubleshooting      |
+| "AI confidence is too low"       | See FAQ → "How do I improve confidence?"              |
 | "I need to set up in production" | See GRADING_IMPLEMENTATION_GUIDE.md → Setup Checklist |
 
 ---
@@ -432,9 +440,9 @@ Throughout the documentation:
 
 ## 🔄 Version History
 
-| Version | Date | Changes |
-|---|---|---|
-| 1.0 | 2026-04-09 | Initial documentation |
+| Version | Date       | Changes               |
+| ------- | ---------- | --------------------- |
+| 1.0     | 2026-04-09 | Initial documentation |
 
 ---
 

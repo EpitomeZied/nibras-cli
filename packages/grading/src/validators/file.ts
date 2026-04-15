@@ -4,14 +4,9 @@
 // بيعمل match بين محتوى الملف والـ model answer
 // ============================================================
 
-import { chatCompletion } from "../client";
-import { gradeExam } from "./exam";
-import type {
-  GradingConfig,
-  FileGradingInput,
-  FileGradingResult,
-  StudentAnswer,
-} from "../types";
+import { chatCompletion } from '../client';
+import { gradeExam } from './exam';
+import type { GradingConfig, FileGradingInput, FileGradingResult, StudentAnswer } from '../types';
 
 // ----------------------------------------------------------------
 // Step 1: استخراج إجابات الطالب من محتوى الملف
@@ -54,13 +49,13 @@ ${JSON.stringify(questions, null, 2)}
 
 File content:
 ---
-${fileContent.slice(0, 8000)} ${fileContent.length > 8000 ? "\n[...content truncated...]" : ""}
+${fileContent.slice(0, 8000)} ${fileContent.length > 8000 ? '\n[...content truncated...]' : ''}
 ---`;
 
   const response = await chatCompletion(
     [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ],
     config,
     true
@@ -69,7 +64,7 @@ ${fileContent.slice(0, 8000)} ${fileContent.length > 8000 ? "\n[...content trunc
   const parsed = response.rawJson as ExtractedAnswers;
 
   if (!parsed?.answers || !Array.isArray(parsed.answers)) {
-    throw new Error("Failed to extract answers from file");
+    throw new Error('Failed to extract answers from file');
   }
 
   return parsed;
@@ -87,14 +82,14 @@ export async function gradeFile(
 
   if (!fileContent || fileContent.trim().length === 0) {
     return {
-      type: "file",
+      type: 'file',
       totalScore: 0,
       maxScore: modelAnswerQuestions.reduce((s, q) => s + q.maxScore, 0),
       percentage: 0,
       confidence: 0,
       needsHumanReview: true,
       results: [],
-      extractionNotes: "File content is empty or could not be read.",
+      extractionNotes: 'File content is empty or could not be read.',
     };
   }
 
@@ -117,14 +112,10 @@ export async function gradeFile(
   }));
 
   // Step 2: تصحيح بنفس الـ exam grader
-  const examResult = await gradeExam(
-    modelAnswerQuestions,
-    studentAnswers,
-    config
-  );
+  const examResult = await gradeExam(modelAnswerQuestions, studentAnswers, config);
 
   return {
-    type: "file",
+    type: 'file',
     totalScore: examResult.totalScore,
     maxScore: examResult.maxScore,
     percentage: examResult.percentage,

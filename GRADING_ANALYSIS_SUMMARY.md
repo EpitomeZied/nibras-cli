@@ -13,12 +13,14 @@ I have completed a **full check of the Nibras grading program** focusing on the 
 ### What Was Analyzed
 
 ✅ **Core Grading Package** (`packages/grading/`)
+
 - 3 grading validators (MCQ, Exam, File)
 - OpenAI-compatible API client
 - Type system and interfaces
 - Backwards compatibility layer
 
 ✅ **Worker Integration** (`apps/worker/`)
+
 - Job claiming and processing
 - Verification & AI grading flow
 - Database transactions
@@ -26,17 +28,20 @@ I have completed a **full check of the Nibras grading program** focusing on the 
 - Notification system
 
 ✅ **Database Schema** (`prisma/schema.prisma`)
+
 - VerificationJob, VerificationRun, Review models
 - AI grading result storage
 - Status tracking
 
 ✅ **Integration Points**
+
 - API submission triggers
 - CLI polling mechanism
 - Web dashboard display
 - Email notifications
 
 ✅ **Configuration & Manifest**
+
 - Project manifest structure
 - Environment variables
 - Rubric definitions
@@ -47,9 +52,11 @@ I have completed a **full check of the Nibras grading program** focusing on the 
 ## 📚 Documentation Created
 
 ### 1. **GRADING_SYSTEM_ANALYSIS.md** (31 KB, 1096 lines)
+
 **The Complete Technical Deep-Dive**
 
 Contents:
+
 - Executive summary
 - Architecture overview with diagrams
 - **Three grading methods explained in detail:**
@@ -78,18 +85,20 @@ Contents:
 ---
 
 ### 2. **GRADING_QUICK_REFERENCE.md** (14 KB, 594 lines)
+
 **The Developer's Cheat Sheet**
 
 Contents:
+
 - 30-second overview
 - Cheat sheet table (when to use each mode)
 - API configuration (minimal & full)
 - Environment variables reference
 - **Code examples for all three modes:**
   ```typescript
-  await grade({ type: 'mcq', questions, config })
-  await grade({ type: 'exam', questions, studentAnswers, config })
-  await grade({ type: 'file', input, config })
+  await grade({ type: 'mcq', questions, config });
+  await grade({ type: 'exam', questions, studentAnswers, config });
+  await grade({ type: 'file', input, config });
   ```
 - Backwards compatible semantic grading API
 - Common patterns:
@@ -110,9 +119,11 @@ Contents:
 ---
 
 ### 3. **GRADING_IMPLEMENTATION_GUIDE.md** (21 KB, 838 lines)
+
 **The How-To Guide**
 
 Contents:
+
 - **Decision tree** for choosing grading method
 - Grading method selection matrix
 - Implementation checklist (step-by-step)
@@ -144,9 +155,11 @@ Contents:
 ---
 
 ### 4. **GRADING_INDEX.md** (13 KB, 458 lines)
+
 **The Navigation Guide**
 
 Contents:
+
 - Documentation overview table
 - Start here by role:
   - Software Architect
@@ -175,11 +188,11 @@ Contents:
 
 ### Three Distinct Grading Methods
 
-| Method | Use Case | Input | Output |
-|---|---|---|---|
-| **MCQ** | Objective quizzes | Questions + options + student choice | Correct answer + confidence |
-| **Exam** | Mixed assessments | Questions + model answers + responses | Score with partial credit |
-| **File** | Document submissions | PDF/text file + questions | Extracted answers + grades |
+| Method   | Use Case             | Input                                 | Output                      |
+| -------- | -------------------- | ------------------------------------- | --------------------------- |
+| **MCQ**  | Objective quizzes    | Questions + options + student choice  | Correct answer + confidence |
+| **Exam** | Mixed assessments    | Questions + model answers + responses | Score with partial credit   |
+| **File** | Document submissions | PDF/text file + questions             | Extracted answers + grades  |
 
 ### Core Innovation: Confidence Scoring
 
@@ -218,6 +231,7 @@ Send notifications
 ### AI Architecture: OpenAI-Compatible
 
 The system is **completely provider-agnostic**:
+
 - Default: OpenAI API (gpt-4o, gpt-4o-mini)
 - Alternative: Azure OpenAI, Ollama, vLLM, LocalAI, etc.
 - Just change `baseURL` and `model` in config
@@ -237,6 +251,7 @@ This balances API costs vs context window constraints.
 ## 🏗️ Architecture Highlights
 
 ### Package Structure
+
 ```
 packages/grading/          Pure grading logic (no DB)
   ├── validators/          Three grading methods
@@ -252,6 +267,7 @@ prisma/                    Database models
 ```
 
 ### Two Worker Modes
+
 1. **BullMQ Mode** (production)
    - Redis-based queue
    - Scales horizontally
@@ -263,6 +279,7 @@ prisma/                    Database models
    - Single worker only
 
 ### Three Integration Layers
+
 1. **API**: Triggers grading by creating VerificationJob
 2. **Worker**: Processes jobs (verify tests + grade)
 3. **Web**: Displays results to students
@@ -271,35 +288,39 @@ prisma/                    Database models
 
 ## 📈 Performance Characteristics
 
-| Metric | Value |
-|---|---|
-| **Grading latency** | 5-30 seconds |
-| **Token cost per exam** | ~500-2000 tokens |
-| **Typical cost per submission** | $0.01-0.05 |
-| **Human review rate** | 20-30% (confidence < 0.8) |
-| **Batch processing** | 5-10 questions/call |
-| **Auto-pass rate** | 70-80% (confident scores) |
+| Metric                          | Value                     |
+| ------------------------------- | ------------------------- |
+| **Grading latency**             | 5-30 seconds              |
+| **Token cost per exam**         | ~500-2000 tokens          |
+| **Typical cost per submission** | $0.01-0.05                |
+| **Human review rate**           | 20-30% (confidence < 0.8) |
+| **Batch processing**            | 5-10 questions/call       |
+| **Auto-pass rate**              | 70-80% (confident scores) |
 
 ---
 
 ## 🔐 Security Features
 
 ✅ **API Key Management**
+
 - Environment variables only
 - Never logged or exposed
 - Per-provider configuration
 
 ✅ **Sandboxed Test Execution**
+
 - Tests run in Docker container
 - Resource limits (ulimits)
 - Optional network isolation
 
 ✅ **Model Answer Confidentiality**
+
 - Stored server-side only
 - Not exposed to students
 - Used only for comparison
 
 ✅ **Evidence Attribution**
+
 - Quotes from student submissions
 - Direct citations, no fabrication
 - Traceable scoring
@@ -320,39 +341,47 @@ prisma/                    Database models
 ## 🎓 Usage Examples
 
 ### Quick MCQ Grading
+
 ```typescript
 import { grade } from '@nibras/grading';
 
 const result = await grade({
   type: 'mcq',
   config: { apiKey: 'sk-...' },
-  questions: [{
-    id: 'q1',
-    question: 'What is a database?',
-    options: ['A. File', 'B. Organized data', 'C. Code'],
-    studentAnswer: 'B. Organized data',
-  }],
+  questions: [
+    {
+      id: 'q1',
+      question: 'What is a database?',
+      options: ['A. File', 'B. Organized data', 'C. Code'],
+      studentAnswer: 'B. Organized data',
+    },
+  ],
 });
 
-console.log(`Score: ${result.score}%`);  // 100%
+console.log(`Score: ${result.score}%`); // 100%
 ```
 
 ### Full Exam with Rubric
+
 ```typescript
 const result = await grade({
   type: 'exam',
   config: { apiKey: 'sk-...', minConfidence: 0.9 },
-  questions: [{
-    id: 'q1',
-    question: 'Explain normalization',
-    maxScore: 10,
-    modelAnswer: 'Process of organizing data...',
-    gradingCriteria: '5 pts definition, 5 pts examples',
-  }],
-  studentAnswers: [{
-    questionId: 'q1',
-    answer: 'Organizing data and removing redundancy...',
-  }],
+  questions: [
+    {
+      id: 'q1',
+      question: 'Explain normalization',
+      maxScore: 10,
+      modelAnswer: 'Process of organizing data...',
+      gradingCriteria: '5 pts definition, 5 pts examples',
+    },
+  ],
+  studentAnswers: [
+    {
+      questionId: 'q1',
+      answer: 'Organizing data and removing redundancy...',
+    },
+  ],
 });
 
 if (result.needsHumanReview) {
@@ -361,6 +390,7 @@ if (result.needsHumanReview) {
 ```
 
 ### File Upload Grading
+
 ```typescript
 const result = await grade({
   type: 'file',
@@ -380,6 +410,7 @@ console.log(`Extracted: ${result.extractionNotes}`);
 ## ⚙️ Configuration Example
 
 ### `.env` (Development)
+
 ```bash
 NIBRAS_AI_API_KEY="sk-proj-..."
 NIBRAS_AI_MODEL="gpt-4o-mini"
@@ -387,23 +418,26 @@ NIBRAS_AI_MIN_CONFIDENCE="0.8"
 ```
 
 ### `.nibras/project.json` (Per-Course)
+
 ```json
 {
   "grading": {
-    "questions": [{
-      "id": "q1",
-      "mode": "semantic",
-      "prompt": "Your question",
-      "points": 10,
-      "answerFile": "answers/q1.txt",
-      "rubric": [
-        {
-          "id": "criterion1",
-          "description": "Correctly...",
-          "points": 5
-        }
-      ]
-    }]
+    "questions": [
+      {
+        "id": "q1",
+        "mode": "semantic",
+        "prompt": "Your question",
+        "points": 10,
+        "answerFile": "answers/q1.txt",
+        "rubric": [
+          {
+            "id": "criterion1",
+            "description": "Correctly...",
+            "points": 5
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -489,25 +523,25 @@ See `CLAUDE.md` for overall architecture context.
 
 ## 📞 Questions & Support
 
-| Question | Answer | Document |
-|---|---|---|
-| "How does grading work?" | Three methods: MCQ, Exam, File | GRADING_SYSTEM_ANALYSIS.md |
-| "How do I implement it?" | Step-by-step guide | GRADING_IMPLEMENTATION_GUIDE.md |
-| "Can you show me code?" | Yes, examples included | GRADING_QUICK_REFERENCE.md |
-| "I'm stuck, where to look?" | Check FAQ & Troubleshooting | All documents |
-| "What's the best way to..." | See Decision Tree | GRADING_IMPLEMENTATION_GUIDE.md |
+| Question                    | Answer                         | Document                        |
+| --------------------------- | ------------------------------ | ------------------------------- |
+| "How does grading work?"    | Three methods: MCQ, Exam, File | GRADING_SYSTEM_ANALYSIS.md      |
+| "How do I implement it?"    | Step-by-step guide             | GRADING_IMPLEMENTATION_GUIDE.md |
+| "Can you show me code?"     | Yes, examples included         | GRADING_QUICK_REFERENCE.md      |
+| "I'm stuck, where to look?" | Check FAQ & Troubleshooting    | All documents                   |
+| "What's the best way to..." | See Decision Tree              | GRADING_IMPLEMENTATION_GUIDE.md |
 
 ---
 
 ## 📊 Documentation Statistics
 
-| Document | Type | Lines | Size | Read Time |
-|---|---|---|---|---|
-| GRADING_SYSTEM_ANALYSIS.md | Deep-dive | 1096 | 31 KB | 40 min |
-| GRADING_QUICK_REFERENCE.md | Cheat sheet | 594 | 14 KB | 15 min |
-| GRADING_IMPLEMENTATION_GUIDE.md | How-to guide | 838 | 21 KB | 30 min |
-| GRADING_INDEX.md | Navigation | 458 | 13 KB | 5 min |
-| **TOTAL** | **4 docs** | **2986** | **79 KB** | **90 min** |
+| Document                        | Type         | Lines    | Size      | Read Time  |
+| ------------------------------- | ------------ | -------- | --------- | ---------- |
+| GRADING_SYSTEM_ANALYSIS.md      | Deep-dive    | 1096     | 31 KB     | 40 min     |
+| GRADING_QUICK_REFERENCE.md      | Cheat sheet  | 594      | 14 KB     | 15 min     |
+| GRADING_IMPLEMENTATION_GUIDE.md | How-to guide | 838      | 21 KB     | 30 min     |
+| GRADING_INDEX.md                | Navigation   | 458      | 13 KB     | 5 min      |
+| **TOTAL**                       | **4 docs**   | **2986** | **79 KB** | **90 min** |
 
 ---
 

@@ -62,6 +62,7 @@ brew install node
 ```
 
 > **Apple Silicon (M1/M2/M3):** Homebrew installs to `/opt/homebrew/bin`. If `node` is not found after install, add `/opt/homebrew/bin` to your PATH:
+>
 > ```bash
 > echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 > ```
@@ -191,9 +192,10 @@ nvm use lts
 Download and run the installer from [git-scm.com](https://git-scm.com/download/win).
 
 During setup:
+
 - **Default editor:** choose your preference
-- **Adjusting PATH:** select *Git from the command line and also from 3rd-party software*
-- **Line ending conversions:** select *Checkout as-is, commit Unix-style line endings*
+- **Adjusting PATH:** select _Git from the command line and also from 3rd-party software_
+- **Line ending conversions:** select _Checkout as-is, commit Unix-style line endings_
 
 #### Step 3 — Set PowerShell execution policy (if needed)
 
@@ -253,7 +255,7 @@ npm install -g git+https://github.com/NibrasPlatform/nibras-cli.git#v1.0.2
 If npm tries to write to `/usr/local/lib` and fails, you have two choices:
 
 1. **Switch to nvm** (recommended — no sudo ever needed): follow the nvm steps in §1.
-2. Fix the global prefix as described in the *Fix npm global permissions* step above, then re-run the install.
+2. Fix the global prefix as described in the _Fix npm global permissions_ step above, then re-run the install.
 
 Do **not** use `sudo npm install -g` — it installs as root and causes further permission problems.
 
@@ -319,6 +321,7 @@ The CLI will:
 4. Save your session locally once authorization succeeds.
 
 > Pass `--no-open` if you prefer to copy the URL manually:
+>
 > ```bash
 > nibras login --api-base-url https://nibras.yourschool.edu --no-open
 > ```
@@ -509,14 +512,14 @@ Clears the saved session. Does not remove the CLI binary. Run `nibras login` aga
 
 ### Error reference
 
-| Error code         | Cause                                                  | Fix                                                                        |
-| ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `AUTH_REQUIRED`    | Not logged in or wrong API URL saved                   | `nibras login --api-base-url <url>`                                        |
-| `INVALID_SESSION`  | Token expired or revoked                               | `nibras login --api-base-url <url>`                                        |
-| `NOT_FOUND`        | Wrong project key or resource missing                  | Double-check the key with your instructor                                  |
-| `VALIDATION_ERROR` | Invalid input, duplicate submission, or missed deadline | Read the full error message; contact instructor for deadline issues         |
-| `RATE_LIMITED`     | Too many requests                                      | Wait 60 seconds and retry                                                  |
-| `NETWORK_ERROR`    | API unreachable                                        | `nibras ping`; check VPN / firewall; verify the API URL is correct         |
+| Error code         | Cause                                                   | Fix                                                                 |
+| ------------------ | ------------------------------------------------------- | ------------------------------------------------------------------- |
+| `AUTH_REQUIRED`    | Not logged in or wrong API URL saved                    | `nibras login --api-base-url <url>`                                 |
+| `INVALID_SESSION`  | Token expired or revoked                                | `nibras login --api-base-url <url>`                                 |
+| `NOT_FOUND`        | Wrong project key or resource missing                   | Double-check the key with your instructor                           |
+| `VALIDATION_ERROR` | Invalid input, duplicate submission, or missed deadline | Read the full error message; contact instructor for deadline issues |
+| `RATE_LIMITED`     | Too many requests                                       | Wait 60 seconds and retry                                           |
+| `NETWORK_ERROR`    | API unreachable                                         | `nibras ping`; check VPN / firewall; verify the API URL is correct  |
 
 ---
 
@@ -637,6 +640,7 @@ Copy the URL printed by the CLI and paste it into any browser manually. Or add `
 
 **Q: My local tests pass but the server says they failed. Why?**
 The server runs tests in an isolated sandbox that mirrors a clean environment. Common causes:
+
 - Hardcoded absolute paths (use relative paths).
 - Files not in the allowed set (check `.nibras/project.json` → `allowedFiles`).
 - Missing dependencies not committed.

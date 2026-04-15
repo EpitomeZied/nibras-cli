@@ -15,11 +15,11 @@ await grade({ type: 'file', input: {...}, config: {...} })
 
 ## Cheat Sheet: When to Use Each Mode
 
-| Use Case | Mode | Input | Output |
-|---|---|---|---|
-| Quiz questions (A/B/C/D) | **MCQ** | Questions + student choices | Correct answer + confidence |
-| Mixed exam (short/long) | **Exam** | Questions + model answers + responses | Score with partial credit |
-| PDF/text assignments | **File** | File content + expected questions | Score + extraction notes |
+| Use Case                 | Mode     | Input                                 | Output                      |
+| ------------------------ | -------- | ------------------------------------- | --------------------------- |
+| Quiz questions (A/B/C/D) | **MCQ**  | Questions + student choices           | Correct answer + confidence |
+| Mixed exam (short/long)  | **Exam** | Questions + model answers + responses | Score with partial credit   |
+| PDF/text assignments     | **File** | File content + expected questions     | Score + extraction notes    |
 
 ---
 
@@ -29,7 +29,7 @@ await grade({ type: 'file', input: {...}, config: {...} })
 
 ```typescript
 const config = {
-  apiKey: 'sk-...',  // Required
+  apiKey: 'sk-...', // Required
 };
 await grade({ type: 'mcq', questions, config });
 // Uses defaults: gpt-4o-mini, OpenAI API, minConfidence=0.8
@@ -39,11 +39,11 @@ await grade({ type: 'mcq', questions, config });
 
 ```typescript
 const config = {
-  apiKey: 'sk-...',                                    // Required
-  model: 'gpt-4o',                                     // Optional (default: gpt-4o-mini)
-  baseURL: 'https://api.openai.com/v1',              // Optional (for Azure/Ollama)
-  minConfidence: 0.85,                                 // Optional (default: 0.8)
-  language: 'ar' | 'en' | 'auto',                     // Optional (default: auto)
+  apiKey: 'sk-...', // Required
+  model: 'gpt-4o', // Optional (default: gpt-4o-mini)
+  baseURL: 'https://api.openai.com/v1', // Optional (for Azure/Ollama)
+  minConfidence: 0.85, // Optional (default: 0.8)
+  language: 'ar' | 'en' | 'auto', // Optional (default: auto)
 };
 ```
 
@@ -73,7 +73,7 @@ const result = await grade({
     {
       id: 'q1',
       question: 'What is a database?',
-      lectureContext: 'Databases store organized data...',  // Optional context
+      lectureContext: 'Databases store organized data...', // Optional context
       options: [
         'A. A file on disk',
         'B. A collection of organized data',
@@ -144,7 +144,7 @@ if (result.type === 'exam') {
   console.log(`Total: ${result.totalScore}/${result.maxScore} (${result.percentage}%)`);
   console.log(`Needs review: ${result.needsHumanReview}`);
 
-  result.results.forEach(r => {
+  result.results.forEach((r) => {
     console.log(`Q${r.questionId}: ${r.score}/${r.maxScore} — ${r.feedback}`);
   });
 }
@@ -166,7 +166,7 @@ const result = await grade({
   input: {
     fileContent: pdfText,
     fileType: 'pdf',
-    assignmentInstructions: 'Database Assignment - Due Friday',  // Optional
+    assignmentInstructions: 'Database Assignment - Due Friday', // Optional
     modelAnswerQuestions: [
       {
         id: 'q1',
@@ -320,12 +320,12 @@ const result = await grade({
 
 ### Common Errors & Fixes
 
-| Error | Cause | Fix |
-|---|---|---|
-| `"Invalid API key"` | Missing or wrong apiKey | Check `NIBRAS_AI_API_KEY` env var |
-| `"AI returned invalid JSON"` | LLM didn't output JSON | Reduce batch size, retry with different model |
-| `"Failed to extract answers from file"` | File content malformed | Ensure file is properly extracted to text |
-| `"Unknown grading type"` | Wrong type string | Use `'mcq'`, `'exam'`, or `'file'` exactly |
+| Error                                   | Cause                   | Fix                                           |
+| --------------------------------------- | ----------------------- | --------------------------------------------- |
+| `"Invalid API key"`                     | Missing or wrong apiKey | Check `NIBRAS_AI_API_KEY` env var             |
+| `"AI returned invalid JSON"`            | LLM didn't output JSON  | Reduce batch size, retry with different model |
+| `"Failed to extract answers from file"` | File content malformed  | Ensure file is properly extracted to text     |
+| `"Unknown grading type"`                | Wrong type string       | Use `'mcq'`, `'exam'`, or `'file'` exactly    |
 
 ### Safe Error Handling Pattern
 
@@ -452,7 +452,7 @@ test('MCQ with mocked AI', async () => {
 ```typescript
 const config = {
   apiKey: 'sk-...',
-  model: 'gpt-4o-mini',  // or gpt-4o
+  model: 'gpt-4o-mini', // or gpt-4o
   // baseURL defaults to https://api.openai.com/v1
 };
 ```
@@ -471,8 +471,8 @@ const config = {
 
 ```typescript
 const config = {
-  apiKey: 'dummy',  // Ollama doesn't need a real key
-  model: 'neural-chat',  // or mistral, llama2, etc.
+  apiKey: 'dummy', // Ollama doesn't need a real key
+  model: 'neural-chat', // or mistral, llama2, etc.
   baseURL: 'http://localhost:11434/v1',
 };
 ```

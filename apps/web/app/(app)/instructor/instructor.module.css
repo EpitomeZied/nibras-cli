@@ -696,7 +696,9 @@
   color: var(--accent);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .btnPromote:hover {

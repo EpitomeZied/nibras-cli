@@ -11,19 +11,11 @@ import styles from './page.module.css';
 
 type Tab = 'profile' | 'github' | 'preferences' | 'danger' | 'admin';
 
-type Course = {
-  id: string;
-  title: string;
-  courseCode: string;
-};
-
-type Member = {
-  id: string;
+type StudentRow = {
   userId: string;
   username: string;
-  githubLogin: string | null;
-  role: string;
-  level: number | null;
+  githubLogin: string;
+  yearLevel: number;
 };
 
 function Toggle({
@@ -175,71 +167,45 @@ const BASE_NAV_ITEMS: NavItem[] = [
 /* ── Admin Year Tab ──────────────────────────────────────────────────────── */
 
 function AdminYearTab() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState('');
-  const [members, setMembers] = useState<Member[]>([]);
-  const [membersLoading, setMembersLoading] = useState(false);
+  const [students, setStudents] = useState<StudentRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [pendingLevels, setPendingLevels] = useState<Record<string, number>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [rowStatus, setRowStatus] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    void fetchCourses();
+    void fetchStudents();
   }, []);
 
-  useEffect(() => {
-    if (selectedCourseId) {
-      void fetchMembers(selectedCourseId);
-    } else {
-      setMembers([]);
-    }
-  }, [selectedCourseId]);
-
-  async function fetchCourses() {
+  async function fetchStudents() {
+    setLoading(true);
     try {
-      const res = await apiFetch('/v1/tracking/courses', { auth: true });
+      const res = await apiFetch('/v1/admin/students', { auth: true });
       if (res.ok) {
-        setCourses((await res.json()) as Course[]);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  async function fetchMembers(courseId: string) {
-    setMembersLoading(true);
-    setMembers([]);
-    setPendingLevels({});
-    setRowStatus({});
-    try {
-      const res = await apiFetch(`/v1/tracking/courses/${courseId}/members`, { auth: true });
-      if (res.ok) {
-        setMembers((await res.json()) as Member[]);
+        const data = (await res.json()) as { students: StudentRow[] };
+        setStudents(data.students);
       }
     } catch {
       // ignore
     } finally {
-      setMembersLoading(false);
+      setLoading(false);
     }
   }
 
   async function handleUpdate(userId: string) {
-    const level = pendingLevels[userId];
-    if (level === undefined) return;
+    const yearLevel = pendingLevels[userId];
+    if (yearLevel === undefined) return;
     setUpdatingId(userId);
     try {
-      const res = await apiFetch(
-        `/v1/tracking/courses/${selectedCourseId}/members/${userId}/level`,
-        {
-          method: 'PATCH',
-          auth: true,
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ level }),
-        }
-      );
+      const res = await apiFetch(`/v1/admin/students/${userId}/year`, {
+        method: 'PATCH',
+        auth: true,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ yearLevel }),
+      });
       setRowStatus((prev) => ({ ...prev, [userId]: res.ok ? 'ok' : 'err' }));
       if (res.ok) {
-        setMembers((prev) => prev.map((m) => (m.userId === userId ? { ...m, level } : m)));
+        setStudents((prev) => prev.map((s) => (s.userId === userId ? { ...s, yearLevel } : s)));
       }
     } catch {
       setRowStatus((prev) => ({ ...prev, [userId]: 'err' }));
@@ -248,36 +214,27 @@ function AdminYearTab() {
     }
   }
 
-  const students = members.filter((m) => m.role === 'student');
-
   return (
     <section className={styles.contentSection}>
       <h2 className={styles.sectionHeading}>Student Year Management</h2>
       <p className={styles.sectionSub}>
-        Set academic year level for any student across any course. Students cannot change their own
-        year.
+        Set the global academic year for any student. This advances them to the next year&apos;s
+        courses automatically.
       </p>
 
-      <select
-        className={styles.yearSelect}
-        value={selectedCourseId}
-        onChange={(e) => setSelectedCourseId(e.target.value)}
-      >
-        <option value="">— Select a course —</option>
-        {courses.map((c) => (
-          <option key={c.id} value={c.id}>
-            [{c.courseCode}] {c.title}
-          </option>
-        ))}
-      </select>
-
-      {membersLoading && (
+      {loading && (
         <p className={styles.sectionSub} style={{ marginTop: 16 }}>
-          Loading members…
+          Loading students…
         </p>
       )}
 
-      {!membersLoading && students.length > 0 && (
+      {!loading && students.length === 0 && (
+        <p className={styles.sectionSub} style={{ marginTop: 16 }}>
+          No students found.
+        </p>
+      )}
+
+      {!loading && students.length > 0 && (
         <table className={styles.adminTable}>
           <thead>
             <tr>
@@ -288,13 +245,13 @@ function AdminYearTab() {
             </tr>
           </thead>
           <tbody>
-            {students.map((m) => {
-              const currentLevel = m.level ?? 1;
-              const pendingLevel = pendingLevels[m.userId] ?? currentLevel;
+            {students.map((s) => {
+              const currentLevel = s.yearLevel;
+              const pendingLevel = pendingLevels[s.userId] ?? currentLevel;
               const isDirty = pendingLevel !== currentLevel;
               return (
-                <tr key={m.userId}>
-                  <td>{m.githubLogin ?? m.username}</td>
+                <tr key={s.userId}>
+                  <td>{s.githubLogin || s.username}</td>
                   <td>
                     <span className={styles.levelBadge}>{getLevelLabel(currentLevel)}</span>
                   </td>
@@ -305,7 +262,7 @@ function AdminYearTab() {
                       onChange={(e) =>
                         setPendingLevels((prev) => ({
                           ...prev,
-                          [m.userId]: Number(e.target.value),
+                          [s.userId]: Number(e.target.value),
                         }))
                       }
                     >
@@ -319,25 +276,19 @@ function AdminYearTab() {
                   <td>
                     <button
                       className={styles.adminUpdateBtn}
-                      onClick={() => void handleUpdate(m.userId)}
-                      disabled={updatingId === m.userId || !isDirty}
+                      onClick={() => void handleUpdate(s.userId)}
+                      disabled={updatingId === s.userId || !isDirty}
                     >
-                      {updatingId === m.userId ? 'Saving…' : 'Set Year'}
+                      {updatingId === s.userId ? 'Saving…' : 'Set Year'}
                     </button>
-                    {rowStatus[m.userId] === 'ok' && <span className={styles.adminOk}>✓</span>}
-                    {rowStatus[m.userId] === 'err' && <span className={styles.adminErr}>✗</span>}
+                    {rowStatus[s.userId] === 'ok' && <span className={styles.adminOk}>✓</span>}
+                    {rowStatus[s.userId] === 'err' && <span className={styles.adminErr}>✗</span>}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-      )}
-
-      {selectedCourseId && !membersLoading && students.length === 0 && (
-        <p className={styles.sectionSub} style={{ marginTop: 16 }}>
-          No students enrolled in this course.
-        </p>
       )}
     </section>
   );

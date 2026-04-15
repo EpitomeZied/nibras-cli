@@ -21,7 +21,7 @@ export interface MCQResult {
 }
 
 export interface MCQGradingResult {
-  type: "mcq";
+  type: 'mcq';
   totalQuestions: number;
   correctCount: number;
   score: number; // 0–100
@@ -33,7 +33,7 @@ export interface MCQGradingResult {
 export interface ExamQuestion {
   id: string;
   question: string;
-  type: "mcq" | "short_answer" | "long_answer" | "true_false";
+  type: 'mcq' | 'short_answer' | 'long_answer' | 'true_false';
   maxScore: number;
   modelAnswer: string; // الإجابة النموذجية
   gradingCriteria?: string; // معايير التصحيح (optional)
@@ -59,7 +59,7 @@ export interface ExamQuestionResult {
 }
 
 export interface ExamGradingResult {
-  type: "exam";
+  type: 'exam';
   totalScore: number;
   maxScore: number;
   percentage: number; // 0–100
@@ -72,13 +72,13 @@ export interface ExamGradingResult {
 
 export interface FileGradingInput {
   fileContent: string; // نص الملف بعد استخراجه
-  fileType: "pdf" | "text" | "code" | "other";
+  fileType: 'pdf' | 'text' | 'code' | 'other';
   modelAnswerQuestions: ExamQuestion[]; // نفس structure الـ exam
   assignmentInstructions?: string;
 }
 
 export interface FileGradingResult {
-  type: "file";
+  type: 'file';
   totalScore: number;
   maxScore: number;
   percentage: number;
@@ -95,7 +95,7 @@ export interface GradingConfig {
   model?: string; // default: gpt-4o-mini
   baseURL?: string; // override for Azure/Ollama
   minConfidence?: number; // default: 0.8
-  language?: "ar" | "en" | "auto"; // default: auto
+  language?: 'ar' | 'en' | 'auto'; // default: auto
   maxRetries?: number; // retry attempts on 429/5xx (default: 2)
   timeoutMs?: number; // per-request timeout in ms (default: none)
 }
@@ -103,13 +103,13 @@ export interface GradingConfig {
 // ---------- Runner input ----------
 
 export type GradingInput =
-  | { type: "mcq"; questions: MCQQuestion[]; config: GradingConfig }
+  | { type: 'mcq'; questions: MCQQuestion[]; config: GradingConfig }
   | {
-      type: "exam";
+      type: 'exam';
       questions: ExamQuestion[];
       studentAnswers: StudentAnswer[];
       config: GradingConfig;
     }
-  | { type: "file"; input: FileGradingInput; config: GradingConfig };
+  | { type: 'file'; input: FileGradingInput; config: GradingConfig };
 
 export type GradingResult = MCQGradingResult | ExamGradingResult | FileGradingResult;

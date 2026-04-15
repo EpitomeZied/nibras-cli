@@ -3,10 +3,10 @@
 // Compatible with: OpenAI, Azure, Ollama, any OpenAI-compatible provider
 // ============================================================
 
-import { GradingConfig } from "./types";
+import { GradingConfig } from './types';
 
 interface Message {
-  role: "system" | "user" | "assistant";
+  role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
@@ -20,8 +20,8 @@ export async function chatCompletion(
   config: GradingConfig,
   jsonMode = true
 ): Promise<ChatResponse> {
-  const baseURL = config.baseURL ?? "https://api.openai.com/v1";
-  const model = config.model ?? "gpt-4o-mini";
+  const baseURL = config.baseURL ?? 'https://api.openai.com/v1';
+  const model = config.model ?? 'gpt-4o-mini';
   const maxRetries = config.maxRetries ?? 2;
   const { timeoutMs } = config;
 
@@ -32,7 +32,7 @@ export async function chatCompletion(
   };
 
   if (jsonMode) {
-    body.response_format = { type: "json_object" };
+    body.response_format = { type: 'json_object' };
   }
 
   let lastError: Error | null = null;
@@ -40,21 +40,17 @@ export async function chatCompletion(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
       // Exponential backoff: 1s, 2s, 4s, …
-      await new Promise((resolve) =>
-        setTimeout(resolve, Math.pow(2, attempt - 1) * 1000)
-      );
+      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
     }
 
     const controller = timeoutMs ? new AbortController() : undefined;
-    const timer = controller
-      ? setTimeout(() => controller.abort(), timeoutMs)
-      : undefined;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
 
     try {
       const res = await fetch(`${baseURL}/chat/completions`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${config.apiKey}`,
         },
         body: JSON.stringify(body),
@@ -78,7 +74,7 @@ export async function chatCompletion(
         choices: Array<{ message: { content: string } }>;
       };
 
-      const text = data.choices[0]?.message?.content ?? "";
+      const text = data.choices[0]?.message?.content ?? '';
 
       let rawJson: unknown;
       if (jsonMode) {
@@ -91,7 +87,7 @@ export async function chatCompletion(
 
       return { text, rawJson };
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
+      if (err instanceof Error && err.name === 'AbortError') {
         lastError = new Error(`AI API timeout after ${timeoutMs}ms`);
         continue; // timeout is retryable
       }
@@ -101,7 +97,7 @@ export async function chatCompletion(
     }
   }
 
-  throw lastError ?? new Error("AI API failed after retries");
+  throw lastError ?? new Error('AI API failed after retries');
 }
 
 // Helper: بيقسم array لـ batches عشان ما نعدّيش الـ context window

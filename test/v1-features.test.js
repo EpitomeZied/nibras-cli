@@ -143,11 +143,14 @@ test('FileStore seeds CS106L with bundle-backed hosted projects', () => {
   const store = new FileStore(makeStorePath());
   const data = store.read('http://127.0.0.1');
   assert.ok(data.courses.some((course) => course.slug === 'cs106l'));
-  const cs106lProjects = data.projects.filter((project) => project.projectKey.startsWith('cs106l/'));
-  assert.deepEqual(
-    cs106lProjects.map((project) => project.projectKey).sort(),
-    ['cs106l/gapbuffer', 'cs106l/hashmap', 'cs106l/kdtree']
+  const cs106lProjects = data.projects.filter((project) =>
+    project.projectKey.startsWith('cs106l/')
   );
+  assert.deepEqual(cs106lProjects.map((project) => project.projectKey).sort(), [
+    'cs106l/gapbuffer',
+    'cs106l/hashmap',
+    'cs106l/kdtree',
+  ]);
   for (const project of cs106lProjects) {
     assert.equal(project.starter.kind, 'bundle');
     assert.equal(project.manifest.test.mode, 'command');
@@ -271,12 +274,10 @@ test('PrismaStore auto-enrollment covers both seeded demo courses', async () => 
     accessToken: 'user-token',
   });
 
-  assert.deepEqual(
-    courseMembershipUpserts
-      .map((entry) => entry.create.courseId)
-      .sort(),
-    ['course-cs106l', 'course-cs161']
-  );
+  assert.deepEqual(courseMembershipUpserts.map((entry) => entry.create.courseId).sort(), [
+    'course-cs106l',
+    'course-cs161',
+  ]);
 });
 
 test('PrismaStore listCourseMemberships backfills seeded demo courses for existing users', async () => {
@@ -317,12 +318,10 @@ test('PrismaStore listCourseMemberships backfills seeded demo courses for existi
   const memberships = await store.listCourseMemberships('https://nibras-api.fly.dev', 'user-1');
 
   assert.equal(memberships.length, 2);
-  assert.deepEqual(
-    courseMembershipUpserts
-      .map((entry) => entry.create.courseId)
-      .sort(),
-    ['course-cs106l', 'course-cs161']
-  );
+  assert.deepEqual(courseMembershipUpserts.map((entry) => entry.create.courseId).sort(), [
+    'course-cs106l',
+    'course-cs161',
+  ]);
 });
 
 // ── Metrics endpoint protection ────────────────────────────────────────────────

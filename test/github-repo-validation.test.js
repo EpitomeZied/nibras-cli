@@ -4,10 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const {
-  getGitHubRepository,
-  parseGitHubRepositoryUrl,
-} = require('../packages/github/dist/index');
+const { getGitHubRepository, parseGitHubRepositoryUrl } = require('../packages/github/dist/index');
 const { buildApp } = require('../apps/api/dist/app');
 const { FileStore } = require('../apps/api/dist/store');
 

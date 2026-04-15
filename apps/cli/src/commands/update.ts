@@ -2,7 +2,8 @@ import { createSpinner } from '../ui/spinner';
 import { printBox } from '../ui/box';
 import { runGlobalNpm, uninstallGlobalCli } from './global-install';
 
-const DEFAULT_RELEASE_API_URL = 'https://api.github.com/repos/NibrasPlatform/nibras-cli/releases/latest';
+const DEFAULT_RELEASE_API_URL =
+  'https://api.github.com/repos/NibrasPlatform/nibras-cli/releases/latest';
 const DEFAULT_GIT_INSTALL_URL = 'git+https://github.com/NibrasPlatform/nibras-cli.git';
 
 function parseOption(args: string[], name: string): string | null {
@@ -76,7 +77,11 @@ export async function commandUpdate(args: string[], plain: boolean): Promise<voi
     spinner.stop();
     printBox(
       'CLI is already on the latest release',
-      [`Installed: ${currentTag}`, `Latest:    ${targetTag}`, 'Tip: run `nibras update --force` to reinstall it.'],
+      [
+        `Installed: ${currentTag}`,
+        `Latest:    ${targetTag}`,
+        'Tip: run `nibras update --force` to reinstall it.',
+      ],
       'info',
       plain
     );

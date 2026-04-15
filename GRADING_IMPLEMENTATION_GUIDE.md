@@ -39,17 +39,17 @@ START
 
 ## Grading Method Selection Matrix
 
-| Factor | MCQ | Exam | File |
-|---|---|---|---|
-| **Best for** | Objective questions | Mixed question types | File submissions |
-| **Answer source** | Multiple choice | Text input | Extracted from file |
-| **Model answer required?** | No (AI infers) | Yes | Yes |
-| **Partial credit** | No (0 or full) | Yes | Yes |
-| **Confidence flagging** | Yes | Yes | Yes |
-| **Batch size** | 10 questions | 5 questions | 1 file |
-| **Token cost** | Lowest | Medium | High |
-| **Ambiguity tolerance** | Medium | High | Highest |
-| **Human review rate** | 10-20% | 20-30% | 30-40% |
+| Factor                     | MCQ                 | Exam                 | File                |
+| -------------------------- | ------------------- | -------------------- | ------------------- |
+| **Best for**               | Objective questions | Mixed question types | File submissions    |
+| **Answer source**          | Multiple choice     | Text input           | Extracted from file |
+| **Model answer required?** | No (AI infers)      | Yes                  | Yes                 |
+| **Partial credit**         | No (0 or full)      | Yes                  | Yes                 |
+| **Confidence flagging**    | Yes                 | Yes                  | Yes                 |
+| **Batch size**             | 10 questions        | 5 questions          | 1 file              |
+| **Token cost**             | Lowest              | Medium               | High                |
+| **Ambiguity tolerance**    | Medium              | High                 | Highest             |
+| **Human review rate**      | 10-20%              | 20-30%               | 30-40%              |
 
 ---
 
@@ -90,15 +90,16 @@ echo "NIBRAS_AI_MODEL=gpt-4o-mini" >> .env
 ```yaml
 # docker-compose.yml or k8s manifest
 environment:
-  NIBRAS_AI_API_KEY: "${AI_API_KEY}"        # From secrets
-  NIBRAS_AI_MODEL: "gpt-4o"
-  NIBRAS_AI_BASE_URL: "${AI_BASE_URL}"      # Optional
-  NIBRAS_AI_MIN_CONFIDENCE: "0.85"          # Stricter for prod
+  NIBRAS_AI_API_KEY: '${AI_API_KEY}' # From secrets
+  NIBRAS_AI_MODEL: 'gpt-4o'
+  NIBRAS_AI_BASE_URL: '${AI_BASE_URL}' # Optional
+  NIBRAS_AI_MIN_CONFIDENCE: '0.85' # Stricter for prod
 ```
 
 ### Step 3: Choose Grading Method
 
 **For MCQ Quiz**:
+
 ```typescript
 import { grade } from '@nibras/grading';
 
@@ -110,6 +111,7 @@ const quizResult = await grade({
 ```
 
 **For Exam**:
+
 ```typescript
 const examResult = await grade({
   type: 'exam',
@@ -120,6 +122,7 @@ const examResult = await grade({
 ```
 
 **For File Upload**:
+
 ```typescript
 const fileResult = await grade({
   type: 'file',
@@ -213,7 +216,7 @@ async function handleSubmission(submissionId: string) {
 // After pushing to branch, poll for grading result
 async function waitForGrading(submissionId: string) {
   let attempt = 0;
-  const maxAttempts = 120;  // 10 minutes at 5s intervals
+  const maxAttempts = 120; // 10 minutes at 5s intervals
 
   while (attempt < maxAttempts) {
     const status = await api.getSubmissionStatus(submissionId);
@@ -282,6 +285,7 @@ export function GradeDisplay({ review }: { review: Review }) {
 ### Integration with Worker (`apps/worker`)
 
 **Already implemented!** See `worker.ts`:
+
 - Automatically runs AI grading when tests pass
 - Creates Review records with AI results
 - Handles retries and failures
@@ -294,6 +298,7 @@ export function GradeDisplay({ review }: { review: Review }) {
 ### Example 1: CS101 Database Assignment
 
 **Setup** (in `.nibras/project.json`):
+
 ```json
 {
   "projectKey": "cs101-db-design",
@@ -332,6 +337,7 @@ export function GradeDisplay({ review }: { review: Review }) {
 ```
 
 **Worker processes this**:
+
 ```
 1. Clone student repo
 2. Run `npm test` → Tests pass
@@ -343,6 +349,7 @@ export function GradeDisplay({ review }: { review: Review }) {
 ```
 
 **Student sees**:
+
 ```
 Grade: 18/20 (90%)
 AI Confidence: 92%
@@ -363,6 +370,7 @@ Consider splitting this further."
 ### Example 2: Organic Chemistry Quiz
 
 **Code** (in API route):
+
 ```typescript
 import { grade } from '@nibras/grading';
 
@@ -373,10 +381,10 @@ app.post('/api/quiz/chem101/submit', async (req, res) => {
   const lectureContext = await db.getLectureNotes(lectureDate);
 
   const questions = await db.getQuizQuestions('chem101');
-  const mcqQuestions = questions.map(q => ({
+  const mcqQuestions = questions.map((q) => ({
     id: q.id,
     question: q.question,
-    lectureContext: lectureContext[q.topic],  // Context per topic
+    lectureContext: lectureContext[q.topic], // Context per topic
     options: q.options,
     studentAnswer: studentAnswers[q.id],
   }));
@@ -398,10 +406,10 @@ app.post('/api/quiz/chem101/submit', async (req, res) => {
   res.json({
     score: result.score,
     passed: result.score >= 70,
-    details: result.results.map(r => ({
+    details: result.results.map((r) => ({
       questionId: r.questionId,
       correct: r.isCorrect,
-      explanation: r.explanation,  // Show student why they were wrong
+      explanation: r.explanation, // Show student why they were wrong
     })),
   });
 });
@@ -412,6 +420,7 @@ app.post('/api/quiz/chem101/submit', async (req, res) => {
 ### Example 3: Code Review Assignment (File Upload)
 
 **Code** (in submission handler):
+
 ```typescript
 import { grade } from '@nibras/grading';
 import * as pdf from 'pdf-parse';
@@ -425,20 +434,20 @@ app.post('/api/assignments/code-review/submit', async (req, res) => {
 
   // Get assignment questions
   const assignment = await db.getAssignment(assignmentId);
-  const questions = assignment.grading.questions;  // Predefined questions
+  const questions = assignment.grading.questions; // Predefined questions
 
   const result = await grade({
     type: 'file',
     config: {
       apiKey: process.env.OPENAI_API_KEY,
-      model: 'gpt-4o',  // Better for complex code review
-      minConfidence: 0.9,  // Stricter for critical feedback
+      model: 'gpt-4o', // Better for complex code review
+      minConfidence: 0.9, // Stricter for critical feedback
     },
     input: {
       fileContent,
       fileType: 'pdf',
       assignmentInstructions: assignment.instructions,
-      modelAnswerQuestions: questions.map(q => ({
+      modelAnswerQuestions: questions.map((q) => ({
         id: q.id,
         question: q.prompt,
         type: 'long_answer',
@@ -453,14 +462,16 @@ app.post('/api/assignments/code-review/submit', async (req, res) => {
   const submission = await db.createSubmission({
     studentId: req.user.id,
     assignmentId,
-    fileUrl: fileBuffer,  // Store original
+    fileUrl: fileBuffer, // Store original
     gradeResult: result,
     needsReview: result.needsHumanReview,
   });
 
   // Notify instructor if flagged
   if (result.needsHumanReview) {
-    await notifyInstructor(`Submission ${submission.id} needs review. AI confidence: ${result.confidence}`);
+    await notifyInstructor(
+      `Submission ${submission.id} needs review. AI confidence: ${result.confidence}`
+    );
   }
 
   res.json({
@@ -480,21 +491,23 @@ app.post('/api/assignments/code-review/submit', async (req, res) => {
 ### 1. Batch Processing Strategy
 
 **Before** (slow — 10 API calls):
+
 ```typescript
 for (const question of questions) {
   const result = await grade({
     type: 'mcq',
-    questions: [question],  // One at a time
+    questions: [question], // One at a time
   });
   // Process result
 }
 ```
 
 **After** (fast — 1 API call):
+
 ```typescript
 const result = await grade({
   type: 'mcq',
-  questions: questions.slice(0, 10),  // Batch of 10
+  questions: questions.slice(0, 10), // Batch of 10
   // Automatically batches internally with chunk()
 });
 ```
@@ -502,6 +515,7 @@ const result = await grade({
 ### 2. Confidence-Based Escalation
 
 **Reduce human review load**:
+
 ```typescript
 const result = await grade({...});
 
@@ -517,12 +531,13 @@ if (result.confidence >= 0.85) {
 
 ### 3. Model Selection
 
-| Accuracy | Speed | Cost | Best For |
-|---|---|---|---|
-| **gpt-4o** | Slow | High | Critical grading, complex rubrics |
-| **gpt-4o-mini** | Fast | Low | Quick feedback, straightforward questions |
+| Accuracy        | Speed | Cost | Best For                                  |
+| --------------- | ----- | ---- | ----------------------------------------- |
+| **gpt-4o**      | Slow  | High | Critical grading, complex rubrics         |
+| **gpt-4o-mini** | Fast  | Low  | Quick feedback, straightforward questions |
 
 **Strategy**:
+
 - Use `gpt-4o-mini` by default (faster, cheaper)
 - Switch to `gpt-4o` if confidence < 0.7 (retry with better model)
 
@@ -531,7 +546,7 @@ const result = await grade({
   type: 'exam',
   config: {
     apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4o-mini',  // Try fast first
+    model: 'gpt-4o-mini', // Try fast first
   },
   questions,
   studentAnswers,
@@ -580,12 +595,14 @@ describe('MCQ Grading', () => {
     const result = await grade({
       type: 'mcq',
       config: { apiKey: process.env.OPENAI_API_KEY },
-      questions: [{
-        id: 'q1',
-        question: 'What is 2+2?',
-        options: ['A. 3', 'B. 4', 'C. 5'],
-        studentAnswer: 'B. 4',
-      }],
+      questions: [
+        {
+          id: 'q1',
+          question: 'What is 2+2?',
+          options: ['A. 3', 'B. 4', 'C. 5'],
+          studentAnswer: 'B. 4',
+        },
+      ],
     });
 
     expect(result.type).toBe('mcq');
@@ -597,12 +614,14 @@ describe('MCQ Grading', () => {
     const result = await grade({
       type: 'mcq',
       config: { apiKey: process.env.OPENAI_API_KEY },
-      questions: [{
-        id: 'q1',
-        question: 'Is Python better?',  // Ambiguous
-        options: ['A. Yes', 'B. No'],
-        studentAnswer: 'A. Yes',
-      }],
+      questions: [
+        {
+          id: 'q1',
+          question: 'Is Python better?', // Ambiguous
+          options: ['A. Yes', 'B. No'],
+          studentAnswer: 'A. Yes',
+        },
+      ],
     });
 
     // Ambiguous question should have lower confidence
@@ -739,18 +758,22 @@ import { grade } from '@nibras/grading';
 const result = await grade({
   type: 'exam',
   config: { apiKey: 'sk-...', model: 'gpt-4o' },
-  questions: [{
-    id: 'q1',
-    question: '...',
-    type: 'long_answer',
-    maxScore: 10,
-    modelAnswer: 'Reference answer',
-    gradingCriteria: 'Rubric description',
-  }],
-  studentAnswers: [{
-    questionId: 'q1',
-    answer: 'Student answer here',
-  }],
+  questions: [
+    {
+      id: 'q1',
+      question: '...',
+      type: 'long_answer',
+      maxScore: 10,
+      modelAnswer: 'Reference answer',
+      gradingCriteria: 'Rubric description',
+    },
+  ],
+  studentAnswers: [
+    {
+      questionId: 'q1',
+      answer: 'Student answer here',
+    },
+  ],
 });
 ```
 
@@ -807,22 +830,26 @@ A: Typically 5-30 seconds depending on batch size and model. Exam slower than MC
 ## Support & Debugging
 
 **Issue**: "Invalid API key"
+
 - Check `NIBRAS_AI_API_KEY` env var exists
 - Verify key format: should start with `sk-`
 - Test with `curl` directly to API
 
 **Issue**: "AI returned invalid JSON"
+
 - Reduce batch size
 - Try `gpt-4o` instead of `gpt-4o-mini`
 - Check system prompt is clear
 
-**Issue**: Low confidence scores**
+**Issue**: Low confidence scores\*\*
+
 - Question might be ambiguous
 - Add more context (lectureContext for MCQ)
 - Provide better model answer (for exam)
 - Use stricter model (gpt-4o vs gpt-4o-mini)
 
-**Issue**: Grading too slow**
+**Issue**: Grading too slow\*\*
+
 - Enable BullMQ mode (Redis-based queue)
 - Reduce batch size (trades off for slower)
 - Use `gpt-4o-mini` (cheaper, slightly less accurate)

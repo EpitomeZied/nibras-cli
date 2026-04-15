@@ -245,11 +245,11 @@ nibras test                                                  # Run manifest-conf
 nibras submit                                                # Stage → commit → push → verify
 ```
 
-| Command        | What it does                                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------------------------------- |
-| `nibras setup` | Writes `.nibras/project.json` + `.nibras/task.md`, inits git, adds `origin`, optionally extracts starter files |
-| `nibras test`  | Runs the OS-aware test command from the manifest; non-zero exit = failure                                     |
-| `nibras submit`| Runs tests, stages only allowed files, commits, pushes, registers with API, polls verification                |
+| Command         | What it does                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------- |
+| `nibras setup`  | Writes `.nibras/project.json` + `.nibras/task.md`, inits git, adds `origin`, optionally extracts starter files |
+| `nibras test`   | Runs the OS-aware test command from the manifest; non-zero exit = failure                                      |
+| `nibras submit` | Runs tests, stages only allowed files, commits, pushes, registers with API, polls verification                 |
 
 `nibras submit` never stops on local test failure — the result is recorded and server-side verification always runs.
 

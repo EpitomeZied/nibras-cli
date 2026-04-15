@@ -15,6 +15,7 @@ type ShellSessionPayload = {
     githubLinked: boolean;
     githubAppInstalled: boolean;
     systemRole?: string;
+    yearLevel?: number;
   };
   memberships?: Array<{ courseId: string; role: string; level: number }>;
 };

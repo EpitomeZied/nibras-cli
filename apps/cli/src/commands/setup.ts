@@ -83,7 +83,12 @@ async function extractZipArchive(archive: Buffer, destinationDir: string): Promi
   const zip = await JSZip.loadAsync(archive);
   for (const [entryName, entry] of Object.entries(zip.files)) {
     const normalized = path.posix.normalize(entryName);
-    if (!normalized || normalized === '.' || normalized.startsWith('../') || normalized.includes('/../')) {
+    if (
+      !normalized ||
+      normalized === '.' ||
+      normalized.startsWith('../') ||
+      normalized.includes('/../')
+    ) {
       throw new Error(`Unsafe path in starter bundle: ${entryName}`);
     }
     const targetPath = path.join(destinationDir, normalized);

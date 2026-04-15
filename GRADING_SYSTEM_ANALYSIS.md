@@ -3,6 +3,7 @@
 ## Executive Summary
 
 The Nibras platform implements a **modular, AI-powered grading system** that supports three distinct grading methods:
+
 1. **MCQ (Multiple Choice)** — automated grading with confidence scoring
 2. **Exam/Assignment** — semantic grading with rubric-based scoring and partial credit
 3. **File Upload** — extract answers from PDFs/text and grade against model answers
@@ -88,9 +89,10 @@ apps/worker/                   # Job processor
 **Purpose**: Automatically grade objective questions without a pre-defined model answer.
 
 **Type Signature**:
+
 ```typescript
 type GradingInput = {
-  type: "mcq";
+  type: 'mcq';
   questions: MCQQuestion[];
   config: GradingConfig;
 };
@@ -98,40 +100,43 @@ type GradingInput = {
 interface MCQQuestion {
   id: string;
   question: string;
-  lectureContext?: string;      // Optional lecture notes for context
-  options: string[];             // ["A. ...", "B. ...", ...]
-  studentAnswer: string;         // Full text of selected option
+  lectureContext?: string; // Optional lecture notes for context
+  options: string[]; // ["A. ...", "B. ...", ...]
+  studentAnswer: string; // Full text of selected option
 }
 ```
 
 **AI Behavior**:
+
 - AI determines the correct answer based on **question semantics + lecture context**
 - **Batch processing**: Groups questions in batches of 10 to avoid context limit overflows
 - **Confidence scoring**: AI outputs confidence (0–1) — ambiguous questions get lower confidence
 - **Language-aware**: Responds in the question's language
 
 **Output**:
+
 ```typescript
 interface MCQGradingResult {
-  type: "mcq";
+  type: 'mcq';
   totalQuestions: number;
   correctCount: number;
-  score: number;                 // 0–100
+  score: number; // 0–100
   results: MCQResult[];
 }
 
 interface MCQResult {
   questionId: string;
   isCorrect: boolean;
-  confidence: number;            // 0–1
-  correctAnswer: string;         // AI's answer
-  explanation: string;           // Justification
+  confidence: number; // 0–1
+  correctAnswer: string; // AI's answer
+  explanation: string; // Justification
 }
 ```
 
 **Implementation** (`validators/mcq.ts`):
+
 ```typescript
-async function gradeBatch(questions: MCQQuestion[], config: GradingConfig): Promise<MCQResult[]>
+async function gradeBatch(questions: MCQQuestion[], config: GradingConfig): Promise<MCQResult[]>;
 ```
 
 ---
@@ -141,9 +146,10 @@ async function gradeBatch(questions: MCQQuestion[], config: GradingConfig): Prom
 **Purpose**: Grade mixed-type exams (MCQ + short/long answer) using model answers and rubrics.
 
 **Type Signature**:
+
 ```typescript
 type GradingInput = {
-  type: "exam";
+  type: 'exam';
   questions: ExamQuestion[];
   studentAnswers: StudentAnswer[];
   config: GradingConfig;
@@ -152,10 +158,10 @@ type GradingInput = {
 interface ExamQuestion {
   id: string;
   question: string;
-  type: "mcq" | "short_answer" | "long_answer" | "true_false";
+  type: 'mcq' | 'short_answer' | 'long_answer' | 'true_false';
   maxScore: number;
-  modelAnswer: string;           // Reference answer
-  gradingCriteria?: string;      // Optional rubric description
+  modelAnswer: string; // Reference answer
+  gradingCriteria?: string; // Optional rubric description
 }
 
 interface StudentAnswer {
@@ -165,6 +171,7 @@ interface StudentAnswer {
 ```
 
 **AI Behavior**:
+
 - Compares student answer to **model answer** using semantic similarity
 - **Partial credit** allowed for partially correct answers
 - **Rules**:
@@ -174,14 +181,15 @@ interface StudentAnswer {
 - **Confidence threshold**: Flags for human review if confidence < `minConfidence` (default 0.8)
 
 **Output**:
+
 ```typescript
 interface ExamGradingResult {
-  type: "exam";
+  type: 'exam';
   totalScore: number;
   maxScore: number;
-  percentage: number;            // 0–100
-  confidence: number;            // Average confidence across questions
-  needsHumanReview: boolean;     // True if any question confidence < threshold
+  percentage: number; // 0–100
+  confidence: number; // Average confidence across questions
+  needsHumanReview: boolean; // True if any question confidence < threshold
   results: ExamQuestionResult[];
 }
 
@@ -192,21 +200,22 @@ interface ExamQuestionResult {
   modelAnswer: string;
   score: number;
   maxScore: number;
-  percentage: number;            // 0–100
-  confidence: number;            // 0–1
-  feedback: string;              // Constructive feedback (2-3 sentences)
-  isFullCredit: boolean;         // score === maxScore
-  needsHumanReview: boolean;     // confidence < minConfidence
+  percentage: number; // 0–100
+  confidence: number; // 0–1
+  feedback: string; // Constructive feedback (2-3 sentences)
+  isFullCredit: boolean; // score === maxScore
+  needsHumanReview: boolean; // confidence < minConfidence
 }
 ```
 
 **Implementation** (`validators/exam.ts`):
+
 ```typescript
 async function gradeBatch(
   questions: ExamQuestion[],
   answerMap: Map<string, string>,
   config: GradingConfig
-): Promise<ExamQuestionResult[]>
+): Promise<ExamQuestionResult[]>;
 ```
 
 ---
@@ -214,36 +223,40 @@ async function gradeBatch(
 ### 3. File Upload Grading
 
 **Purpose**: Grade assignments submitted as files (PDF, text, code) by:
+
 1. **Extracting** student answers from file content
 2. **Matching** extracted answers to questions
 3. **Grading** using the exam grading logic
 
 **Type Signature**:
+
 ```typescript
 type GradingInput = {
-  type: "file";
+  type: 'file';
   input: FileGradingInput;
   config: GradingConfig;
 };
 
 interface FileGradingInput {
-  fileContent: string;              // Text extracted from file (PDF/text/code)
-  fileType: "pdf" | "text" | "code" | "other";
+  fileContent: string; // Text extracted from file (PDF/text/code)
+  fileType: 'pdf' | 'text' | 'code' | 'other';
   modelAnswerQuestions: ExamQuestion[];
-  assignmentInstructions?: string;  // Context for extraction
+  assignmentInstructions?: string; // Context for extraction
 }
 ```
 
 **Two-Step Process**:
 
 **Step 1: Answer Extraction**
+
 ```typescript
 async function extractAnswersFromFile(
   fileContent: string,
   questions: Array<{ id: string; question: string }>,
   config: GradingConfig
-): Promise<ExtractedAnswers>
+): Promise<ExtractedAnswers>;
 ```
+
 - AI reads file content and identifies answers for each question
 - **Semantic matching**: Doesn't require exact order or formatting
 - **Outputs**:
@@ -251,29 +264,32 @@ async function extractAnswersFromFile(
   - `extractionNotes`: Notes on file structure/issues (e.g., "PDF scanned with 3 typos")
 
 **Step 2: Grading**
+
 - Reuses `gradeExam()` with extracted answers
 - Same output as exam grading
 
 **Output**:
+
 ```typescript
 interface FileGradingResult {
-  type: "file";
+  type: 'file';
   totalScore: number;
   maxScore: number;
   percentage: number;
   confidence: number;
   needsHumanReview: boolean;
   results: ExamQuestionResult[];
-  extractionNotes?: string;      // File parsing notes
+  extractionNotes?: string; // File parsing notes
 }
 ```
 
 **Implementation** (`validators/file.ts`):
+
 ```typescript
 export async function gradeFile(
   input: FileGradingInput,
   config: GradingConfig
-): Promise<FileGradingResult>
+): Promise<FileGradingResult>;
 ```
 
 ---
@@ -289,27 +305,30 @@ export async function chatCompletion(
   messages: Message[],
   config: GradingConfig,
   jsonMode = true
-): Promise<ChatResponse>
+): Promise<ChatResponse>;
 ```
 
 **Configuration**:
+
 ```typescript
 interface GradingConfig {
   apiKey: string;
-  model?: string;           // default: "gpt-4o-mini"
-  baseURL?: string;         // default: "https://api.openai.com/v1"
-  minConfidence?: number;   // default: 0.8
-  language?: "ar" | "en" | "auto";  // default: "auto"
+  model?: string; // default: "gpt-4o-mini"
+  baseURL?: string; // default: "https://api.openai.com/v1"
+  minConfidence?: number; // default: 0.8
+  language?: 'ar' | 'en' | 'auto'; // default: "auto"
 }
 ```
 
 **Supported Providers**:
+
 - ✅ **OpenAI** (gpt-4o, gpt-4o-mini, etc.)
 - ✅ **Azure OpenAI** (via custom baseURL)
 - ✅ **Ollama** (self-hosted, via baseURL)
 - ✅ **Any OpenAI-compatible API** (e.g., vLLM, LocalAI)
 
 **Key Features**:
+
 - **JSON mode**: Enforces structured JSON responses
 - **Deterministic**: `temperature: 0` for consistent grading
 - **Error handling**: Throws on invalid JSON or API errors
@@ -330,16 +349,17 @@ export async function gradeSemanticAnswer(input: {
   project: string;
   question: GradingQuestion;
   answerText: string;
-}): Promise<AiGradeResult>
+}): Promise<AiGradeResult>;
 ```
 
 **Old Types** (still supported):
+
 ```typescript
 type GradingQuestion = {
   id: string;
   prompt: string;
   points: number;
-  rubric: GradingRubricItem[];     // Criterion-based rubric
+  rubric: GradingRubricItem[]; // Criterion-based rubric
   examples?: GradingExample[];
   minConfidence?: number;
 };
@@ -348,13 +368,14 @@ type AiGradeResult = {
   score: number;
   confidence: number;
   needsReview: boolean;
-  criterionScores: CriterionScore[];  // Per-rubric scores
+  criterionScores: CriterionScore[]; // Per-rubric scores
   reasoningSummary: string;
   evidenceQuotes: string[];
 };
 ```
 
 **Why Keep It?**
+
 - Maintains API compatibility with `@nibras/worker` (older deployments)
 - Allows gradual migration to new grading methods
 - Used for legacy CS161 course configurations
@@ -366,6 +387,7 @@ type AiGradeResult = {
 ### Job Flow in `apps/worker/src/worker.ts`
 
 **Setup**:
+
 ```typescript
 // Two modes of operation
 if (process.env.REDIS_URL) {
@@ -409,6 +431,7 @@ if (process.env.REDIS_URL) {
 ### AI Grading in Worker
 
 **Configuration** (environment variables):
+
 ```bash
 NIBRAS_AI_API_KEY="sk-..."              # Required
 NIBRAS_AI_MODEL="gpt-4o"                # Required
@@ -419,11 +442,12 @@ NIBRAS_AI_MIN_CONFIDENCE="0.8"          # Optional
 ```
 
 **AI Grading Workflow**:
+
 ```typescript
 async function runAiGrading(
   submissionAttemptId: string,
   prisma: PrismaClient
-): Promise<AiRunResult | null>
+): Promise<AiRunResult | null>;
 ```
 
 1. **Load AI config** (return `null` if not configured)
@@ -439,8 +463,8 @@ async function runAiGrading(
    await tx.review.create({
      data: {
        submissionAttemptId,
-       reviewerUserId: submission.userId,      // System grader
-       status: "pending",                      // Awaits human review
+       reviewerUserId: submission.userId, // System grader
+       status: 'pending', // Awaits human review
        score: aggregated.score,
        feedback: aggregated.reasoningSummary,
        aiConfidence: aggregated.confidence,
@@ -456,13 +480,13 @@ async function runAiGrading(
 
 ### Final Job Status
 
-| Verification Result | AI Result | Final Status | Notes |
-|---|---|---|---|
-| ✅ Pass (exit 0) | AI ran, high confidence | `passed` | Auto-approved |
-| ✅ Pass | AI ran, low confidence | `needs_review` | Flagged for human review |
-| ✅ Pass | No AI config | `passed` | Verification only |
-| ❌ Fail | N/A | `failed` | Submission rejected |
-| ⚠️ Error | N/A | `queued` (retry) or `failed` (exhausted) | Retry up to maxAttempts |
+| Verification Result | AI Result               | Final Status                             | Notes                    |
+| ------------------- | ----------------------- | ---------------------------------------- | ------------------------ |
+| ✅ Pass (exit 0)    | AI ran, high confidence | `passed`                                 | Auto-approved            |
+| ✅ Pass             | AI ran, low confidence  | `needs_review`                           | Flagged for human review |
+| ✅ Pass             | No AI config            | `passed`                                 | Verification only        |
+| ❌ Fail             | N/A                     | `failed`                                 | Submission rejected      |
+| ⚠️ Error            | N/A                     | `queued` (retry) or `failed` (exhausted) | Retry up to maxAttempts  |
 
 ---
 
@@ -486,6 +510,7 @@ model VerificationJob {
 ```
 
 **States**:
+
 - `queued`: Waiting for worker
 - `running`: Worker has claimed it
 - `passed`: Verification passed
@@ -555,7 +580,7 @@ Grading configuration lives in the project manifest:
     "questions": [
       {
         "id": "q1",
-        "mode": "semantic",        // or "mcq", "exam", "file"
+        "mode": "semantic", // or "mcq", "exam", "file"
         "prompt": "Explain OOP",
         "points": 10,
         "answerFile": "answers/q1.txt",
@@ -596,6 +621,7 @@ Grading configuration lives in the project manifest:
 Problem: Large numbers of questions would exceed LLM context windows.
 
 Solution:
+
 ```typescript
 export function chunk<T>(arr: T[], size: number): T[][] {
   const result: T[][] = [];
@@ -607,6 +633,7 @@ export function chunk<T>(arr: T[], size: number): T[][] {
 ```
 
 Usage:
+
 - **MCQ**: Batch size = 10
 - **Exam**: Batch size = 5 (longer answers)
 - **Sequential processing**: Process each batch, collect results
@@ -624,7 +651,7 @@ Usage:
 const needsHumanReview = confidence < minConfidence;
 
 // Exam-level (aggregate)
-const needsHumanReview = allResults.some(r => r.needsHumanReview);
+const needsHumanReview = allResults.some((r) => r.needsHumanReview);
 
 // Worker-level (final status)
 const finalStatus = aiResult?.reviewRequired
@@ -650,6 +677,7 @@ vs.
 ```
 
 **Implementation**: System prompt explicitly instructs:
+
 > "Consider semantic similarity, not just exact wording"
 
 ---
@@ -707,22 +735,22 @@ Submission → VerificationJob (queued)
 
 ```typescript
 const result = await grade({
-  type: "mcq",
+  type: 'mcq',
   config: {
-    apiKey: "sk-...",
-    model: "gpt-4o-mini",
+    apiKey: 'sk-...',
+    model: 'gpt-4o-mini',
   },
   questions: [
     {
-      id: "q1",
-      question: "What is a database?",
-      lectureContext: "In lecture 3, we defined databases as...",
+      id: 'q1',
+      question: 'What is a database?',
+      lectureContext: 'In lecture 3, we defined databases as...',
       options: [
-        "A. A collection of organized data",
-        "B. A single file",
-        "C. A programming language",
+        'A. A collection of organized data',
+        'B. A single file',
+        'C. A programming language',
       ],
-      studentAnswer: "A. A collection of organized data",
+      studentAnswer: 'A. A collection of organized data',
     },
   ],
 });
@@ -735,26 +763,26 @@ console.log(`Correct: ${result.correctCount}/${result.totalQuestions}`);
 
 ```typescript
 const result = await grade({
-  type: "exam",
+  type: 'exam',
   config: {
-    apiKey: "sk-...",
-    model: "gpt-4o",
-    minConfidence: 0.9,  // Stricter threshold
+    apiKey: 'sk-...',
+    model: 'gpt-4o',
+    minConfidence: 0.9, // Stricter threshold
   },
   questions: [
     {
-      id: "q1",
-      question: "What is normalization?",
-      type: "long_answer",
+      id: 'q1',
+      question: 'What is normalization?',
+      type: 'long_answer',
       maxScore: 10,
-      modelAnswer: "Normalization reduces redundancy by splitting tables...",
-      gradingCriteria: "Award 5 pts for definition, 5 pts for benefits",
+      modelAnswer: 'Normalization reduces redundancy by splitting tables...',
+      gradingCriteria: 'Award 5 pts for definition, 5 pts for benefits',
     },
   ],
   studentAnswers: [
     {
-      questionId: "q1",
-      answer: "Normalization splits large tables into smaller ones to remove duplicate data...",
+      questionId: 'q1',
+      answer: 'Normalization splits large tables into smaller ones to remove duplicate data...',
     },
   ],
 });
@@ -766,22 +794,22 @@ console.log(`Needs review: ${result.needsHumanReview}`);
 ### Example 3: File Upload
 
 ```typescript
-const pdfText = await extractTextFromPDF("assignment.pdf");  // External tool
+const pdfText = await extractTextFromPDF('assignment.pdf'); // External tool
 
 const result = await grade({
-  type: "file",
-  config: { apiKey: "sk-...", model: "gpt-4o-mini" },
+  type: 'file',
+  config: { apiKey: 'sk-...', model: 'gpt-4o-mini' },
   input: {
     fileContent: pdfText,
-    fileType: "pdf",
-    assignmentInstructions: "Database Design Assignment — Week 5",
+    fileType: 'pdf',
+    assignmentInstructions: 'Database Design Assignment — Week 5',
     modelAnswerQuestions: [
       {
-        id: "q1",
-        question: "Explain normalization",
-        type: "long_answer",
+        id: 'q1',
+        question: 'Explain normalization',
+        type: 'long_answer',
         maxScore: 10,
-        modelAnswer: "Normalization is...",
+        modelAnswer: 'Normalization is...',
       },
     ],
   },
@@ -800,14 +828,14 @@ console.log(`Score: ${result.totalScore}/${result.maxScore}`);
 ```typescript
 if (fileContent.trim().length === 0) {
   return {
-    type: "file",
+    type: 'file',
     totalScore: 0,
     maxScore: questions.reduce((s, q) => s + q.maxScore, 0),
     percentage: 0,
     confidence: 0,
     needsHumanReview: true,
     results: [],
-    extractionNotes: "File content is empty or could not be read.",
+    extractionNotes: 'File content is empty or could not be read.',
   };
 }
 ```
@@ -822,7 +850,7 @@ try {
     answerFile: q.answerFile,
     questionId: q.id,
   });
-  continue;  // Skip this question, aggregate partial results
+  continue; // Skip this question, aggregate partial results
 }
 ```
 
@@ -867,11 +895,11 @@ async function failJob(
 
 ### Batch Processing
 
-| Grading Type | Batch Size | Rationale |
-|---|---|---|
-| MCQ | 10 | Shorter answers, less context usage |
-| Exam | 5 | Longer answers + model answers consume more tokens |
-| File extraction | 1 | File content can be large (8KB truncation) |
+| Grading Type    | Batch Size | Rationale                                          |
+| --------------- | ---------- | -------------------------------------------------- |
+| MCQ             | 10         | Shorter answers, less context usage                |
+| Exam            | 5          | Longer answers + model answers consume more tokens |
+| File extraction | 1          | File content can be large (8KB truncation)         |
 
 ### Token Cost Optimization
 
@@ -905,10 +933,12 @@ await prisma.verificationJob.create({
 
 // Push to queue if Redis available
 if (redisAvailable) {
-  await verificationQueue.add(
-    VERIFICATION_QUEUE_NAME,
-    { jobId, submissionAttemptId, attempt: 0, maxAttempts: 3 },
-  );
+  await verificationQueue.add(VERIFICATION_QUEUE_NAME, {
+    jobId,
+    submissionAttemptId,
+    attempt: 0,
+    maxAttempts: 3,
+  });
 }
 ```
 
@@ -921,7 +951,7 @@ Submits assignments and polls for results:
 // 2. Push to branch
 // 3. Create submission attempt
 // 4. Poll VerificationJob until finished
-while (job.status === "running") {
+while (job.status === 'running') {
   await sleep(2000);
   job = await fetchJobStatus(jobId);
 }
@@ -954,7 +984,7 @@ Sends email when grading completes (via Resend API):
 await sendSubmissionStatusEmail({
   studentEmail: attempt.user.email,
   submissionId: attempt.id,
-  status: finalStatus,  // passed / failed / needs_review
+  status: finalStatus, // passed / failed / needs_review
   score: review?.score,
   feedback: review?.feedback,
 });
@@ -982,9 +1012,9 @@ log('debug', 'AI config loaded', {
 ```typescript
 // Tests run in isolated Docker container
 return runSandboxed(
-  cloneUrl,           // Git repo
-  branch,             // Submission branch
-  testCommand         // npm test / python test.py / etc.
+  cloneUrl, // Git repo
+  branch, // Submission branch
+  testCommand // npm test / python test.py / etc.
 );
 ```
 
@@ -1041,6 +1071,7 @@ Error: AI returned invalid JSON: The AI response wasn't valid JSON
 **Cause**: LLM returned text instead of JSON (rare with `response_format: {type: "json_object"}`)
 
 **Fix**:
+
 1. Check `minConfidence` threshold (lower = more certain)
 2. Verify system prompt is clear
 3. Retry with `gpt-4o` instead of `gpt-4o-mini`
@@ -1054,6 +1085,7 @@ Error: Invalid AI response structure for MCQ batch
 **Cause**: JSON response doesn't match expected schema
 
 **Fix**:
+
 1. Verify all required fields present in response
 2. Check batch size (10 for MCQ, 5 for exam)
 3. Log the raw response to debug
@@ -1063,6 +1095,7 @@ Error: Invalid AI response structure for MCQ batch
 **Cause**: File content doesn't match questions
 
 **Fix**:
+
 1. Check `fileContent` is properly extracted (PDFs need text extraction tool)
 2. Ensure questions are clear and questions match file content
 3. Try with simpler assignment first
@@ -1072,6 +1105,7 @@ Error: Invalid AI response structure for MCQ batch
 **Cause**: `NIBRAS_AI_API_KEY` or `NIBRAS_AI_MODEL` not set
 
 **Fix**:
+
 ```bash
 export NIBRAS_AI_API_KEY="sk-..."
 export NIBRAS_AI_MODEL="gpt-4o-mini"

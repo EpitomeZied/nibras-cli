@@ -126,7 +126,10 @@ function writeCheckConfig(dir, { topLevel = {}, subject = {}, project = {} } = {
   );
 }
 
-function writeCommandConfig(dir, { subject = 'cs106l', projectId = 'gapbuffer', project = {} } = {}) {
+function writeCommandConfig(
+  dir,
+  { subject = 'cs106l', projectId = 'gapbuffer', project = {} } = {}
+) {
   fs.writeFileSync(
     path.join(dir, '.nibras.json'),
     JSON.stringify({

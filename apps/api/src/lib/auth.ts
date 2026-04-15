@@ -58,7 +58,7 @@ export async function requireUser(
   const user =
     authKind === 'bearer'
       ? ((await store.getUserByToken(apiBaseUrl, token)) ??
-         (await store.getUserByWebSession(apiBaseUrl, token)))
+        (await store.getUserByWebSession(apiBaseUrl, token)))
       : await store.getUserByWebSession(apiBaseUrl, token);
   if (!user) {
     reply.code(401).send(Errors.invalidSession());

@@ -1829,13 +1829,8 @@ export class PrismaStore implements AppStore {
       });
       return courses.map(toCourseRecord);
     }
-    // Derive the student's current year level from their memberships (default 1).
-    const levelRow = await this.prisma.courseMembership.findFirst({
-      where: { userId, role: CourseRole.student },
-      orderBy: { level: 'desc' },
-      select: { level: true },
-    });
-    const studentLevel = levelRow?.level ?? 1;
+    // Use the global yearLevel on User as the single source of truth.
+    const studentLevel = (user as { yearLevel?: number }).yearLevel ?? 1;
 
     // Show every active course that belongs to the student's current year so
     // they always see the full curriculum for their level, even if an admin
@@ -1855,12 +1850,7 @@ export class PrismaStore implements AppStore {
     if (user.systemRole === SystemRole.admin) {
       return this.prisma.course.count({ where: { isActive: true } });
     }
-    const levelRow = await this.prisma.courseMembership.findFirst({
-      where: { userId, role: CourseRole.student },
-      orderBy: { level: 'desc' },
-      select: { level: true },
-    });
-    const studentLevel = levelRow?.level ?? 1;
+    const studentLevel = (user as { yearLevel?: number }).yearLevel ?? 1;
     return this.prisma.course.count({
       where: { isActive: true, termLabel: { startsWith: `Year ${studentLevel}` } },
     });
@@ -1990,25 +1980,80 @@ export class PrismaStore implements AppStore {
     level: number
   ): Promise<CourseMembershipRecord | null> {
     await this.seed(apiBaseUrl);
-    const existing = await this.prisma.courseMembership.findFirst({
-      where: { courseId, userId, role: 'student' },
+    await this.syncStudentYear(userId, level);
+    const membership = await this.prisma.courseMembership.findFirst({
+      where: { courseId, userId, role: CourseRole.student },
     });
-    if (!existing) return null;
-    const updated = await this.prisma.courseMembership.update({
-      where: { id: existing.id },
-      data: { level },
+    return membership ? toMembershipRecord(membership) : null;
+  }
+
+  /** Atomically update User.yearLevel, sync all student memberships, and upsert Year-N enrolments. */
+  private async syncStudentYear(userId: string, yearLevel: number): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Update global year level on the User row.
+      await tx.user.update({ where: { id: userId }, data: { yearLevel } });
+
+      // 2. Sync level on every existing student membership for this user.
+      await tx.courseMembership.updateMany({
+        where: { userId, role: CourseRole.student },
+        data: { level: yearLevel },
+      });
+
+      // 3. Auto-enrol into every active Year-N course (upsert to avoid duplicates).
+      const yearCourses = await tx.course.findMany({
+        where: { isActive: true, termLabel: { startsWith: `Year ${yearLevel}` } },
+        select: { id: true },
+      });
+      for (const course of yearCourses) {
+        await tx.courseMembership.upsert({
+          where: { courseId_userId: { courseId: course.id, userId } },
+          update: { level: yearLevel },
+          create: { courseId: course.id, userId, role: CourseRole.student, level: yearLevel },
+        });
+      }
     });
+
     await this.prisma.auditLog.create({
       data: {
         userId,
-        courseId,
-        action: 'member.level_updated',
-        targetType: 'courseMembership',
-        targetId: updated.id,
-        payload: { level } as Prisma.InputJsonValue,
+        action: 'member.year_synced',
+        targetType: 'user',
+        targetId: userId,
+        payload: { yearLevel } as Prisma.InputJsonValue,
       },
     });
-    return toMembershipRecord(updated);
+  }
+
+  async syncStudentYearGlobal(
+    apiBaseUrl: string,
+    userId: string,
+    yearLevel: number
+  ): Promise<void> {
+    await this.seed(apiBaseUrl);
+    await this.syncStudentYear(userId, yearLevel);
+  }
+
+  async listStudentsWithYearLevel(
+    apiBaseUrl: string
+  ): Promise<Array<{ userId: string; username: string; githubLogin: string; yearLevel: number }>> {
+    await this.seed(apiBaseUrl);
+    const memberships = await this.prisma.courseMembership.findMany({
+      where: { role: CourseRole.student },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+    const studentIds = memberships.map((m) => m.userId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: studentIds } },
+      include: { githubAccount: true },
+      orderBy: { username: 'asc' },
+    });
+    return users.map((u) => ({
+      userId: u.id,
+      username: u.username,
+      githubLogin: u.githubAccount?.login ?? '',
+      yearLevel: (u as { yearLevel?: number }).yearLevel ?? 1,
+    }));
   }
 
   async createCourseInvite(

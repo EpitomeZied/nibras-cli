@@ -8,6 +8,7 @@ export interface ShellUser {
   githubLinked: boolean;
   githubAppInstalled: boolean;
   systemRole?: string | null;
+  yearLevel?: number;
   memberships?: Array<{ courseId: string; role: string; level: number }>;
 }
 

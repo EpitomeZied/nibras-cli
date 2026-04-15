@@ -554,73 +554,73 @@ async function checkAndAutoUpgradeStudentLevel(
 
   const { userId } = submission;
 
-  // Find the student's membership for the course this submission belongs to
-  const triggerMembership = await prisma.courseMembership.findFirst({
-    where: { courseId: submission.project.courseId, userId, role: 'student' },
+  // Read the student's GLOBAL year level (single source of truth).
+  const userRow = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { yearLevel: true },
   });
-  if (!triggerMembership || triggerMembership.level >= MAX_LEVEL) return;
+  if (!userRow) return;
+  const currentLevel: number = (userRow as { yearLevel: number }).yearLevel ?? 1;
+  if (currentLevel >= MAX_LEVEL) return;
 
-  const currentLevel = triggerMembership.level;
-
-  // Find ALL courses this student is enrolled in at the current level.
-  // A student must complete every published project (all milestones) across
-  // ALL their enrolled courses at their current level before advancing.
-  const allMemberships = await prisma.courseMembership.findMany({
-    where: { userId, role: 'student', level: currentLevel },
+  // Gather all active courses at this year level.
+  const yearCourses = await prisma.course.findMany({
+    where: { isActive: true, termLabel: { startsWith: `Year ${currentLevel}` } },
+    select: { id: true },
   });
+  if (yearCourses.length === 0) return;
 
-  for (const mem of allMemberships) {
-    const levelProjects = await prisma.project.findMany({
-      where: { courseId: mem.courseId, level: currentLevel, status: 'published' },
+  // Every published project (with all its milestones) across every Year-N course
+  // must have a 'passed' submission from this student before we promote.
+  for (const course of yearCourses) {
+    const projects = await prisma.project.findMany({
+      where: { courseId: course.id, status: 'published' },
       include: { milestones: true },
     });
-    // A course with no projects at this level does not block advancement
-    if (levelProjects.length === 0) continue;
+    // A year with no published projects does not block advancement.
+    if (projects.length === 0) continue;
 
-    for (const proj of levelProjects) {
+    for (const proj of projects) {
       for (const milestone of proj.milestones) {
         const passedSub = await prisma.submissionAttempt.findFirst({
           where: { userId, projectId: proj.id, milestoneId: milestone.id, status: 'passed' },
         });
-        if (!passedSub) return; // still work to do in this course
+        if (!passedSub) return; // still work remaining
       }
     }
   }
 
-  // All courses at currentLevel are cleared — promote across every enrollment
+  // All Year-N courses are complete — atomically promote the student globally.
   const nextLevel = currentLevel + 1;
-  const membershipIds = allMemberships.map((m) => m.id);
-  await prisma.courseMembership.updateMany({
-    where: { id: { in: membershipIds } },
-    data: { level: nextLevel },
-  });
+  await prisma.$transaction(async (tx) => {
+    // 1. Advance the global year level.
+    await tx.user.update({ where: { id: userId }, data: { yearLevel: nextLevel } });
 
-  // Auto-enrol the student in every active Year-N+1 course so they
-  // immediately see the next year's curriculum in their dashboard.
-  const nextYearCourses = await prisma.course.findMany({
-    where: { isActive: true, termLabel: { startsWith: `Year ${nextLevel}` } },
-    select: { id: true },
-  });
-  await Promise.all(
-    nextYearCourses.map((course) =>
-      prisma.courseMembership.upsert({
+    // 2. Sync every existing student membership.
+    await tx.courseMembership.updateMany({
+      where: { userId, role: 'student' },
+      data: { level: nextLevel },
+    });
+
+    // 3. Auto-enrol in every active Year-(N+1) course.
+    const nextYearCourses = await tx.course.findMany({
+      where: { isActive: true, termLabel: { startsWith: `Year ${nextLevel}` } },
+      select: { id: true },
+    });
+    for (const course of nextYearCourses) {
+      await tx.courseMembership.upsert({
         where: { courseId_userId: { courseId: course.id, userId } },
         update: { level: nextLevel },
         create: { courseId: course.id, userId, role: 'student', level: nextLevel },
-      })
-    )
-  );
-
-  log(
-    'info',
-    `Student auto-promoted across ${membershipIds.length} course(s): level ${currentLevel} → ${nextLevel}`,
-    {
-      userId,
-      fromLevel: currentLevel,
-      toLevel: nextLevel,
-      courseIds: allMemberships.map((m) => m.courseId),
+      });
     }
-  );
+  });
+
+  log('info', `Student auto-promoted globally: level ${currentLevel} → ${nextLevel}`, {
+    userId,
+    fromLevel: currentLevel,
+    toLevel: nextLevel,
+  });
 }
 
 async function failJob(
