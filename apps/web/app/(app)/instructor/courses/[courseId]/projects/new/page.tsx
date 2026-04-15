@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { useFormSubmit } from '../../../../../../lib/use-form-submit';
+import { getLevelLabel } from '../../../../../../lib/levels';
 import styles from '../../../../instructor.module.css';
 
 type RubricRow = { criterion: string; maxScore: number };
@@ -13,6 +14,7 @@ type ResourceRow = { label: string; url: string };
 export default function NewProjectPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const router = useRouter();
+  const [level, setLevel] = useState(1);
   const [rubric, setRubric] = useState<RubricRow[]>([{ criterion: '', maxScore: 10 }]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const { submitting, error, submit } = useFormSubmit({
@@ -59,6 +61,7 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
       title: (form.get('title') as string).trim(),
       description: (form.get('description') as string).trim(),
       status: 'draft',
+      level,
       deliveryMode: form.get('deliveryMode') as string,
       rubric: rubric
         .filter((row) => row.criterion.trim())
@@ -105,6 +108,17 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
             placeholder="Brief description shown to students."
             rows={3}
           />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="level">Academic Year Level</label>
+          <select id="level" value={level} onChange={(e) => setLevel(Number(e.target.value))}>
+            {[1, 2, 3, 4].map((lvl) => (
+              <option key={lvl} value={lvl}>
+                {getLevelLabel(lvl)}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className={styles.formGroup}>

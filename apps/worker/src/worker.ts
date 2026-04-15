@@ -544,6 +544,8 @@ async function checkAndAutoUpgradeStudentLevel(
   submissionAttemptId: string,
   prisma: PrismaClient
 ): Promise<void> {
+  const MAX_LEVEL = 4;
+
   const submission = await prisma.submissionAttempt.findUnique({
     where: { id: submissionAttemptId },
     include: { project: true },
@@ -553,32 +555,42 @@ async function checkAndAutoUpgradeStudentLevel(
   const { userId, project } = submission;
   const courseId = project.courseId!;
 
-  // Only run for students currently at level 1
+  // Find the student's membership at any level below the maximum
   const membership = await prisma.courseMembership.findFirst({
-    where: { courseId, userId, role: 'student', level: 1 },
+    where: { courseId, userId, role: 'student' },
   });
-  if (!membership) return;
+  if (!membership || membership.level >= MAX_LEVEL) return;
 
-  // Get all published level-1 projects in the course
-  const level1Projects = await prisma.project.findMany({
-    where: { courseId, level: 1, status: 'published' },
+  const currentLevel = membership.level;
+
+  // Get all published projects at the student's current level
+  const currentLevelProjects = await prisma.project.findMany({
+    where: { courseId, level: currentLevel, status: 'published' },
     include: { milestones: true },
   });
 
-  // Check every milestone of every level-1 project
-  for (const proj of level1Projects) {
+  // Every milestone of every current-level project must be passed
+  for (const proj of currentLevelProjects) {
     for (const milestone of proj.milestones) {
       const passedSub = await prisma.submissionAttempt.findFirst({
         where: { userId, projectId: proj.id, milestoneId: milestone.id, status: 'passed' },
       });
-      if (!passedSub) return; // milestone not yet passed
+      if (!passedSub) return; // still work to do
     }
   }
 
-  // All level-1 milestones cleared — upgrade
+  // All current-level milestones cleared — promote to next level
+  const nextLevel = currentLevel + 1;
   await prisma.courseMembership.update({
     where: { id: membership.id },
-    data: { level: 2 },
+    data: { level: nextLevel },
+  });
+
+  log('info', `Student auto-promoted: level ${currentLevel} → ${nextLevel}`, {
+    userId,
+    courseId,
+    fromLevel: currentLevel,
+    toLevel: nextLevel,
   });
 }
 

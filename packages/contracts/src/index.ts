@@ -111,7 +111,7 @@ export const DevicePollResponseSchema = z.union([DevicePollPendingSchema, Device
 export const SessionMembershipSchema = z.object({
   courseId: z.string().min(1),
   role: z.enum(['student', 'instructor', 'ta']),
-  level: z.number().int().min(1).max(2).default(1),
+  level: z.number().int().min(1).max(4).default(1),
 });
 export type SessionMembership = z.infer<typeof SessionMembershipSchema>;
 

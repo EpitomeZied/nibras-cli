@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { apiFetch } from '../../../../../../../lib/session';
 import { useFormSubmit } from '../../../../../../../lib/use-form-submit';
+import { getLevelLabel } from '../../../../../../../lib/levels';
 import styles from '../../../../../instructor.module.css';
 
 type RubricRow = { criterion: string; maxScore: number };
@@ -17,6 +18,7 @@ type Project = {
   description: string;
   status: string;
   deliveryMode: string;
+  level: number;
   rubric: RubricRow[];
   resources: ResourceRow[];
 };
@@ -34,6 +36,7 @@ export default function EditProjectPage({
   const [description, setDescription] = useState('');
   const [deliveryMode, setDeliveryMode] = useState('individual');
   const [status, setStatus] = useState('draft');
+  const [level, setLevel] = useState(1);
   const [rubric, setRubric] = useState<RubricRow[]>([]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
   const { submitting, error, submit } = useFormSubmit({
@@ -52,6 +55,7 @@ export default function EditProjectPage({
         setDescription(data.description || '');
         setDeliveryMode(data.deliveryMode);
         setStatus(data.status);
+        setLevel(data.level ?? 1);
         setRubric(data.rubric.length > 0 ? data.rubric : []);
         setResources(data.resources || []);
       } catch (err) {
@@ -93,6 +97,7 @@ export default function EditProjectPage({
       description: description.trim(),
       deliveryMode,
       status,
+      level,
       rubric: rubric
         .filter((row) => row.criterion.trim())
         .map((row) => ({
@@ -175,6 +180,17 @@ export default function EditProjectPage({
             <option value="draft">Draft</option>
             <option value="published">Published</option>
             <option value="archived">Archived</option>
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="level">Academic Year Level</label>
+          <select id="level" value={level} onChange={(e) => setLevel(Number(e.target.value))}>
+            {[1, 2, 3, 4].map((lvl) => (
+              <option key={lvl} value={lvl}>
+                {getLevelLabel(lvl)}
+              </option>
+            ))}
           </select>
         </div>
 

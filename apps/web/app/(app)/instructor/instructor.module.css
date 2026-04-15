@@ -640,6 +640,16 @@
   color: var(--success, #16a34a);
 }
 
+.levelBadge3 {
+  background: color-mix(in srgb, #6366f1 15%, transparent);
+  color: #4f46e5;
+}
+
+.levelBadge4 {
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #b45309;
+}
+
 .btnPromote {
   font-size: 12px;
   padding: 3px 10px;

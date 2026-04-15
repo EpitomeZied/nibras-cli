@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { use } from 'react';
 import { apiFetch } from '../../../../../lib/session';
+import { getLevelLabel, getLevelBadgeSuffix, MAX_LEVEL } from '../../../../../lib/levels';
 import styles from '../../../instructor.module.css';
 
 type Member = {
@@ -27,6 +28,10 @@ export default function CourseMembersPage({ params }: { params: Promise<{ course
   const [addError, setAddError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [promotingId, setPromotingId] = useState<string | null>(null);
+  const [levelFilter, setLevelFilter] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLevel, setBulkLevel] = useState<number>(2);
+  const [bulkPromoting, setBulkPromoting] = useState(false);
   const [inviteRole, setInviteRole] = useState<'student' | 'ta'>('student');
   const [inviteExpiry, setInviteExpiry] = useState('');
   const [generatingInvite, setGeneratingInvite] = useState(false);
@@ -131,19 +136,64 @@ export default function CourseMembersPage({ params }: { params: Promise<{ course
   }
 
   async function handlePromote(userId: string) {
+    const member = members.find((m) => m.userId === userId);
+    if (!member) return;
+    const nextLevel = Math.min((member.level ?? 1) + 1, MAX_LEVEL);
     setPromotingId(userId);
     try {
       await apiFetch(`/v1/tracking/courses/${courseId}/members/${userId}/level`, {
         method: 'PATCH',
         auth: true,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ level: 2 }),
+        body: JSON.stringify({ level: nextLevel }),
       });
-      setMembers((prev) => prev.map((m) => (m.userId === userId ? { ...m, level: 2 } : m)));
+      setMembers((prev) => prev.map((m) => (m.userId === userId ? { ...m, level: nextLevel } : m)));
     } catch {
       // Silently ignore promote errors
     } finally {
       setPromotingId(null);
+    }
+  }
+
+  async function handleBulkPromote() {
+    if (selectedIds.size === 0) return;
+    setBulkPromoting(true);
+    try {
+      await Promise.all(
+        [...selectedIds].map((uid) =>
+          apiFetch(`/v1/tracking/courses/${courseId}/members/${uid}/level`, {
+            method: 'PATCH',
+            auth: true,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ level: bulkLevel }),
+          })
+        )
+      );
+      setMembers((prev) =>
+        prev.map((m) => (selectedIds.has(m.userId) ? { ...m, level: bulkLevel } : m))
+      );
+      setSelectedIds(new Set());
+    } catch {
+      // Silently ignore bulk errors
+    } finally {
+      setBulkPromoting(false);
+    }
+  }
+
+  function toggleSelect(userId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(students: Member[]) {
+    if (students.every((s) => selectedIds.has(s.userId))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(students.map((s) => s.userId)));
     }
   }
 
@@ -307,67 +357,178 @@ export default function CourseMembersPage({ params }: { params: Promise<{ course
           {members.length === 0 ? (
             <p className={styles.muted}>No members yet.</p>
           ) : (
-            <table className={styles.submissionTable}>
-              <thead>
-                <tr>
-                  <th>GitHub Login</th>
-                  <th>Username</th>
-                  <th>Role</th>
-                  <th>Level</th>
-                  <th>Joined</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id}>
-                    <td className={styles.mono}>@{member.githubLogin}</td>
-                    <td>{member.username}</td>
-                    <td>
-                      <span className={`${styles.roleBadge} ${roleClass(member.role)}`}>
-                        {member.role}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.levelBadge} ${(member.level ?? 1) >= 2 ? styles.levelBadge2 : styles.levelBadge1}`}
-                      >
-                        Level {member.level ?? 1}
-                      </span>
-                    </td>
-                    <td className={styles.mono}>
-                      {new Date(member.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
+            <>
+              {/* Filter + bulk toolbar */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  marginBottom: 14,
+                }}
+              >
+                <select
+                  value={levelFilter ?? ''}
+                  onChange={(e) =>
+                    setLevelFilter(e.target.value === '' ? null : Number(e.target.value))
+                  }
+                  style={{
+                    padding: '6px 10px',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    fontSize: '13px',
+                  }}
+                >
+                  <option value="">All Years</option>
+                  {[1, 2, 3, 4].map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {getLevelLabel(lvl)}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedIds.size > 0 && (
+                  <>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      {selectedIds.size} selected —
+                    </span>
+                    <select
+                      value={bulkLevel}
+                      onChange={(e) => setBulkLevel(Number(e.target.value))}
+                      style={{
+                        padding: '6px 10px',
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--text)',
+                        fontSize: '13px',
+                      }}
+                    >
+                      {[1, 2, 3, 4].map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          Set to {getLevelLabel(lvl)}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className={styles.btnPrimary}
+                      onClick={() => void handleBulkPromote()}
+                      disabled={bulkPromoting}
+                      style={{ padding: '6px 14px', fontSize: 13 }}
+                    >
+                      {bulkPromoting ? 'Updating…' : 'Apply'}
+                    </button>
+                    <button
+                      className={styles.btnSecondary}
+                      onClick={() => setSelectedIds(new Set())}
+                      style={{ padding: '6px 10px', fontSize: 13 }}
+                    >
+                      Clear
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {(() => {
+                const students = members.filter((m) => m.role === 'student');
+                const filtered = levelFilter
+                  ? members.filter((m) => (m.level ?? 1) === levelFilter)
+                  : members;
+                const allStudentsSelected =
+                  students.length > 0 && students.every((s) => selectedIds.has(s.userId));
+
+                return (
+                  <table className={styles.submissionTable}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: 32 }}>
+                          <input
+                            type="checkbox"
+                            checked={allStudentsSelected}
+                            onChange={() => toggleSelectAll(students)}
+                            title="Select all students"
+                          />
+                        </th>
+                        <th>GitHub Login</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Academic Year</th>
+                        <th>Joined</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((member) => {
+                        const lvl = member.level ?? 1;
+                        const badgeClass =
+                          styles[`levelBadge${getLevelBadgeSuffix(lvl)}`] ?? styles.levelBadge1;
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.role === 'student' && (
+                                <input
+                                  type="checkbox"
+                                  checked={selectedIds.has(member.userId)}
+                                  onChange={() => toggleSelect(member.userId)}
+                                />
+                              )}
+                            </td>
+                            <td className={styles.mono}>@{member.githubLogin}</td>
+                            <td>{member.username}</td>
+                            <td>
+                              <span className={`${styles.roleBadge} ${roleClass(member.role)}`}>
+                                {member.role}
+                              </span>
+                            </td>
+                            <td>
+                              {member.role === 'student' ? (
+                                <span className={`${styles.levelBadge} ${badgeClass}`}>
+                                  {getLevelLabel(lvl)}
+                                </span>
+                              ) : (
+                                <span className={styles.muted}>—</span>
+                              )}
+                            </td>
+                            <td className={styles.mono}>
+                              {new Date(member.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </td>
+                            <td style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              {member.role === 'student' && lvl < MAX_LEVEL && (
+                                <button
+                                  className={styles.btnPromote}
+                                  onClick={() => void handlePromote(member.userId)}
+                                  disabled={promotingId === member.userId}
+                                  title={`Promote to ${getLevelLabel(lvl + 1)}`}
+                                >
+                                  {promotingId === member.userId ? '…' : `↑ Year ${lvl + 1}`}
+                                </button>
+                              )}
+                              {member.role !== 'instructor' && (
+                                <button
+                                  className={styles.btnRemoveRow}
+                                  onClick={() => void handleRemove(member.userId)}
+                                  disabled={removingId === member.userId}
+                                  title="Remove member"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
                       })}
-                    </td>
-                    <td style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      {member.role === 'student' && (member.level ?? 1) < 2 && (
-                        <button
-                          className={styles.btnPromote}
-                          onClick={() => void handlePromote(member.userId)}
-                          disabled={promotingId === member.userId}
-                          title="Promote to Level 2"
-                        >
-                          {promotingId === member.userId ? '…' : 'Promote →'}
-                        </button>
-                      )}
-                      {member.role !== 'instructor' && (
-                        <button
-                          className={styles.btnRemoveRow}
-                          onClick={() => void handleRemove(member.userId)}
-                          disabled={removingId === member.userId}
-                          title="Remove member"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </>
           )}
         </div>
       )}
