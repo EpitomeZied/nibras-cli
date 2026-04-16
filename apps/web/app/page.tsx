@@ -31,6 +31,25 @@ function AuthBanner() {
   );
 }
 
+const heroProofs = [
+  { label: 'courses launched', value: '12' },
+  { label: 'student repos synced', value: '148' },
+  { label: 'avg setup time', value: '< 5 min' },
+];
+
+const blueprintSections = [
+  { title: 'Orientation', detail: 'setup + repo access' },
+  { title: 'Milestone 01', detail: 'cli submission flow' },
+  { title: 'Milestone 02', detail: 'pair review + rubric' },
+  { title: 'Final Sprint', detail: 'ship and grade' },
+];
+
+const livePipeline = [
+  { student: 'Ahmed K.', status: 'Verified', score: '94/100' },
+  { student: 'Sara L.', status: 'Running', score: 'Queued' },
+  { student: 'Nour M.', status: 'Needs review', score: '41/100' },
+];
+
 export default function HomePage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -66,15 +85,12 @@ export default function HomePage() {
         <AuthBanner />
       </Suspense>
 
-      {/* Animated orbs */}
-      <div className={`${styles.orb} ${styles.orb1}`} />
-      <div className={`${styles.orb} ${styles.orb2}`} />
-      <div className={`${styles.orb} ${styles.orb3}`} />
+      <div className={`${styles.glow} ${styles.glowLeft}`} aria-hidden="true" />
+      <div className={`${styles.glow} ${styles.glowRight}`} aria-hidden="true" />
+      <div className={`${styles.glow} ${styles.glowBottom}`} aria-hidden="true" />
+      <div className={styles.grid} aria-hidden="true" />
+      <div className={styles.noise} aria-hidden="true" />
 
-      {/* Dot grid */}
-      <div className={styles.grid} />
-
-      {/* ── Top nav ─────────────────────────────────────────────────────────── */}
       <nav className={styles.nav}>
         <div className={styles.navLogo}>
           <NibrasLogo variant="inverse" width={110} priority />
@@ -100,169 +116,173 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <div className={styles.hero}>
-        <div className={styles.heroBadge}>
-          <span className={styles.badgeDot} />
-          Early Access · Built for Educators
-        </div>
-
-        <h1 className={styles.headline}>
-          <span className={styles.headlineBright}>Run your coding course</span>
-          <span className={styles.headlineGrad}>like a real dev team.</span>
-          <span className={styles.headlineMuted}>Without the chaos.</span>
-        </h1>
-
-        <p className={styles.sub}>
-          Nibras brings GitHub-native submissions, automated grading, and live student progress into
-          one smooth workflow — so you spend less time managing and more time teaching.
-        </p>
-
-        <div className={styles.heroCtas}>
-          <button
-            className={styles.btnHeroPrimary}
-            onClick={() => void handleSignIn()}
-            disabled={submitting}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-            {submitting ? 'Connecting…' : 'Get started free'}
-          </button>
-          <a href="#how-it-works" className={styles.btnHeroGhost}>
-            See how it works →
-          </a>
-        </div>
-      </div>
-
-      {/* ── Product UI Mockup ────────────────────────────────────────────────── */}
-      <div className={styles.productMockupWrap}>
-        <div className={styles.productMockup}>
-          {/* Browser-like title bar */}
-          <div className={styles.mockupBar}>
-            <span className={styles.mockupDot} style={{ background: '#ff5f57' }} />
-            <span className={styles.mockupDot} style={{ background: '#febc2e' }} />
-            <span className={styles.mockupDot} style={{ background: '#28c840' }} />
-            <span className={styles.mockupUrl}>nibras.app/instructor/courses</span>
+      <section className={styles.heroSection}>
+        <div className={styles.heroCopy}>
+          <div className={styles.heroBadge}>
+            <span className={styles.badgeDot} />
+            Beta • Structured for serious coding classrooms
           </div>
 
-          {/* App body */}
-          <div className={styles.mockupBody}>
-            {/* Sidebar */}
-            <div className={styles.mockupSidebar}>
-              {[
-                { label: 'Dashboard', active: false },
-                { label: 'My Courses', active: true },
-                { label: 'Submissions', active: false },
-                { label: 'Students', active: false },
-                { label: 'Settings', active: false },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className={`${styles.mockupSidebarItem}${item.active ? ` ${styles.active}` : ''}`}
-                >
-                  <span className={styles.mockupSidebarDot} />
-                  {item.label}
-                </div>
-              ))}
+          <h1 className={styles.headline}>
+            Other tools collect submissions.
+            <span className={styles.headlineAccent}> Nibras runs the whole course.</span>
+          </h1>
+
+          <p className={styles.sub}>
+            Build projects, onboard students, track GitHub repos, and review AI-assisted grading in
+            one clean workflow that feels closer to a product team than a spreadsheet.
+          </p>
+
+          <div className={styles.heroCtas}>
+            <button
+              className={styles.btnHeroPrimary}
+              onClick={() => void handleSignIn()}
+              disabled={submitting}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+              {submitting ? 'Connecting…' : 'Start with GitHub'}
+            </button>
+            <a href="#how-it-works" className={styles.btnHeroGhost}>
+              See the workflow
+            </a>
+          </div>
+
+          <div className={styles.heroProofs}>
+            {heroProofs.map((proof) => (
+              <div key={proof.label} className={styles.heroProofCard}>
+                <span className={styles.heroProofValue}>{proof.value}</span>
+                <span className={styles.heroProofLabel}>{proof.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.heroVisual}>
+          <div className={styles.floatingCard}>
+            <span className={styles.floatingCardLabel}>AI review</span>
+            <strong>15 submissions ready for instructor check</strong>
+          </div>
+
+          <div className={`${styles.floatingCard} ${styles.floatingCardSecondary}`}>
+            <span className={styles.floatingCardLabel}>Current sprint</span>
+            <strong>Week 4 goes live in 03:12:09</strong>
+          </div>
+
+          <div className={styles.productFrame}>
+            <div className={styles.productTopbar}>
+              <div className={styles.windowDots}>
+                <span className={styles.windowDot} style={{ background: '#fb7185' }} />
+                <span className={styles.windowDot} style={{ background: '#fbbf24' }} />
+                <span className={styles.windowDot} style={{ background: '#34d399' }} />
+              </div>
+              <span className={styles.productUrl}>nibras.app/courses/cs101</span>
             </div>
 
-            {/* Main content */}
-            <div className={styles.mockupContent}>
-              <div className={styles.mockupHeader}>
-                <h3 className={styles.mockupTitle}>CS101 — Intro to Programming</h3>
-                <span className={styles.mockupBadge}>Active</span>
-              </div>
-
-              {/* Stats cards */}
-              <div className={styles.mockupCards}>
-                {[
-                  { label: 'Students', value: '32', sub: '↑ 4 this week' },
-                  { label: 'Submissions', value: '148', sub: '↑ 12 today' },
-                  { label: 'Avg. Score', value: '87%', sub: '↑ 3% vs last' },
-                ].map((card) => (
-                  <div key={card.label} className={styles.mockupCard}>
-                    <span className={styles.mockupCardLabel}>{card.label}</span>
-                    <span className={styles.mockupCardValue}>{card.value}</span>
-                    <span className={styles.mockupCardSub}>{card.sub}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Submissions table */}
-              <div className={styles.mockupTable}>
-                <div className={`${styles.mockupTableRow} ${styles.head}`}>
-                  <span>Student</span>
-                  <span>Project</span>
-                  <span>Status</span>
-                  <span>Score</span>
+            <div className={styles.productBody}>
+              <aside className={styles.productSidebar}>
+                <span className={styles.panelEyebrow}>Course Blueprint</span>
+                <h3 className={styles.panelTitle}>Intro to Programming</h3>
+                <div className={styles.blueprintList}>
+                  {blueprintSections.map((section) => (
+                    <div key={section.title} className={styles.blueprintItem}>
+                      <span className={styles.blueprintStep} />
+                      <div>
+                        <strong>{section.title}</strong>
+                        <span>{section.detail}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                {[
-                  {
-                    student: 'Ahmed K.',
-                    project: 'Milestone 3',
-                    status: 'passed',
-                    score: '94/100',
-                  },
-                  { student: 'Sara L.', project: 'Milestone 3', status: 'pending', score: '—' },
-                  { student: 'Omar B.', project: 'Milestone 2', status: 'passed', score: '88/100' },
-                  { student: 'Nour M.', project: 'Milestone 3', status: 'failed', score: '41/100' },
-                ].map((row) => (
-                  <div key={row.student} className={styles.mockupTableRow}>
-                    <span style={{ color: '#fafafa', fontWeight: 600 }}>{row.student}</span>
-                    <span style={{ color: 'rgba(161,161,170,0.6)', fontSize: '12px' }}>
-                      {row.project}
-                    </span>
-                    <span
-                      className={`${styles.mockupStatus} ${styles[row.status as keyof typeof styles]}`}
-                    >
-                      <svg
-                        width="6"
-                        height="6"
-                        viewBox="0 0 6 6"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <circle cx="3" cy="3" r="3" />
-                      </svg>
-                      {row.status}
-                    </span>
-                    <span style={{ color: 'rgba(161,161,170,0.7)', fontSize: '12px' }}>
-                      {row.score}
-                    </span>
+              </aside>
+
+              <div className={styles.productMain}>
+                <div className={styles.releaseCard}>
+                  <div>
+                    <span className={styles.panelEyebrow}>Release status</span>
+                    <h3 className={styles.releaseTitle}>Milestone 03 is shipping now</h3>
                   </div>
-                ))}
+                  <span className={styles.releaseBadge}>32 students active</span>
+                </div>
+
+                <div className={styles.metricsRow}>
+                  <div className={styles.metricCard}>
+                    <span>Repos connected</span>
+                    <strong>32 / 32</strong>
+                    <small>every student synced</small>
+                  </div>
+                  <div className={styles.metricCard}>
+                    <span>Auto-grade coverage</span>
+                    <strong>87%</strong>
+                    <small>review only edge cases</small>
+                  </div>
+                  <div className={styles.metricCard}>
+                    <span>Pending feedback</span>
+                    <strong>4</strong>
+                    <small>needs instructor eyes</small>
+                  </div>
+                </div>
+
+                <div className={styles.pipelineCard}>
+                  <div className={styles.pipelineHeader}>
+                    <span className={styles.panelEyebrow}>Live pipeline</span>
+                    <span className={styles.pipelineStatus}>Realtime sync</span>
+                  </div>
+                  <div className={styles.pipelineRows}>
+                    {livePipeline.map((entry) => (
+                      <div key={entry.student} className={styles.pipelineRow}>
+                        <strong>{entry.student}</strong>
+                        <span>{entry.status}</span>
+                        <span>{entry.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.terminalCard}>
+                  <div className={styles.terminalHeader}>
+                    <span className={styles.panelEyebrow}>Student CLI</span>
+                    <span className={styles.terminalPrompt}>~/cs101/milestone-3</span>
+                  </div>
+                  <div className={styles.terminalBody}>
+                    <p>
+                      <span>$</span> nibras submit
+                    </p>
+                    <p>Uploading tracked files...</p>
+                    <p>Running rubric and tests...</p>
+                    <p className={styles.terminalSuccess}>Submission passed · Score 94 / 100</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Trusted bar ──────────────────────────────────────────────────────── */}
       <p className={styles.trustedBar}>
-        Trusted by educators building the next generation of developers
+        Built for instructors who want coursework to feel like a real engineering workflow
       </p>
 
-      {/* ── Stats bar ────────────────────────────────────────────────────────── */}
       <div className={styles.statsBar}>
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>∞</span>
-          <span className={styles.statLabel}>Possibilities unlocked</span>
+          <span className={styles.statNumber}>1</span>
+          <span className={styles.statLabel}>workflow from brief to grade</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>0ms</span>
-          <span className={styles.statLabel}>Manual grading time</span>
+          <span className={styles.statNumber}>5m</span>
+          <span className={styles.statLabel}>student onboarding target</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
           <span className={styles.statNumber}>100%</span>
-          <span className={styles.statLabel}>GitHub-native submissions</span>
+          <span className={styles.statLabel}>GitHub-backed submissions</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>99.9%</span>
-          <span className={styles.statLabel}>Platform uptime</span>
+          <span className={styles.statNumber}>24/7</span>
+          <span className={styles.statLabel}>grading and verification visibility</span>
         </div>
       </div>
 
