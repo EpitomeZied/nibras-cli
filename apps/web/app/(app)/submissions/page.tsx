@@ -17,6 +17,7 @@ type StudentSubmission = {
   submissionType: string;
   submissionValue: string | null;
   notes: string | null;
+  submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
   localTestExitCode: number | null;
@@ -52,9 +53,7 @@ export default function SubmissionsPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>My Submissions</h1>
-          <p className={styles.pageSub}>
-            View, edit, and resubmit all your milestone submissions.
-          </p>
+          <p className={styles.pageSub}>View, edit, and resubmit all your milestone submissions.</p>
         </div>
         <select
           className={styles.filterSelect}
@@ -117,14 +116,12 @@ export default function SubmissionsPage() {
                       </td>
                       <td className={styles.typeCell}>{sub.submissionType}</td>
                       <td>
-                        <span
-                          className={`${styles.statusBadge} ${getStatusClass(sub.status)}`}
-                        >
+                        <span className={`${styles.statusBadge} ${getStatusClass(sub.status)}`}>
                           {STATUS_LABELS[sub.status] ?? sub.status.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td className={styles.mono}>
-                        {new Date(sub.createdAt).toLocaleDateString('en-US', {
+                        {new Date(sub.submittedAt || sub.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',

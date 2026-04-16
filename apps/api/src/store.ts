@@ -1226,7 +1226,11 @@ export class FileStore implements AppStore {
     opts?: PaginationOpts
   ): Promise<SubmissionRecord[]> {
     const data = this.read(_apiBaseUrl);
-    let results = data.submissions.filter((s) => s.userId === userId);
+    let results = data.submissions
+      .filter((s) => s.userId === userId)
+      .sort((left, right) =>
+        (right.submittedAt || right.createdAt).localeCompare(left.submittedAt || left.createdAt)
+      );
     if (opts?.offset) results = results.slice(opts.offset);
     if (opts?.limit) results = results.slice(0, opts.limit);
     return results;
@@ -2198,13 +2202,37 @@ export class FileStore implements AppStore {
     if (!submission) {
       return null;
     }
-    if (payload.submissionType !== undefined) submission.submissionType = payload.submissionType;
-    if (payload.submissionValue !== undefined) submission.submissionValue = payload.submissionValue;
-    if (payload.notes !== undefined) submission.notes = payload.notes;
-    if (payload.repoUrl !== undefined) submission.repoUrl = payload.repoUrl;
-    if (payload.branch !== undefined) submission.branch = payload.branch;
-    if (payload.commitSha !== undefined) submission.commitSha = payload.commitSha;
-    submission.updatedAt = nowIso();
+    const nextSubmissionType = payload.submissionType ?? submission.submissionType;
+    const nextSubmissionValue = payload.submissionValue ?? submission.submissionValue ?? '';
+    const nextBranch = payload.branch || submission.branch || 'main';
+    const nextRepoUrl =
+      nextSubmissionType === 'github'
+        ? payload.repoUrl || nextSubmissionValue || submission.repoUrl
+        : nextSubmissionValue || submission.repoUrl;
+    const nextCommitSha =
+      payload.commitSha && payload.commitSha.trim()
+        ? payload.commitSha.trim()
+        : nextSubmissionType === 'github'
+          ? `github-pending-${randomUUID().slice(0, 8)}`
+          : `manual-${randomUUID().slice(0, 8)}`;
+    const nextStatus = nextSubmissionType === 'github' ? 'running' : 'needs_review';
+    const nextSummary =
+      nextSubmissionType === 'github'
+        ? 'GitHub submission updated. Waiting for webhook activity.'
+        : 'Submission updated and queued for instructor review.';
+    const submittedAt = nowIso();
+
+    submission.submissionType = nextSubmissionType;
+    submission.submissionValue = nextSubmissionValue;
+    submission.notes = payload.notes ?? submission.notes;
+    submission.repoUrl = nextRepoUrl;
+    submission.branch = nextBranch;
+    submission.commitSha = nextCommitSha;
+    submission.status = nextStatus;
+    submission.summary = nextSummary;
+    submission.submittedAt = submittedAt;
+    submission.localTestExitCode = null;
+    submission.updatedAt = submittedAt;
     data.activity.unshift(
       makeActivityRecord({
         actorUserId: userId,
@@ -2214,7 +2242,7 @@ export class FileStore implements AppStore {
         milestoneId: submission.milestoneId,
         submissionId,
         action: 'submission.updated',
-        summary: 'Submission details were updated.',
+        summary: 'Submission details were updated and resubmitted.',
       })
     );
     this.write(data);

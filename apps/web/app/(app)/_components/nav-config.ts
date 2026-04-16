@@ -16,6 +16,11 @@ export const appNavItems: AppNavItem[] = [
     description: 'Manage submissions, progress, and reviews.',
   },
   {
+    href: '/submissions',
+    label: 'Submissions',
+    description: 'Review, edit, and resubmit your milestone work.',
+  },
+  {
     href: '/instructor',
     label: 'Instructor',
     description: 'Manage courses, projects, and review submissions.',
@@ -35,6 +40,10 @@ export const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/projects': {
     title: 'Projects',
     subtitle: 'Review milestones, submissions, and grading details.',
+  },
+  '/submissions': {
+    title: 'Submissions',
+    subtitle: 'Review, edit, and resubmit your milestone work.',
   },
   '/instructor': {
     title: 'Instructor',

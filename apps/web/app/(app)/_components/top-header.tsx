@@ -19,6 +19,7 @@ type ShellSessionUser = {
 
 const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard', adminOnly: false },
+  { label: 'Submissions', href: '/submissions', adminOnly: false },
   { label: 'Courses', href: '/instructor', adminOnly: true },
   { label: 'Projects', href: '/projects', adminOnly: false },
   { label: 'Settings', href: '/settings', adminOnly: false },

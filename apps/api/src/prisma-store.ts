@@ -2687,16 +2687,68 @@ export class PrismaStore implements AppStore {
     }>
   ): Promise<SubmissionRecord | null> {
     await this.seed(apiBaseUrl);
+    const existing = await this.prisma.submissionAttempt.findUnique({
+      where: { id: submissionId },
+    });
+    if (!existing) {
+      return null;
+    }
+
+    const nextSubmissionType = payload.submissionType ?? existing.submissionType;
+    const nextSubmissionValue = payload.submissionValue ?? existing.submissionValue ?? '';
+    const nextBranch = payload.branch || existing.branch || 'main';
+    const nextRepoUrl =
+      nextSubmissionType === 'github'
+        ? payload.repoUrl || nextSubmissionValue || existing.repoUrl
+        : nextSubmissionValue || existing.repoUrl;
+    const nextCommitSha =
+      payload.commitSha && payload.commitSha.trim()
+        ? payload.commitSha.trim()
+        : nextSubmissionType === 'github'
+          ? `github-pending-${randomUUID().slice(0, 8)}`
+          : `manual-${randomUUID().slice(0, 8)}`;
+    const nextStatus =
+      nextSubmissionType === 'github' ? SubmissionStatus.running : SubmissionStatus.needs_review;
+    const nextSummary =
+      nextSubmissionType === 'github'
+        ? 'GitHub submission updated. Waiting for webhook activity.'
+        : 'Submission updated and queued for instructor review.';
+    const submittedAt = new Date();
+
+    if (nextSubmissionType === 'github') {
+      const parsedRepo = parseGitHubRepoUrl(nextRepoUrl);
+      if (parsedRepo) {
+        await this.prisma.userProjectRepo.update({
+          where: {
+            userId_projectId: {
+              userId: existing.userId,
+              projectId: existing.projectId,
+            },
+          },
+          data: {
+            owner: parsedRepo.owner,
+            name: parsedRepo.name,
+            cloneUrl: nextRepoUrl,
+            defaultBranch: nextBranch,
+          },
+        });
+      }
+    }
+
     const updated = await this.prisma.submissionAttempt
       .update({
         where: { id: submissionId },
         data: {
-          submissionType: payload.submissionType as TrackingSubmissionType | undefined,
-          submissionValue: payload.submissionValue,
-          notes: payload.notes,
-          repoUrl: payload.repoUrl,
-          branch: payload.branch,
-          commitSha: payload.commitSha,
+          submissionType: nextSubmissionType as TrackingSubmissionType,
+          submissionValue: nextSubmissionValue,
+          notes: payload.notes ?? existing.notes,
+          repoUrl: nextRepoUrl,
+          branch: nextBranch,
+          commitSha: nextCommitSha,
+          status: nextStatus,
+          summary: nextSummary,
+          submittedAt,
+          localTestExitCode: null,
         },
         include: { project: true },
       })
@@ -2998,7 +3050,7 @@ export class PrismaStore implements AppStore {
     const rows = await this.prisma.submissionAttempt.findMany({
       where: { userId },
       include: { project: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
       take: opts?.limit,
       skip: opts?.offset,
     });

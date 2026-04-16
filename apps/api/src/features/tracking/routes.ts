@@ -657,6 +657,20 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
         reply.code(403).send(Errors.forbidden());
         return;
       }
+      const canManageExistingProject = project ? canManageProject(auth, project) : false;
+      if (
+        existing.userId === auth.user.id &&
+        auth.user.systemRole !== 'admin' &&
+        !canManageExistingProject
+      ) {
+        const review = await store.getTrackingReview(requestBaseUrl(request), params.submissionId);
+        if (review && (review.status === 'approved' || review.status === 'graded')) {
+          reply
+            .code(422)
+            .send(Errors.validation('Approved submissions can no longer be edited.'));
+          return;
+        }
+      }
       const payload = UpdateTrackingSubmissionRequestSchema.parse(request.body);
       const updated = await store.updateTrackingSubmission(
         requestBaseUrl(request),

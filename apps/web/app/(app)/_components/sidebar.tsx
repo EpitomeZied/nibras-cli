@@ -43,6 +43,23 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  Submissions: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M4 2.5h6l2 2V13a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3 13V4a1.5 1.5 0 0 1 1-1.42Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 2.5V5h2.5M5.5 8h5M5.5 10.5h5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   Instructor: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.3" />

@@ -2,10 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type {
-  GitHubRepositoryValidateResponse,
-  TrackingSubmissionType,
-} from '@nibras/contracts';
+import type { GitHubRepositoryValidateResponse, TrackingSubmissionType } from '@nibras/contracts';
 import { apiFetch } from '../../../lib/session';
 import {
   canSubmitSubmission,
@@ -29,6 +26,7 @@ type Submission = {
   submissionType: string;
   submissionValue: string | null;
   notes: string | null;
+  submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
   localTestExitCode: number | null;
@@ -110,18 +108,46 @@ async function loadGitHubStatus(): Promise<GitHubStatus> {
     const githubLogin = user.githubLogin ?? '';
 
     if (!githubLinked || githubAppInstalled) {
-      return { available: true, githubLinked, githubAppInstalled, githubLogin, installUrl: '', statusMessage: '' };
+      return {
+        available: true,
+        githubLinked,
+        githubAppInstalled,
+        githubLogin,
+        installUrl: '',
+        statusMessage: '',
+      };
     }
 
     try {
       const installRes = await apiFetch('/v1/github/install-url', { auth: true });
       if (!installRes.ok) {
-        return { available: true, githubLinked, githubAppInstalled, githubLogin, installUrl: '', statusMessage: 'GitHub App install link unavailable.' };
+        return {
+          available: true,
+          githubLinked,
+          githubAppInstalled,
+          githubLogin,
+          installUrl: '',
+          statusMessage: 'GitHub App install link unavailable.',
+        };
       }
       const installPayload = (await installRes.json()) as { installUrl?: string };
-      return { available: true, githubLinked, githubAppInstalled, githubLogin, installUrl: installPayload.installUrl ?? '', statusMessage: '' };
+      return {
+        available: true,
+        githubLinked,
+        githubAppInstalled,
+        githubLogin,
+        installUrl: installPayload.installUrl ?? '',
+        statusMessage: '',
+      };
     } catch {
-      return { available: true, githubLinked, githubAppInstalled, githubLogin, installUrl: '', statusMessage: 'GitHub App install link unavailable.' };
+      return {
+        available: true,
+        githubLinked,
+        githubAppInstalled,
+        githubLogin,
+        installUrl: '',
+        statusMessage: 'GitHub App install link unavailable.',
+      };
     }
   } catch {
     return fallback('GitHub status is temporarily unavailable.');
@@ -144,8 +170,8 @@ function EditForm({
   );
   const [submissionValue, setSubmissionValue] = useState(
     submission.submissionType === 'github'
-      ? (submission.repoUrl || submission.submissionValue || '')
-      : (submission.submissionValue || '')
+      ? submission.repoUrl || submission.submissionValue || ''
+      : submission.submissionValue || ''
   );
   const [notes, setNotes] = useState(submission.notes ?? '');
   const [submitting, setSubmitting] = useState(false);
@@ -179,25 +205,47 @@ function EditForm({
           : styles.cardNeutral;
 
   const repoStatusText = useMemo(() => {
-    if (!githubStatus.available) return githubStatus.statusMessage || 'GitHub status is temporarily unavailable.';
-    if (!githubStatus.githubLinked) return 'Connect your GitHub account before verifying a repository.';
+    if (!githubStatus.available)
+      return githubStatus.statusMessage || 'GitHub status is temporarily unavailable.';
+    if (!githubStatus.githubLinked)
+      return 'Connect your GitHub account before verifying a repository.';
     if (repoValidationState === 'checking') return 'Checking the repository on GitHub…';
-    if (repoValidationState === 'valid') return 'Repository verified. This is the repo that will be submitted.';
-    if (repoValidationState === 'invalid' || repoValidationState === 'unavailable') return repoValidationMessage;
+    if (repoValidationState === 'valid')
+      return 'Repository verified. This is the repo that will be submitted.';
+    if (repoValidationState === 'invalid' || repoValidationState === 'unavailable')
+      return repoValidationMessage;
     return 'Verify the repository before saving changes.';
   }, [githubStatus, repoValidationMessage, repoValidationState]);
 
   const trackingCard = useMemo(() => {
     if (!githubStatus.available) {
-      return { tone: styles.cardWarning, title: 'GitHub status unavailable', body: githubStatus.statusMessage || 'GitHub submissions are blocked until your account status can be checked.' };
+      return {
+        tone: styles.cardWarning,
+        title: 'GitHub status unavailable',
+        body:
+          githubStatus.statusMessage ||
+          'GitHub submissions are blocked until your account status can be checked.',
+      };
     }
     if (!githubStatus.githubLinked) {
-      return { tone: styles.cardWarning, title: 'Connect GitHub first', body: 'GitHub repository submission requires a connected GitHub account.' };
+      return {
+        tone: styles.cardWarning,
+        title: 'Connect GitHub first',
+        body: 'GitHub repository submission requires a connected GitHub account.',
+      };
     }
     if (!githubStatus.githubAppInstalled) {
-      return { tone: styles.cardWarning, title: 'Install the GitHub App', body: 'Install the GitHub App before submitting a GitHub repo so pushes can be tracked automatically.' };
+      return {
+        tone: styles.cardWarning,
+        title: 'Install the GitHub App',
+        body: 'Install the GitHub App before submitting a GitHub repo so pushes can be tracked automatically.',
+      };
     }
-    return { tone: styles.cardSuccess, title: 'Automatic tracking is ready', body: 'GitHub App is installed. After you save, pushes to the verified repo will be tracked automatically.' };
+    return {
+      tone: styles.cardSuccess,
+      title: 'Automatic tracking is ready',
+      body: 'GitHub App is installed. After you save, pushes to the verified repo will be tracked automatically.',
+    };
   }, [githubStatus]);
 
   function changeType(nextType: TrackingSubmissionType) {
@@ -225,7 +273,9 @@ function EditForm({
   async function verifyRepository() {
     if (!githubStatus.available) {
       setRepoValidationState('unavailable');
-      setRepoValidationMessage(githubStatus.statusMessage || 'GitHub status is temporarily unavailable.');
+      setRepoValidationMessage(
+        githubStatus.statusMessage || 'GitHub status is temporarily unavailable.'
+      );
       return;
     }
     if (!githubStatus.githubLinked) {
@@ -253,7 +303,11 @@ function EditForm({
         | { error?: string };
       if (!response.ok) {
         setRepoValidationState(response.status >= 500 ? 'unavailable' : 'invalid');
-        setRepoValidationMessage('error' in payload && typeof payload.error === 'string' ? payload.error : 'Repository verification failed.');
+        setRepoValidationMessage(
+          'error' in payload && typeof payload.error === 'string'
+            ? payload.error
+            : 'Repository verification failed.'
+        );
         return;
       }
       const repo = payload as GitHubRepositoryValidateResponse;
@@ -263,7 +317,9 @@ function EditForm({
       setRepoValidationMessage('');
     } catch (error) {
       setRepoValidationState('unavailable');
-      setRepoValidationMessage(error instanceof Error ? error.message : 'Repository verification failed.');
+      setRepoValidationMessage(
+        error instanceof Error ? error.message : 'Repository verification failed.'
+      );
     }
   }
 
@@ -320,7 +376,7 @@ function EditForm({
     <div className={styles.editPanel}>
       <div>
         <h2 className={styles.editPanelTitle}>Edit &amp; Resubmit</h2>
-        <p className={styles.editPanelSub}>Update your submission and save changes.</p>
+        <p className={styles.editPanelSub}>Update your submission and send it back for review.</p>
       </div>
 
       {/* Type tabs */}
@@ -359,7 +415,11 @@ function EditForm({
               <button
                 type="button"
                 className={styles.verifyBtn}
-                disabled={repoValidationState === 'checking' || !githubStatus.available || !githubStatus.githubLinked}
+                disabled={
+                  repoValidationState === 'checking' ||
+                  !githubStatus.available ||
+                  !githubStatus.githubLinked
+                }
                 onClick={() => void verifyRepository()}
               >
                 {repoValidationState === 'checking' ? 'Verifying…' : 'Verify Repo'}
@@ -368,7 +428,9 @@ function EditForm({
           </label>
 
           <div className={`${styles.card} ${repoStatusTone}`}>
-            <strong>{repoValidationState === 'valid' ? 'Repository verified' : 'Repository status'}</strong>
+            <strong>
+              {repoValidationState === 'valid' ? 'Repository verified' : 'Repository status'}
+            </strong>
             <p>{repoStatusText}</p>
           </div>
 
@@ -376,10 +438,22 @@ function EditForm({
             <div className={`${styles.card} ${styles.cardSuccess}`}>
               <strong>Verified repo summary</strong>
               <dl className={styles.summaryGrid}>
-                <div><dt>Repository</dt><dd>{verifiedRepository.fullName}</dd></div>
-                <div><dt>URL</dt><dd>{verifiedRepository.repoUrl}</dd></div>
-                <div><dt>Visibility</dt><dd>{verifiedRepository.visibility}</dd></div>
-                <div><dt>Default branch</dt><dd>{verifiedRepository.defaultBranch}</dd></div>
+                <div>
+                  <dt>Repository</dt>
+                  <dd>{verifiedRepository.fullName}</dd>
+                </div>
+                <div>
+                  <dt>URL</dt>
+                  <dd>{verifiedRepository.repoUrl}</dd>
+                </div>
+                <div>
+                  <dt>Visibility</dt>
+                  <dd>{verifiedRepository.visibility}</dd>
+                </div>
+                <div>
+                  <dt>Default branch</dt>
+                  <dd>{verifiedRepository.defaultBranch}</dd>
+                </div>
               </dl>
             </div>
           )}
@@ -398,7 +472,9 @@ function EditForm({
               </a>
             )}
             {!githubStatus.githubLinked && (
-              <a href="/settings" className={styles.inlineAction}>Open Settings</a>
+              <a href="/settings" className={styles.inlineAction}>
+                Open Settings
+              </a>
             )}
           </div>
         </>
@@ -561,11 +637,14 @@ export default function SubmissionDetailPage({
     );
   }
 
-  const submittedDate = new Date(submission.createdAt).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const submittedDate = new Date(submission.submittedAt || submission.createdAt).toLocaleDateString(
+    'en-US',
+    {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }
+  );
 
   return (
     <main className={styles.page}>
@@ -595,18 +674,21 @@ export default function SubmissionDetailPage({
       <div className={styles.detailGrid}>
         {/* LEFT: submission details + review ───────────────────────── */}
         <div className={styles.detailCol}>
-
           {/* Submission details panel */}
           <div className={styles.panel}>
             <div className={styles.panelHead}>
               <h2 className={styles.panelTitle}>Submission Details</h2>
-              <span className={styles.muted} style={{ fontSize: 12 }}>{submittedDate}</span>
+              <span className={styles.muted} style={{ fontSize: 12 }}>
+                {submittedDate}
+              </span>
             </div>
             <table className={styles.detailTable}>
               <tbody>
                 <tr>
                   <td>Project</td>
-                  <td><strong>{submission.projectKey}</strong></td>
+                  <td>
+                    <strong>{submission.projectKey}</strong>
+                  </td>
                 </tr>
                 <tr>
                   <td>Type</td>
@@ -618,7 +700,12 @@ export default function SubmissionDetailPage({
                       <td>Repository</td>
                       <td>
                         {submission.repoUrl ? (
-                          <a href={submission.repoUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--primary, #3b82f6)', wordBreak: 'break-all' }}>
+                          <a
+                            href={submission.repoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: 'var(--primary, #3b82f6)', wordBreak: 'break-all' }}
+                          >
                             {submission.repoUrl}
                           </a>
                         ) : (
@@ -642,7 +729,12 @@ export default function SubmissionDetailPage({
                   <tr>
                     <td>Link</td>
                     <td>
-                      <a href={submission.submissionValue} target="_blank" rel="noreferrer" style={{ color: 'var(--primary, #3b82f6)', wordBreak: 'break-all' }}>
+                      <a
+                        href={submission.submissionValue}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: 'var(--primary, #3b82f6)', wordBreak: 'break-all' }}
+                      >
                         {submission.submissionValue}
                       </a>
                     </td>
@@ -683,7 +775,15 @@ export default function SubmissionDetailPage({
               <div className={styles.panelHead}>
                 <h2 className={styles.panelTitle}>💬 Your Notes</h2>
               </div>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--text)' }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  lineHeight: 1.75,
+                  whiteSpace: 'pre-wrap',
+                  color: 'var(--text)',
+                }}
+              >
                 {submission.notes}
               </p>
             </div>
@@ -700,7 +800,10 @@ export default function SubmissionDetailPage({
                     fontWeight: 700,
                     padding: '3px 10px',
                     borderRadius: 999,
-                    background: submission.localTestExitCode === 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                    background:
+                      submission.localTestExitCode === 0
+                        ? 'rgba(34,197,94,0.1)'
+                        : 'rgba(239,68,68,0.1)',
                     color: submission.localTestExitCode === 0 ? 'var(--success)' : 'var(--danger)',
                     border: `1px solid ${submission.localTestExitCode === 0 ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
                   }}
@@ -761,7 +864,15 @@ export default function SubmissionDetailPage({
                   >
                     Feedback
                   </p>
-                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.75, whiteSpace: 'pre-wrap', color: 'var(--text)' }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 14,
+                      lineHeight: 1.75,
+                      whiteSpace: 'pre-wrap',
+                      color: 'var(--text)',
+                    }}
+                  >
                     {review.feedback}
                   </p>
                 </div>
@@ -817,7 +928,7 @@ export default function SubmissionDetailPage({
               submission={submission}
               githubStatus={githubStatus}
               onSuccess={() => {
-                showToast('✅ Submission updated successfully!');
+                showToast('Submission updated and resubmitted.');
                 void loadData();
               }}
             />
@@ -827,9 +938,8 @@ export default function SubmissionDetailPage({
               <div>
                 <strong>Submission approved</strong>
                 <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.85, fontWeight: 400 }}>
-                  This submission has been{' '}
-                  {review?.status === 'graded' ? 'graded' : 'approved'} by your instructor.
-                  No further edits are needed.
+                  This submission has been {review?.status === 'graded' ? 'graded' : 'approved'} by
+                  your instructor. No further edits are needed.
                 </p>
               </div>
             </div>
