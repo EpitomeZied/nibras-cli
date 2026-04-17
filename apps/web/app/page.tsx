@@ -7,44 +7,47 @@ import NibrasLogo from './_components/nibras-logo';
 import { discoverApiBaseUrl } from './lib/session';
 import styles from './signin.module.css';
 
-const pillars = [
+const workflowSteps = [
   {
-    title: 'Course Delivery',
-    copy: 'Run publishing, milestones, submissions, and review from one instructor workspace.',
-    badge: 'Core',
+    number: '01',
+    title: 'Blueprint',
+    subtitle: 'Define the structure',
+    body: 'Start from a project template, a team-project setup, or a university program blueprint. Nibras organizes the workflow before the work begins.',
   },
   {
-    title: 'Team Project Operations',
-    copy: 'Create reusable templates, collect role applications, generate teams, and lock rosters cleanly.',
-    badge: 'Early Access',
+    number: '02',
+    title: 'Coordinate',
+    subtitle: 'Set the intent',
+    body: 'Collect role applications, shape team formation, choose tracks, and route petitions and approvals through one coherent system.',
   },
   {
-    title: 'Academic Program Planning',
-    copy: 'Support tracks, petitions, printable sheets, and requirement-aware planning for students.',
-    badge: 'Early Access',
-  },
-  {
-    title: 'CLI + GitHub Infrastructure',
-    copy: 'Keep setup, testing, and submission GitHub-native with a polished terminal workflow.',
-    badge: 'Core',
+    number: '03',
+    title: 'Deliver',
+    subtitle: 'Run the workflow',
+    body: 'Students use the CLI and GitHub flow, instructors review submissions, and planners keep academic progress visible and printable.',
   },
 ];
 
-const teamWorkflow = [
+const capabilities = [
   {
-    step: '01',
-    title: 'Start from a template',
-    copy: 'Instructors define a reusable project blueprint with team size, role structure, and repeatable launch settings.',
+    eyebrow: 'Templates',
+    title: 'Reusable project blueprints',
+    body: 'Define repeatable project structure, delivery mode, team size, and role setup once.',
   },
   {
-    step: '02',
-    title: 'Students rank roles',
-    copy: 'Each student submits a role application with ranked preferences, skills, and availability constraints.',
+    eyebrow: 'Team Formation',
+    title: 'Role applications to locked teams',
+    body: 'Students rank preferences, instructors generate suggestions, and final team rosters are locked cleanly.',
   },
   {
-    step: '03',
-    title: 'Generate and lock teams',
-    copy: 'Nibras previews suggested teams, highlights waitlists, and locks the final roster before shared submissions begin.',
+    eyebrow: 'Planner',
+    title: 'University-style program planning',
+    body: 'Tracks, petitions, approvals, and printable sheets live in one student-facing planning workspace.',
+  },
+  {
+    eyebrow: 'CLI + GitHub',
+    title: 'Still built for real developer workflows',
+    body: 'Setup, testing, and submission stay GitHub-native while the web app handles coordination and review.',
   },
 ];
 
@@ -92,21 +95,20 @@ export default function HomePage() {
         <AuthBanner />
       </Suspense>
 
-      <div className={styles.backdrop} />
-      <div className={styles.grid} />
+      <div className={styles.ambientGlow} />
+      <div className={styles.gridOverlay} />
 
       <nav className={styles.nav}>
-        <div className={styles.navBrand}>
-          <NibrasLogo variant="inverse" width={114} priority />
-          <span className={styles.betaBadge}>Unified Platform</span>
+        <div className={styles.brand}>
+          <NibrasLogo variant="inverse" width={118} priority />
+          <span className={styles.betaPill}>Beta</span>
         </div>
         <div className={styles.navLinks}>
-          <a href="#pillars">Platform</a>
-          <a href="#team-workflow">Team Projects</a>
-          <a href="#planner-workflow">Planner</a>
-          <a href="#cli">CLI</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#transformation">Transformation</a>
+          <a href="#features">Features</a>
           <button
-            className={styles.navButton}
+            className={styles.navAction}
             onClick={() => void handleSignIn()}
             disabled={submitting}
           >
@@ -117,14 +119,14 @@ export default function HomePage() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <span className={styles.heroEyebrow}>Modern Academic Workflows</span>
+          <span className={styles.eyebrow}>Beta • Workflows that organize themselves</span>
           <h1>
-            Run courses, team projects, and university-style planning
-            <span> from one platform.</span>
+            Other tools only track submissions.
+            <span> Nibras designs the workflow.</span>
           </h1>
           <p className={styles.heroText}>
-            Nibras connects project templates, role applications, team formation, academic program
-            planning, GitHub-backed submissions, and a real developer CLI into one coherent system.
+            Project templates, role applications, team formation, and university-style program
+            planning now live in one structured platform built around how courses actually run.
           </p>
 
           <div className={styles.heroActions}>
@@ -133,224 +135,187 @@ export default function HomePage() {
               onClick={() => void handleSignIn()}
               disabled={submitting}
             >
-              {submitting ? 'Connecting…' : 'Open Nibras'}
+              {submitting ? 'Connecting…' : 'Start with GitHub'}
             </button>
-            <a href="#pillars" className={styles.secondaryButton}>
-              Explore features
+            <a href="#features" className={styles.secondaryButton}>
+              Explore platform
             </a>
           </div>
 
-          <div className={styles.heroStats}>
-            <div>
-              <strong>Templates</strong>
-              <span>Reusable project blueprints</span>
-            </div>
-            <div>
-              <strong>Team Ops</strong>
-              <span>Applications to locked rosters</span>
-            </div>
-            <div>
-              <strong>Planner</strong>
-              <span>Tracks, petitions, printable sheets</span>
-            </div>
+          <div className={styles.signalRow}>
+            <span>Project Templates</span>
+            <span>Role Applications</span>
+            <span>Team Formation</span>
+            <span>Program Planner</span>
           </div>
 
-          {error && <p className={styles.errorBox}>{error}</p>}
+          {error ? <p className={styles.errorBox}>{error}</p> : null}
         </div>
 
-        <div className={styles.heroPreview}>
-          <article className={styles.previewCard}>
-            <div className={styles.previewBar}>
+        <div className={styles.heroVisual}>
+          <div className={styles.blueprintCard}>
+            <div className={styles.windowDots}>
               <span />
               <span />
               <span />
             </div>
-            <div className={styles.previewHeader}>
-              <span className={styles.previewBadge}>Template Builder</span>
-              <strong>Capstone Team Project</strong>
-            </div>
-            <div className={styles.previewList}>
-              <div>
-                <span>Delivery mode</span>
-                <strong>Team</strong>
-              </div>
-              <div>
-                <span>Team size</span>
-                <strong>3 students</strong>
-              </div>
-              <div>
-                <span>Roles</span>
-                <strong>Lead, Research, QA</strong>
-              </div>
-            </div>
-          </article>
+            <div className={styles.blueprintShell}>
+              <aside className={styles.leftRail}>
+                <div className={styles.railSection}>
+                  <span className={styles.railLabel}>Blueprint</span>
+                  <strong>Capstone Course Ops</strong>
+                </div>
+                <div className={styles.railList}>
+                  <span className={styles.activeRailItem}>Project Templates</span>
+                  <span>Role Applications</span>
+                  <span>Team Formation</span>
+                  <span>Program Planner</span>
+                  <span>Printable Sheet</span>
+                </div>
+              </aside>
 
-          <article className={styles.previewCard}>
-            <div className={styles.previewHeader}>
-              <span className={styles.previewBadge}>Team Formation</span>
-              <strong>Suggested Teams</strong>
-            </div>
-            <div className={styles.teamPreview}>
-              <div>
-                <strong>Team A</strong>
-                <span>Mariam · Lead</span>
-                <span>Omar · Research</span>
-                <span>Nour · QA</span>
-              </div>
-              <div>
-                <strong>Team B</strong>
-                <span>Hana · Lead</span>
-                <span>Youssef · Research</span>
-                <span>Lina · QA</span>
-              </div>
-            </div>
-          </article>
+              <div className={styles.workspace}>
+                <div className={styles.workspaceHeader}>
+                  <div>
+                    <span className={styles.workspaceEyebrow}>Generated Structure</span>
+                    <h2>Applied Systems Track</h2>
+                  </div>
+                  <span className={styles.statusChip}>Early Access</span>
+                </div>
 
-          <article className={styles.previewCard}>
-            <div className={styles.previewHeader}>
-              <span className={styles.previewBadge}>Program Sheet</span>
-              <strong>Requirement Snapshot</strong>
+                <div className={styles.panelGrid}>
+                  <article className={styles.infoPanel}>
+                    <span className={styles.panelEyebrow}>Template</span>
+                    <strong>Capstone Team Project</strong>
+                    <p>3-person teams • lead / research / QA</p>
+                  </article>
+                  <article className={styles.infoPanel}>
+                    <span className={styles.panelEyebrow}>Formation</span>
+                    <strong>Suggested Teams Ready</strong>
+                    <p>12 applications • 4 teams • 1 waitlist</p>
+                  </article>
+                  <article className={styles.infoPanel}>
+                    <span className={styles.panelEyebrow}>Planner</span>
+                    <strong>Requirement Audit Live</strong>
+                    <p>Track selected • 1 petition pending</p>
+                  </article>
+                </div>
+
+                <div className={styles.docPanel}>
+                  <div className={styles.docHeader}>
+                    <strong>Program Sheet Snapshot</strong>
+                    <span>Generated view</span>
+                  </div>
+                  <div className={styles.docRows}>
+                    <div>
+                      <span>Foundation</span>
+                      <strong>Satisfied</strong>
+                    </div>
+                    <div>
+                      <span>Core</span>
+                      <strong>2 courses left</strong>
+                    </div>
+                    <div>
+                      <span>Petitions</span>
+                      <strong>Pending advisor</strong>
+                    </div>
+                    <div>
+                      <span>Final output</span>
+                      <strong>Printable sheet</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className={styles.sheetPreview}>
-              <div>
-                <span>Foundation</span>
-                <strong>Satisfied</strong>
-              </div>
-              <div>
-                <span>Core</span>
-                <strong>2 courses left</strong>
-              </div>
-              <div>
-                <span>Track</span>
-                <strong>AI Systems</strong>
-              </div>
-              <div>
-                <span>Petitions</span>
-                <strong>1 pending</strong>
-              </div>
-            </div>
-          </article>
+          </div>
         </div>
       </section>
 
-      <section id="pillars" className={styles.section}>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>Product Pillars</span>
-          <h2>Everything Nibras now ships, organized around real workflows.</h2>
+      <section id="how-it-works" className={styles.section}>
+        <div className={styles.sectionIntro}>
+          <span className={styles.eyebrow}>How It Works</span>
+          <h2>From blank workflow to organized delivery.</h2>
           <p>
-            The platform is no longer just a submission dashboard. It now spans reusable project
-            setup, team coordination, and degree planning.
+            The same logic Docinit applies to documentation structure is the right visual direction
+            for Nibras: blueprint first, then execution.
           </p>
         </div>
 
-        <div className={styles.pillarGrid}>
-          {pillars.map((pillar) => (
-            <article key={pillar.title} className={styles.pillarCard}>
-              <div className={styles.pillarTop}>
-                <strong>{pillar.title}</strong>
-                <span>{pillar.badge}</span>
-              </div>
-              <p>{pillar.copy}</p>
+        <div className={styles.stepsGrid}>
+          {workflowSteps.map((step) => (
+            <article key={step.number} className={styles.stepCard}>
+              <span className={styles.stepNumber}>{step.number}</span>
+              <h3>{step.title}</h3>
+              <strong>{step.subtitle}</strong>
+              <p>{step.body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section id="team-workflow" className={styles.section}>
-        <div className={styles.splitSection}>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionEyebrow}>Team Project Operations</span>
-            <h2>From reusable template to locked team roster.</h2>
-            <p>
-              Templates define the structure. Students rank roles. Instructors generate previews,
-              inspect the result, and lock teams before final work begins.
-            </p>
-          </div>
+      <section id="transformation" className={styles.section}>
+        <div className={styles.sectionIntro}>
+          <span className={styles.eyebrow}>Transformation</span>
+          <h2>From scattered operations to a coherent academic system.</h2>
+          <p>
+            Nibras now covers more than submissions. The UI should make the before-and-after
+            obvious.
+          </p>
+        </div>
 
-          <div className={styles.workflowList}>
-            {teamWorkflow.map((item) => (
-              <article key={item.step} className={styles.workflowCard}>
-                <span>{item.step}</span>
-                <strong>{item.title}</strong>
-                <p>{item.copy}</p>
-              </article>
-            ))}
-          </div>
+        <div className={styles.compareGrid}>
+          <article className={styles.compareCard}>
+            <span className={styles.compareLabel}>Before</span>
+            <strong>Course ops scattered across tools</strong>
+            <ul>
+              <li>Templates hidden inside course setup</li>
+              <li>Team applications feel bolted onto submissions</li>
+              <li>Program planning lives outside the main product story</li>
+              <li>Navigation mixes unrelated workflows together</li>
+            </ul>
+          </article>
+
+          <article className={`${styles.compareCard} ${styles.compareCardAccent}`}>
+            <span className={styles.compareLabel}>After</span>
+            <strong>Blueprint-driven academic workflows</strong>
+            <ul>
+              <li>Templates are first-class reusable blueprints</li>
+              <li>Role applications lead naturally into team formation</li>
+              <li>Planner, tracks, petitions, and printable sheets are visible</li>
+              <li>Role-based workspaces organize the app around real jobs</li>
+            </ul>
+          </article>
         </div>
       </section>
 
-      <section id="planner-workflow" className={styles.section}>
-        <div className={styles.splitSection}>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionEyebrow}>Academic Program Planning</span>
-            <h2>Tracks, petitions, approvals, and printable sheets in one student planner.</h2>
-            <p>
-              Students can enroll in a program, choose tracks when eligible, manage planned courses,
-              and produce a clear requirement-aware record for advisor review.
-            </p>
-          </div>
-
-          <div className={styles.auditCard}>
-            <div className={styles.auditTop}>
-              <strong>Planner Overview</strong>
-              <span>Early Access</span>
-            </div>
-            <div className={styles.auditGrid}>
-              <div>
-                <span>Track</span>
-                <strong>Selected</strong>
-              </div>
-              <div>
-                <span>Petitions</span>
-                <strong>1 pending</strong>
-              </div>
-              <div>
-                <span>Approvals</span>
-                <strong>Advisor ready</strong>
-              </div>
-              <div>
-                <span>Printable sheet</span>
-                <strong>Snapshot available</strong>
-              </div>
-            </div>
-            <p>
-              Requirement groups, petitions, and approvals stay connected instead of living in
-              separate spreadsheets or advisor email threads.
-            </p>
-          </div>
+      <section id="features" className={styles.section}>
+        <div className={styles.sectionIntro}>
+          <span className={styles.eyebrow}>Everything You Need</span>
+          <h2>Four product areas, one design language.</h2>
+          <p>
+            The UI is now organized around the actual shipped feature surface instead of the older
+            grading-only story.
+          </p>
         </div>
-      </section>
 
-      <section id="cli" className={styles.section}>
-        <div className={styles.splitSection}>
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionEyebrow}>CLI + GitHub Foundation</span>
-            <h2>The student experience still feels like developer tooling.</h2>
-            <p>
-              Setup, testing, and submission remain GitHub-native and CLI-first, while the web app
-              handles planning, review, and coordination workflows around that foundation.
-            </p>
-          </div>
-
-          <div className={styles.cliCard}>
-            <pre>{`$ nibras setup
-$ nibras test
-$ nibras submit
-
-Project template: linked
-Team workflow: ready
-Program planner: synced`}</pre>
-          </div>
+        <div className={styles.featuresGrid}>
+          {capabilities.map((capability) => (
+            <article key={capability.title} className={styles.featureCard}>
+              <span>{capability.eyebrow}</span>
+              <h3>{capability.title}</h3>
+              <p>{capability.body}</p>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className={styles.ctaSection}>
         <div>
-          <span className={styles.sectionEyebrow}>Ready to Organize the Platform?</span>
-          <h2>Open the unified Nibras workspace.</h2>
+          <span className={styles.eyebrow}>Ready To Open Nibras?</span>
+          <h2>Start from the blueprint, not the chaos.</h2>
           <p>
-            Sign in with GitHub to access project templates, team formation tools, the planner, and
-            the instructor workspace.
+            Sign in to access the redesigned platform with grouped navigation, planner workspaces,
+            template flows, and team formation UI.
           </p>
         </div>
         <div className={styles.heroActions}>
@@ -366,21 +331,6 @@ Program planner: synced`}</pre>
           </Link>
         </div>
       </section>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerBrand}>
-          <NibrasLogo variant="inverse" width={108} />
-          <p>
-            Project templates, team formation, and academic planning for modern learning workflows.
-          </p>
-        </div>
-        <div className={styles.footerLinks}>
-          <a href="#pillars">Platform</a>
-          <a href="#team-workflow">Team Projects</a>
-          <a href="#planner-workflow">Planner</a>
-          <a href="#cli">CLI</a>
-        </div>
-      </footer>
     </main>
   );
 }

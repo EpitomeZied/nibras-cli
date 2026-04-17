@@ -1,8 +1,8 @@
 /* ── Page ───────────────────────────────────────────────────────────────────── */
 
 .page {
-  padding: 40px 0;
-  max-width: 1000px;
+  padding: 18px 0 42px;
+  max-width: 1080px;
 }
 
 /* ── Page heading ───────────────────────────────────────────────────────────── */
@@ -10,10 +10,12 @@
 .pageHeader {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-bottom: 24px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 6px;
+  padding: 24px 26px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
 }
 
 .settingsTitle {
@@ -27,16 +29,16 @@
 
 .settingsSubtitle {
   margin: 0;
-  font-size: 13.5px;
-  color: rgba(161, 161, 170, 0.55);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* ── Two-panel layout ───────────────────────────────────────────────────────── */
 
 .settingsWrap {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 40px;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
   align-items: start;
 }
 
@@ -45,17 +47,21 @@
 .settingsNav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   position: sticky;
   top: calc(52px + 20px);
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .settingsNavItem {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 14px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
   font-size: 13.5px;
   font-weight: 500;
   color: rgba(161, 161, 170, 0.65);
@@ -78,8 +84,8 @@
 
 .settingsNavItemActive {
   color: #fafafa;
-  background: rgba(255, 255, 255, 0.05);
-  border-left-color: #22c55e;
+  background: rgba(255, 255, 255, 0.06);
+  border-left-color: rgba(255, 255, 255, 0.82);
   font-weight: 600;
 }
 
@@ -107,15 +113,15 @@
 }
 
 .contentSection {
-  padding-bottom: 32px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 24px 26px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.014));
 }
 
 .contentSection:last-child {
-  border-bottom: none;
   margin-bottom: 0;
-  padding-bottom: 0;
 }
 
 .sectionHeading {
@@ -253,7 +259,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  border-radius: 16px;
   overflow: hidden;
   max-width: 480px;
 }
@@ -326,7 +332,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px;
-  border-radius: 10px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
   max-width: 520px;
@@ -396,7 +402,7 @@
 .manualInstall {
   margin-top: 16px;
   padding: 14px 16px;
-  border-radius: 10px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
@@ -484,7 +490,7 @@
   gap: 24px;
   padding: 14px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  max-width: 520px;
+  max-width: 580px;
 }
 
 .prefRow:last-child {

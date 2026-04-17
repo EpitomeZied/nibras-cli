@@ -5,13 +5,13 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  background: rgba(7, 8, 9, 0.84);
+  background: rgba(7, 8, 9, 0.78);
 }
 
 .inner {
-  max-width: 1320px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 18px 32px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -70,28 +70,29 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--primary-strong);
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.22);
+  color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .title {
   margin: 0;
-  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  font-size: clamp(1.12rem, 1.7vw, 1.4rem);
   line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
 .subtitle {
   margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  max-width: 64ch;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  max-width: 68ch;
 }
 
 .aside {
@@ -110,9 +111,9 @@
   align-items: center;
   gap: 10px;
   padding: 6px 10px 6px 6px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text);
   min-width: 0;
 }
@@ -165,9 +166,9 @@
   top: calc(100% + 8px);
   right: 0;
   width: 240px;
-  background: #101214;
+  background: #0f1112;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: 18px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   z-index: 80;
