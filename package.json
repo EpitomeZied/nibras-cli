@@ -29,6 +29,7 @@
     "dev:services": "concurrently -k --names api,worker,web \"nodemon --watch apps/api/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run api:dev\\\"\" \"nodemon --watch apps/worker/dist --watch packages/contracts/dist --watch packages/core/dist --watch packages/github/dist --watch packages/grading/dist --ext js,json --signal SIGTERM --exec \\\"npm run worker:dev\\\"\" \"npm run dev -w @nibras/web\"",
     "dev": "npm run dev:bootstrap && concurrently -k \"npm run dev:watch\" \"npm run dev:services\"",
     "web:build": "npm run build -w @nibras/web",
+    "demo:team-projects": "node scripts/team-project-demo.js",
     "manual:preflight": "npm test && npm run web:build",
     "test": "npm run build && node --test test/*.js",
     "lint": "eslint . && prettier --check .",

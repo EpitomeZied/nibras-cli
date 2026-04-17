@@ -126,6 +126,7 @@ async function runVerification(
         },
       },
       userProjectRepo: true,
+      teamProjectRepo: true,
     },
   });
 
@@ -143,7 +144,7 @@ async function runVerification(
   }
 
   // Run the test command in an isolated sandbox (ulimit + optional network namespace).
-  const cloneUrl = attempt.userProjectRepo.cloneUrl;
+  const cloneUrl = attempt.teamProjectRepo?.cloneUrl || attempt.userProjectRepo?.cloneUrl;
   if (!cloneUrl) {
     return {
       exitCode: 1,
@@ -195,6 +196,7 @@ async function runAiGrading(
         include: { releases: { orderBy: { createdAt: 'desc' }, take: 1 } },
       },
       userProjectRepo: true,
+      teamProjectRepo: true,
     },
   });
 
@@ -236,7 +238,7 @@ async function runAiGrading(
   if (!manifestGrading) return null;
   if (manifestGrading.questions.length === 0) return null;
 
-  const cloneUrl = attempt.userProjectRepo.cloneUrl;
+  const cloneUrl = attempt.teamProjectRepo?.cloneUrl || attempt.userProjectRepo?.cloneUrl;
   if (!cloneUrl) return null;
 
   const tmpDir = await mkdtemp(join(tmpdir(), 'nibras-ai-'));

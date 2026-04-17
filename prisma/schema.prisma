@@ -38,6 +38,28 @@ enum DeliveryMode {
   team
 }
 
+enum ProjectTemplateStatus {
+  draft
+  active
+}
+
+enum TeamFormationStatus {
+  not_started
+  application_open
+  team_review
+  teams_locked
+}
+
+enum ProjectRoleApplicationStatus {
+  submitted
+  withdrawn
+}
+
+enum TeamStatus {
+  suggested
+  locked
+}
+
 enum TrackingSubmissionType {
   github
   link
@@ -49,6 +71,86 @@ enum ReviewStatus {
   approved
   changes_requested
   graded
+}
+
+enum ProgramStatus {
+  draft
+  published
+  archived
+}
+
+enum RequirementGroupCategory {
+  foundation
+  core
+  depth
+  elective
+  capstone
+  policy
+}
+
+enum RequirementRuleType {
+  required
+  choose_n
+  elective_pool
+  track_gate
+}
+
+enum StudentProgramStatus {
+  enrolled
+  track_selected
+  submitted_for_advisor
+  advisor_approved
+  department_approved
+}
+
+enum PlannedCourseSourceType {
+  standard
+  transfer
+  petition
+  manual
+}
+
+enum StudentRequirementDecisionStatus {
+  pending
+  satisfied
+  waived
+  petition_pending
+}
+
+enum RequirementDecisionSourceType {
+  planned_course
+  transfer_credit
+  petition
+  waiver
+}
+
+enum PetitionType {
+  transfer_credit
+  substitution
+  waiver
+}
+
+enum PetitionStatus {
+  pending_advisor
+  pending_department
+  approved
+  rejected
+}
+
+enum ApprovalStage {
+  advisor
+  department
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum AcademicTerm {
+  fall
+  spring
 }
 
 enum RepoVisibility {
@@ -78,9 +180,17 @@ model User {
   webSessions       WebSession[]
   userProjectRepos  UserProjectRepo[]
   submissionAttempts SubmissionAttempt[]
+  submittedAttempts SubmissionAttempt[] @relation("SubmissionSubmittedBy")
   auditLogs         AuditLog[]
   reviews           Review[]
   notifications     Notification[]
+  projectRoleApplications ProjectRoleApplication[]
+  teamMembers       TeamMember[]
+  createdTeamFormationRuns TeamFormationRun[]
+  studentPrograms   StudentProgram[]
+  submittedPetitions Petition[]        @relation("ProgramPetitionSubmitter")
+  reviewedPetitions Petition[]         @relation("ProgramPetitionReviewer")
+  reviewedProgramApprovals ProgramApproval[]
 
   @@index([systemRole])
   @@index([yearLevel])
@@ -97,6 +207,7 @@ model Course {
   updatedAt   DateTime           @updatedAt
   memberships CourseMembership[]
   projects    Project[]
+  projectTemplates ProjectTemplate[]
   invites     CourseInvite[]
   auditLogs   AuditLog[]
 }
@@ -126,6 +237,230 @@ model CourseMembership {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, userId])
+}
+
+model Program {
+  id                   String            @id @default(cuid())
+  slug                 String            @unique
+  title                String
+  code                 String
+  academicYear         String
+  totalUnitRequirement Int
+  status               ProgramStatus     @default(draft)
+  activeVersionId      String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  versions             ProgramVersion[]
+  catalogCourses       CatalogCourse[]
+}
+
+model ProgramVersion {
+  id                     String            @id @default(cuid())
+  programId              String
+  versionLabel           String
+  effectiveFrom          DateTime?
+  effectiveTo            DateTime?
+  isActive               Boolean           @default(false)
+  policyText             String            @default("")
+  trackSelectionMinYear  Int               @default(2)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  program                Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  tracks                 Track[]
+  requirementGroups      RequirementGroup[]
+  studentPrograms        StudentProgram[]
+  sheetSnapshots         ProgramSheetSnapshot[]
+
+  @@index([programId, isActive])
+}
+
+model Track {
+  id                  String             @id @default(cuid())
+  programVersionId    String
+  slug                String
+  title               String
+  description         String             @default("")
+  selectionYearStart  Int                @default(2)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  programVersion      ProgramVersion     @relation(fields: [programVersionId], references: [id], onDelete: Cascade)
+  requirementGroups   RequirementGroup[]
+  selectedByStudents  StudentProgram[]
+
+  @@unique([programVersionId, slug])
+}
+
+model CatalogCourse {
+  id                     String               @id @default(cuid())
+  programId              String
+  subjectCode            String
+  catalogNumber          String
+  title                  String
+  defaultUnits           Int
+  department             String
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  program                Program              @relation(fields: [programId], references: [id], onDelete: Cascade)
+  requirementCourses     RequirementCourse[]
+  studentPlannedCourses  StudentPlannedCourse[]
+  originalPetitionLinks  PetitionCourseLink[] @relation("OriginalPetitionCourse")
+  substitutePetitionLinks PetitionCourseLink[] @relation("SubstitutePetitionCourse")
+
+  @@unique([programId, subjectCode, catalogNumber])
+}
+
+model RequirementGroup {
+  id                String                @id @default(cuid())
+  programVersionId  String
+  trackId           String?
+  title             String
+  category          RequirementGroupCategory
+  minUnits          Int                   @default(0)
+  minCourses        Int                   @default(0)
+  notes             String                @default("")
+  sortOrder         Int                   @default(0)
+  noDoubleCount     Boolean               @default(true)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  programVersion    ProgramVersion        @relation(fields: [programVersionId], references: [id], onDelete: Cascade)
+  track             Track?                @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  rules             RequirementRule[]
+  decisions         StudentRequirementDecision[]
+  petitions         Petition[]
+
+  @@index([programVersionId, trackId, sortOrder])
+}
+
+model RequirementRule {
+  id                  String             @id @default(cuid())
+  requirementGroupId  String
+  ruleType            RequirementRuleType
+  pickCount           Int?
+  note                String             @default("")
+  sortOrder           Int                @default(0)
+  requirementGroup    RequirementGroup   @relation(fields: [requirementGroupId], references: [id], onDelete: Cascade)
+  courses             RequirementCourse[]
+
+  @@index([requirementGroupId, sortOrder])
+}
+
+model RequirementCourse {
+  id                 String           @id @default(cuid())
+  requirementRuleId  String
+  catalogCourseId    String
+  requirementRule    RequirementRule  @relation(fields: [requirementRuleId], references: [id], onDelete: Cascade)
+  catalogCourse      CatalogCourse    @relation(fields: [catalogCourseId], references: [id], onDelete: Cascade)
+
+  @@unique([requirementRuleId, catalogCourseId])
+}
+
+model StudentProgram {
+  id              String                       @id @default(cuid())
+  userId          String
+  programVersionId String
+  selectedTrackId String?
+  status          StudentProgramStatus        @default(enrolled)
+  isLocked        Boolean                     @default(false)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programVersion  ProgramVersion              @relation(fields: [programVersionId], references: [id], onDelete: Cascade)
+  selectedTrack   Track?                      @relation(fields: [selectedTrackId], references: [id], onDelete: SetNull)
+  plannedCourses  StudentPlannedCourse[]
+  decisions       StudentRequirementDecision[]
+  petitions       Petition[]
+  approvals       ProgramApproval[]
+  sheetSnapshots  ProgramSheetSnapshot[]
+
+  @@index([userId, programVersionId])
+}
+
+model StudentPlannedCourse {
+  id               String                  @id @default(cuid())
+  studentProgramId String
+  catalogCourseId  String
+  plannedYear      Int
+  plannedTerm      AcademicTerm
+  sourceType       PlannedCourseSourceType @default(standard)
+  note             String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  studentProgram   StudentProgram          @relation(fields: [studentProgramId], references: [id], onDelete: Cascade)
+  catalogCourse    CatalogCourse           @relation(fields: [catalogCourseId], references: [id], onDelete: Cascade)
+
+  @@index([studentProgramId, plannedYear, plannedTerm])
+}
+
+model StudentRequirementDecision {
+  id                String                          @id @default(cuid())
+  studentProgramId  String
+  requirementGroupId String
+  status            StudentRequirementDecisionStatus
+  sourceType        RequirementDecisionSourceType?
+  notes             String?
+  createdAt         DateTime                        @default(now())
+  updatedAt         DateTime                        @updatedAt
+  studentProgram    StudentProgram                  @relation(fields: [studentProgramId], references: [id], onDelete: Cascade)
+  requirementGroup  RequirementGroup                @relation(fields: [requirementGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProgramId, requirementGroupId])
+}
+
+model Petition {
+  id                     String          @id @default(cuid())
+  studentProgramId       String
+  type                   PetitionType
+  status                 PetitionStatus  @default(pending_advisor)
+  justification          String
+  targetRequirementGroupId String?
+  submittedByUserId      String
+  reviewerUserId         String?
+  reviewerNotes          String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  studentProgram         StudentProgram  @relation(fields: [studentProgramId], references: [id], onDelete: Cascade)
+  targetRequirementGroup RequirementGroup? @relation(fields: [targetRequirementGroupId], references: [id], onDelete: SetNull)
+  submittedByUser        User            @relation("ProgramPetitionSubmitter", fields: [submittedByUserId], references: [id], onDelete: Cascade)
+  reviewerUser           User?           @relation("ProgramPetitionReviewer", fields: [reviewerUserId], references: [id], onDelete: SetNull)
+  courseLinks            PetitionCourseLink[]
+}
+
+model PetitionCourseLink {
+  id                       String        @id @default(cuid())
+  petitionId               String
+  originalCatalogCourseId  String?
+  substituteCatalogCourseId String?
+  petition                 Petition      @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  originalCatalogCourse    CatalogCourse? @relation("OriginalPetitionCourse", fields: [originalCatalogCourseId], references: [id], onDelete: SetNull)
+  substituteCatalogCourse  CatalogCourse? @relation("SubstitutePetitionCourse", fields: [substituteCatalogCourseId], references: [id], onDelete: SetNull)
+}
+
+model ProgramApproval {
+  id               String         @id @default(cuid())
+  studentProgramId String
+  stage            ApprovalStage
+  status           ApprovalStatus @default(pending)
+  reviewerUserId   String?
+  notes            String?
+  decidedAt        DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  studentProgram   StudentProgram @relation(fields: [studentProgramId], references: [id], onDelete: Cascade)
+  reviewerUser     User?          @relation(fields: [reviewerUserId], references: [id], onDelete: SetNull)
+
+  @@unique([studentProgramId, stage])
+}
+
+model ProgramSheetSnapshot {
+  id               String         @id @default(cuid())
+  studentProgramId String
+  versionId        String
+  renderedPayload  Json
+  generatedAt      DateTime       @default(now())
+  studentProgram   StudentProgram @relation(fields: [studentProgramId], references: [id], onDelete: Cascade)
+  version          ProgramVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([studentProgramId, generatedAt])
 }
 
 model GithubAccount {
@@ -197,6 +532,7 @@ model Project {
   id               String            @id @default(cuid())
   subjectId        String
   courseId         String?
+  templateId       String?
   slug             String            @unique
   name             String
   defaultBranch    String            @default("main")
@@ -204,17 +540,157 @@ model Project {
   status           ProjectStatus     @default(draft)
   level            Int               @default(1)
   deliveryMode     DeliveryMode      @default(individual)
+  applicationOpenAt DateTime?
+  applicationCloseAt DateTime?
+  teamLockAt       DateTime?
+  teamFormationStatus TeamFormationStatus @default(not_started)
   rubricJson       Json?
   resourcesJson    Json?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   subject          Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   course           Course?           @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  template         ProjectTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
   releases         ProjectRelease[]
   milestones       Milestone[]
   userProjectRepos UserProjectRepo[]
   submissions      SubmissionAttempt[]
+  roleApplications ProjectRoleApplication[]
+  teamFormationRuns TeamFormationRun[]
+  teams            Team[]
   auditLogs        AuditLog[]
+}
+
+model ProjectTemplate {
+  id          String               @id @default(cuid())
+  courseId    String
+  slug        String
+  title       String
+  description String              @default("")
+  deliveryMode DeliveryMode       @default(team)
+  teamSize    Int?
+  status      ProjectTemplateStatus @default(active)
+  rubricJson  Json?
+  resourcesJson Json?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  course      Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  roles       ProjectTemplateRole[]
+  milestones  ProjectTemplateMilestone[]
+  projects    Project[]
+
+  @@unique([courseId, slug])
+}
+
+model ProjectTemplateRole {
+  id         String          @id @default(cuid())
+  templateId String
+  key        String
+  label      String
+  count      Int             @default(1)
+  sortOrder  Int             @default(0)
+  template   ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  preferences ProjectRolePreference[]
+}
+
+model ProjectTemplateMilestone {
+  id          String          @id @default(cuid())
+  templateId  String
+  title       String
+  description String          @default("")
+  order       Int
+  dueAt       DateTime?
+  isFinal     Boolean         @default(false)
+  template    ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, order])
+}
+
+model ProjectRoleApplication {
+  id               String                       @id @default(cuid())
+  projectId        String
+  userId           String
+  statement        String                       @default("")
+  availabilityNote String                       @default("")
+  status           ProjectRoleApplicationStatus @default(submitted)
+  submittedAt      DateTime?
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+  project          Project                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user             User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferences      ProjectRolePreference[]
+
+  @@unique([projectId, userId])
+}
+
+model ProjectRolePreference {
+  id              String                 @id @default(cuid())
+  applicationId   String
+  templateRoleId  String
+  rank            Int
+  application     ProjectRoleApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  templateRole    ProjectTemplateRole    @relation(fields: [templateRoleId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, rank])
+}
+
+model TeamFormationRun {
+  id               String   @id @default(cuid())
+  projectId        String
+  algorithmVersion String
+  configJson       Json
+  resultJson       Json
+  createdByUserId  String
+  createdAt        DateTime @default(now())
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdByUser    User     @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  teams            Team[]
+}
+
+model Team {
+  id             String           @id @default(cuid())
+  projectId      String
+  name           String
+  status         TeamStatus       @default(suggested)
+  formationRunId String?
+  lockedAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  formationRun   TeamFormationRun? @relation(fields: [formationRunId], references: [id], onDelete: SetNull)
+  members        TeamMember[]
+  repo           TeamProjectRepo?
+  submissions    SubmissionAttempt[]
+}
+
+model TeamMember {
+  id         String   @id @default(cuid())
+  teamId      String
+  userId      String
+  roleKey     String
+  roleLabel   String
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+model TeamProjectRepo {
+  id            String         @id @default(cuid())
+  teamId        String         @unique
+  owner         String
+  name          String
+  githubRepoId  String?
+  cloneUrl      String?
+  defaultBranch String
+  visibility    RepoVisibility @default(private)
+  installStatus String         @default("provisioned")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  team          Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submissions   SubmissionAttempt[]
 }
 
 model ProjectRelease {
@@ -268,9 +744,12 @@ model UserProjectRepo {
 model SubmissionAttempt {
   id               String            @id @default(cuid())
   userId           String
+  submittedByUserId String?
   projectId        String
   projectReleaseId String
-  userProjectRepoId String
+  userProjectRepoId String?
+  teamId           String?
+  teamProjectRepoId String?
   milestoneId      String?
   commitSha        String
   repoUrl          String
@@ -285,9 +764,12 @@ model SubmissionAttempt {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submittedByUser  User?             @relation("SubmissionSubmittedBy", fields: [submittedByUserId], references: [id], onDelete: SetNull)
   project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectRelease   ProjectRelease    @relation(fields: [projectReleaseId], references: [id], onDelete: Cascade)
-  userProjectRepo  UserProjectRepo   @relation(fields: [userProjectRepoId], references: [id], onDelete: Cascade)
+  userProjectRepo  UserProjectRepo?  @relation(fields: [userProjectRepoId], references: [id], onDelete: Cascade)
+  team             Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  teamProjectRepo  TeamProjectRepo?  @relation(fields: [teamProjectRepoId], references: [id], onDelete: SetNull)
   milestone        Milestone?        @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   reviews           Review[]
   githubDeliveries  GithubDelivery[]
@@ -300,6 +782,7 @@ model SubmissionAttempt {
   @@index([projectId])
   @@index([status])
   @@index([milestoneId])
+  @@index([teamId])
 }
 
 model Milestone {

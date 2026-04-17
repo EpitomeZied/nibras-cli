@@ -16,6 +16,7 @@ import { registerHostedCliRoutes } from './features/hosted-cli/routes';
 import { registerTrackingRoutes } from './features/tracking/routes';
 import { registerAdminRoutes } from './features/admin/routes';
 import { registerNotificationRoutes } from './features/notifications/routes';
+import { registerProgramRoutes } from './features/programs/routes';
 
 function normalizeOrigin(value: string | undefined): string | null {
   if (!value) {
@@ -111,6 +112,7 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
           { name: 'github', description: 'GitHub App OAuth and webhooks' },
           { name: 'projects', description: 'Project setup and submission' },
           { name: 'tracking', description: 'Courses, milestones, and student progress' },
+          { name: 'programs', description: 'Academic programs, tracks, and program sheets' },
           { name: 'admin', description: 'Admin-only operations' },
           { name: 'system', description: 'Health, readiness, and metrics' },
         ],
@@ -302,6 +304,7 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
   registerGitHubRoutes(app, store, githubConfig);
   registerHostedCliRoutes(app, store, githubConfig);
   registerTrackingRoutes(app, store);
+  registerProgramRoutes(app, store);
   registerAdminRoutes(app, store);
   registerNotificationRoutes(app, store);
 

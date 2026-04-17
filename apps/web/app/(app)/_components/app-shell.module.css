@@ -1,40 +1,70 @@
 .appShell {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #0a0a0a;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 30%),
+    linear-gradient(180deg, #070809 0%, #0b0d10 100%);
+}
+
+.desktopSidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 30;
 }
 
 .mainArea {
   display: flex;
   flex-direction: column;
-  flex: 1;
   min-width: 0;
+  min-height: 100vh;
+}
+
+.mobileSidebar {
+  display: none;
 }
 
 .pageBody {
   flex: 1;
   width: 100%;
+  padding: 28px 0 40px;
 }
-
-/* ── Centered content wrapper ───────────────────────────────────────────── */
 
 .pageInner {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 32px;
   box-sizing: border-box;
 }
 
-@media (max-width: 900px) {
-  .pageInner {
-    padding: 0 24px;
+@media (max-width: 1024px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+
+  .desktopSidebar {
+    display: none;
+  }
+
+  .mobileSidebar {
+    display: block;
+  }
+
+  .pageBody {
+    padding-top: 18px;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .pageInner {
-    padding: 0 16px;
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pageInner {
+    padding: 0 14px;
   }
 }

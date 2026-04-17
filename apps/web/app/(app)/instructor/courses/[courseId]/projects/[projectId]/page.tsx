@@ -124,6 +124,14 @@ export default function ProjectDetailPage({
           </span>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          {project.deliveryMode === 'team' && (
+            <Link
+              href={`/instructor/courses/${courseId}/projects/${projectId}/teams`}
+              className={styles.btnSecondary}
+            >
+              Team Review
+            </Link>
+          )}
           <Link
             href={`/instructor/courses/${courseId}/projects/${projectId}/edit`}
             className={styles.btnSecondary}

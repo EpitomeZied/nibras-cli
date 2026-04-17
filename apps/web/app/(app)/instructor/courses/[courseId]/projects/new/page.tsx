@@ -5,18 +5,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { useFormSubmit } from '../../../../../../lib/use-form-submit';
+import { useFetch } from '../../../../../../lib/use-fetch';
 import { getLevelLabel } from '../../../../../../lib/levels';
 import styles from '../../../../instructor.module.css';
 
 type RubricRow = { criterion: string; maxScore: number };
 type ResourceRow = { label: string; url: string };
+type TemplateOption = { id: string; title: string; teamSize: number | null };
 
 export default function NewProjectPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const router = useRouter();
   const [level, setLevel] = useState(1);
+  const [templateId, setTemplateId] = useState('');
   const [rubric, setRubric] = useState<RubricRow[]>([{ criterion: '', maxScore: 10 }]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
+  const { data: templates } = useFetch<TemplateOption[]>(
+    `/v1/tracking/courses/${courseId}/templates`
+  );
   const { submitting, error, submit } = useFormSubmit({
     url: '/v1/tracking/projects',
     onSuccess: () => router.push(`/instructor/courses/${courseId}`),
@@ -63,6 +69,16 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
       status: 'draft',
       level,
       deliveryMode: form.get('deliveryMode') as string,
+      templateId: templateId || null,
+      applicationOpenAt: form.get('applicationOpenAt')
+        ? new Date(String(form.get('applicationOpenAt'))).toISOString()
+        : null,
+      applicationCloseAt: form.get('applicationCloseAt')
+        ? new Date(String(form.get('applicationCloseAt'))).toISOString()
+        : null,
+      teamLockAt: form.get('teamLockAt')
+        ? new Date(String(form.get('teamLockAt'))).toISOString()
+        : null,
       rubric: rubric
         .filter((row) => row.criterion.trim())
         .map((row) => ({
@@ -127,6 +143,40 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
             <option value="individual">Individual</option>
             <option value="team">Team</option>
           </select>
+        </div>
+
+        {templates && templates.length > 0 && (
+          <div className={styles.formGroup}>
+            <label htmlFor="templateId">Project Template</label>
+            <select
+              id="templateId"
+              value={templateId}
+              onChange={(event) => setTemplateId(event.target.value)}
+            >
+              <option value="">No template</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.title}
+                  {template.teamSize ? ` · ${template.teamSize} students` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className={styles.formGroup}>
+          <label htmlFor="applicationOpenAt">Applications open</label>
+          <input id="applicationOpenAt" name="applicationOpenAt" type="datetime-local" />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="applicationCloseAt">Applications close</label>
+          <input id="applicationCloseAt" name="applicationCloseAt" type="datetime-local" />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label htmlFor="teamLockAt">Team lock date</label>
+          <input id="teamLockAt" name="teamLockAt" type="datetime-local" />
         </div>
 
         {/* Rubric */}

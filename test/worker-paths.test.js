@@ -201,15 +201,23 @@ test('runSandboxed preserves failing command output in logs', async () => {
   assert.match(result.log, /CMake Error: missing target/);
 });
 
-// ── c) Team delivery mode returns 501 ─────────────────────────────────────────
+// ── c) Team delivery mode workflow ────────────────────────────────────────────
 
-test('POST submission to a team-mode milestone returns 501 SERVICE_UNAVAILABLE', async () => {
+test('POST submission to a team-mode milestone returns 422 until teams are locked', async () => {
   const storePath = makeStorePath();
 
-  // Mutate the seeded project to team delivery mode
   const app = buildTestApp(storePath, (data) => {
     const project = data.projects.find((p) => p.id === 'project_cs161_exam1');
-    if (project) project.deliveryMode = 'team';
+    if (project) {
+      project.deliveryMode = 'team';
+      project.teamFormationStatus = 'application_open';
+      project.teamSize = 3;
+      project.teamRoles = [
+        { id: 'role_backend', key: 'backend', label: 'Backend', count: 1, sortOrder: 0 },
+        { id: 'role_frontend', key: 'frontend', label: 'Frontend', count: 1, sortOrder: 1 },
+        { id: 'role_pm', key: 'pm', label: 'Project Manager', count: 1, sortOrder: 2 },
+      ];
+    }
   });
 
   try {
@@ -229,10 +237,87 @@ test('POST submission to a team-mode milestone returns 501 SERVICE_UNAVAILABLE',
         commitSha: 'abc789def012',
       }),
     });
-    assert.equal(res.statusCode, 501, 'should return 501 for team mode');
+    assert.equal(res.statusCode, 422, 'should return 422 before teams are locked');
     const body = res.json();
-    assert.equal(body.code, 'SERVICE_UNAVAILABLE', 'error code should be SERVICE_UNAVAILABLE');
-    assert.ok(body.error.toLowerCase().includes('team'), 'error message should mention "team"');
+    assert.equal(body.code, 'VALIDATION_ERROR');
+    assert.ok(body.error.toLowerCase().includes('locked'));
+  } finally {
+    await app.close();
+  }
+});
+
+test('POST submission to a locked team-mode milestone succeeds for a team member', async () => {
+  const storePath = makeStorePath();
+
+  const app = buildTestApp(storePath, (data) => {
+    const project = data.projects.find((p) => p.id === 'project_cs161_exam1');
+    if (project) {
+      project.deliveryMode = 'team';
+      project.teamFormationStatus = 'teams_locked';
+      project.teamSize = 3;
+      project.teamRoles = [
+        { id: 'role_backend', key: 'backend', label: 'Backend', count: 1, sortOrder: 0 },
+        { id: 'role_frontend', key: 'frontend', label: 'Frontend', count: 1, sortOrder: 1 },
+        { id: 'role_pm', key: 'pm', label: 'Project Manager', count: 1, sortOrder: 2 },
+      ];
+    }
+    data.teams.push({
+      id: 'team_exam1_alpha',
+      projectId: 'project_cs161_exam1',
+      name: 'Team Alpha',
+      status: 'locked',
+      lockedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      repo: {
+        id: 'team_repo_exam1_alpha',
+        teamId: 'team_exam1_alpha',
+        owner: 'demo-user',
+        name: 'nibras-cs161-exam1-alpha',
+        githubRepoId: null,
+        cloneUrl: null,
+        defaultBranch: 'main',
+        visibility: 'private',
+        installStatus: 'provisioned',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      members: [
+        {
+          id: 'team_member_demo',
+          teamId: 'team_exam1_alpha',
+          userId: 'user_demo',
+          username: 'demo',
+          roleKey: 'backend',
+          roleLabel: 'Backend',
+          status: 'active',
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+  });
+
+  try {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/tracking/milestones/milestone_exam1_design/submissions',
+      headers: {
+        authorization: 'Bearer student-token',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify({
+        submissionType: 'github',
+        submissionValue: 'https://github.com/demo/repo',
+        notes: 'Team attempt',
+        repoUrl: 'https://github.com/demo/repo',
+        branch: 'main',
+        commitSha: 'abc789def012',
+      }),
+    });
+    assert.equal(res.statusCode, 201);
+    const body = res.json();
+    assert.equal(body.teamId, 'team_exam1_alpha');
+    assert.equal(body.submittedByUserId, 'user_demo');
   } finally {
     await app.close();
   }

@@ -14,6 +14,11 @@ import {
   buildInstructorHomeDashboard,
   buildStudentHomeDashboard,
 } from './features/tracking/home-dashboard';
+import {
+  buildDefaultProgramSeed,
+  buildProgramSheet,
+  buildStudentProgramPlan,
+} from './features/programs/domain';
 
 export type PaginationOpts = { limit?: number; offset?: number };
 
@@ -46,9 +51,48 @@ export type SystemRole = 'user' | 'admin';
 export type MembershipRole = 'student' | 'instructor' | 'ta';
 export type ProjectStatus = 'draft' | 'published' | 'archived';
 export type DeliveryMode = 'individual' | 'team';
+export type ProjectTemplateStatus = 'draft' | 'active';
+export type TeamFormationStatus =
+  | 'not_started'
+  | 'application_open'
+  | 'team_review'
+  | 'teams_locked';
+export type ProjectRoleApplicationStatus = 'submitted' | 'withdrawn';
+export type TeamStatus = 'suggested' | 'locked';
 export type SubmissionWorkflowStatus = 'queued' | 'running' | 'passed' | 'failed' | 'needs_review';
 export type SubmissionType = 'github' | 'link' | 'text';
 export type ReviewStatus = 'pending' | 'approved' | 'changes_requested' | 'graded';
+export type ProgramStatus = 'draft' | 'published' | 'archived';
+export type RequirementGroupCategory =
+  | 'foundation'
+  | 'core'
+  | 'depth'
+  | 'elective'
+  | 'capstone'
+  | 'policy';
+export type RequirementRuleType = 'required' | 'choose_n' | 'elective_pool' | 'track_gate';
+export type StudentProgramStatus =
+  | 'enrolled'
+  | 'track_selected'
+  | 'submitted_for_advisor'
+  | 'advisor_approved'
+  | 'department_approved';
+export type PlannedCourseSourceType = 'standard' | 'transfer' | 'petition' | 'manual';
+export type StudentRequirementDecisionStatus =
+  | 'pending'
+  | 'satisfied'
+  | 'waived'
+  | 'petition_pending';
+export type RequirementDecisionSourceType =
+  | 'planned_course'
+  | 'transfer_credit'
+  | 'petition'
+  | 'waiver';
+export type PetitionType = 'transfer_credit' | 'substitution' | 'waiver';
+export type PetitionStatus = 'pending_advisor' | 'pending_department' | 'approved' | 'rejected';
+export type ApprovalStage = 'advisor' | 'department';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type AcademicTerm = 'fall' | 'spring';
 
 export type NotificationRecord = {
   id: string;
@@ -100,6 +144,236 @@ export type CourseMembershipRecord = {
   updatedAt: string;
 };
 
+export type ProgramRecord = {
+  id: string;
+  slug: string;
+  title: string;
+  code: string;
+  academicYear: string;
+  totalUnitRequirement: number;
+  status: ProgramStatus;
+  activeVersionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProgramVersionRecord = {
+  id: string;
+  programId: string;
+  versionLabel: string;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  isActive: boolean;
+  policyText: string;
+  trackSelectionMinYear: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TrackRecord = {
+  id: string;
+  programVersionId: string;
+  slug: string;
+  title: string;
+  description: string;
+  selectionYearStart: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CatalogCourseRecord = {
+  id: string;
+  programId: string;
+  subjectCode: string;
+  catalogNumber: string;
+  title: string;
+  defaultUnits: number;
+  department: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RequirementCourseRecord = {
+  id: string;
+  requirementRuleId: string;
+  catalogCourseId: string;
+};
+
+export type RequirementRuleRecord = {
+  id: string;
+  requirementGroupId: string;
+  ruleType: RequirementRuleType;
+  pickCount: number | null;
+  note: string;
+  sortOrder: number;
+  courses: RequirementCourseRecord[];
+};
+
+export type RequirementGroupRecord = {
+  id: string;
+  programVersionId: string;
+  trackId: string | null;
+  title: string;
+  category: RequirementGroupCategory;
+  minUnits: number;
+  minCourses: number;
+  notes: string;
+  sortOrder: number;
+  noDoubleCount: boolean;
+  rules: RequirementRuleRecord[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StudentPlannedCourseRecord = {
+  id: string;
+  studentProgramId: string;
+  catalogCourseId: string;
+  plannedYear: number;
+  plannedTerm: AcademicTerm;
+  sourceType: PlannedCourseSourceType;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StudentRequirementDecisionRecord = {
+  id: string;
+  studentProgramId: string;
+  requirementGroupId: string;
+  status: StudentRequirementDecisionStatus;
+  sourceType: RequirementDecisionSourceType | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PetitionCourseLinkRecord = {
+  id: string;
+  petitionId: string;
+  originalCatalogCourseId: string | null;
+  substituteCatalogCourseId: string | null;
+};
+
+export type PetitionRecord = {
+  id: string;
+  studentProgramId: string;
+  type: PetitionType;
+  status: PetitionStatus;
+  justification: string;
+  targetRequirementGroupId: string | null;
+  submittedByUserId: string;
+  reviewerUserId: string | null;
+  reviewerNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  courseLinks: PetitionCourseLinkRecord[];
+};
+
+export type ProgramApprovalRecord = {
+  id: string;
+  studentProgramId: string;
+  stage: ApprovalStage;
+  status: ApprovalStatus;
+  reviewerUserId: string | null;
+  notes: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProgramSheetSnapshotRecord = {
+  id: string;
+  studentProgramId: string;
+  versionId: string;
+  renderedPayload: Record<string, unknown>;
+  generatedAt: string;
+};
+
+export type StudentProgramRecord = {
+  id: string;
+  userId: string;
+  programVersionId: string;
+  selectedTrackId: string | null;
+  status: StudentProgramStatus;
+  isLocked: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProgramVersionDetailRecord = {
+  program: ProgramRecord;
+  version: ProgramVersionRecord;
+  tracks: TrackRecord[];
+  catalogCourses: CatalogCourseRecord[];
+  requirementGroups: RequirementGroupRecord[];
+};
+
+export type ProgramSheetSectionCourseRecord = {
+  plannedCourseId: string;
+  catalogCourseId: string;
+  subjectCode: string;
+  catalogNumber: string;
+  title: string;
+  units: number;
+  plannedYear: number;
+  plannedTerm: AcademicTerm;
+  sourceType: PlannedCourseSourceType;
+};
+
+export type ProgramSheetSectionRecord = {
+  requirementGroupId: string;
+  title: string;
+  category: RequirementGroupCategory;
+  minUnits: number;
+  minCourses: number;
+  notes: string;
+  matchedCourses: ProgramSheetSectionCourseRecord[];
+  usedUnits: number;
+  usedCourses: number;
+  status: StudentRequirementDecisionStatus;
+};
+
+export type ProgramSheetViewRecord = {
+  studentProgramId: string;
+  student: {
+    id: string;
+    username: string;
+    email: string;
+    yearLevel: number;
+  };
+  program: ProgramRecord;
+  version: ProgramVersionRecord;
+  selectedTrack: TrackRecord | null;
+  status: StudentProgramStatus;
+  isLocked: boolean;
+  canSelectTrack: boolean;
+  generatedAt: string | null;
+  policyText: string;
+  sections: ProgramSheetSectionRecord[];
+  petitions: PetitionRecord[];
+  approvals: ProgramApprovalRecord[];
+};
+
+export type StudentProgramPlanRecord = {
+  id: string;
+  userId: string;
+  program: ProgramRecord;
+  version: ProgramVersionRecord;
+  selectedTrack: TrackRecord | null;
+  availableTracks: TrackRecord[];
+  status: StudentProgramStatus;
+  isLocked: boolean;
+  canSelectTrack: boolean;
+  catalogCourses: CatalogCourseRecord[];
+  requirementGroups: RequirementGroupRecord[];
+  plannedCourses: StudentPlannedCourseRecord[];
+  decisions: StudentRequirementDecisionRecord[];
+  petitions: PetitionRecord[];
+  approvals: ProgramApprovalRecord[];
+  latestSheet: ProgramSheetViewRecord | null;
+};
+
 export type TrackingResourceRecord = {
   label: string;
   url: string;
@@ -109,6 +383,139 @@ export type TrackingRubricItemRecord = {
   criterion: string;
   maxScore: number;
   earned?: number;
+};
+
+export type ProjectTemplateRoleRecord = {
+  id: string;
+  key: string;
+  label: string;
+  count: number;
+  sortOrder: number;
+};
+
+export type ProjectTemplateMilestoneRecord = {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  dueAt: string | null;
+  isFinal: boolean;
+};
+
+export type ProjectTemplateRecord = {
+  id: string;
+  courseId: string;
+  slug: string;
+  title: string;
+  description: string;
+  deliveryMode: DeliveryMode;
+  teamSize: number | null;
+  status: ProjectTemplateStatus;
+  rubric: TrackingRubricItemRecord[];
+  resources: TrackingResourceRecord[];
+  roles: ProjectTemplateRoleRecord[];
+  milestones: ProjectTemplateMilestoneRecord[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProjectRolePreferenceRecord = {
+  templateRoleId: string;
+  roleKey: string;
+  roleLabel: string;
+  rank: number;
+};
+
+export type ProjectRoleApplicationRecord = {
+  id: string;
+  projectId: string;
+  userId: string;
+  statement: string;
+  availabilityNote: string;
+  status: ProjectRoleApplicationStatus;
+  submittedAt: string | null;
+  updatedAt: string;
+  preferences: ProjectRolePreferenceRecord[];
+};
+
+export type TeamFormationSuggestionMemberRecord = {
+  userId: string;
+  username: string;
+  level: number;
+  roleKey: string;
+  roleLabel: string;
+};
+
+export type TeamFormationSuggestionRecord = {
+  name: string;
+  members: TeamFormationSuggestionMemberRecord[];
+  averageLevel: number;
+};
+
+export type TeamFormationWaitlistEntryRecord = {
+  userId: string;
+  username: string;
+  level: number;
+};
+
+export type TeamFormationRunRecord = {
+  id: string;
+  projectId: string;
+  algorithmVersion: string;
+  config: Record<string, unknown>;
+  result: {
+    teams: TeamFormationSuggestionRecord[];
+    waitlist: TeamFormationWaitlistEntryRecord[];
+    warnings: string[];
+  };
+  createdByUserId: string;
+  createdAt: string;
+};
+
+export type TeamMemberRecord = {
+  id: string;
+  teamId: string;
+  userId: string;
+  username: string;
+  roleKey: string;
+  roleLabel: string;
+  status: string;
+  createdAt: string;
+};
+
+export type TeamProjectRepoRecord = {
+  id: string;
+  teamId: string;
+  owner: string;
+  name: string;
+  githubRepoId: string | null;
+  cloneUrl: string | null;
+  defaultBranch: string;
+  visibility: 'private' | 'public';
+  installStatus: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TeamRecord = {
+  id: string;
+  projectId: string;
+  name: string;
+  status: TeamStatus;
+  lockedAt: string | null;
+  members: TeamMemberRecord[];
+  repo: TeamProjectRepoRecord | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TeamMemberBadgeRecord = {
+  userId: string;
+  name: string;
+  initials: string;
+  color: string;
+  roleKey: string | null;
+  roleLabel: string | null;
 };
 
 export type RepoRecord = {
@@ -129,11 +536,21 @@ export type ProjectRecord = {
   projectKey: string;
   slug: string;
   courseId: string | null;
+  templateId: string | null;
   title: string;
   description: string;
   status: ProjectStatus;
   level: number;
   deliveryMode: DeliveryMode;
+  teamFormationStatus: TeamFormationStatus;
+  applicationOpenAt: string | null;
+  applicationCloseAt: string | null;
+  teamLockAt: string | null;
+  teamSize: number | null;
+  teamRoles: ProjectTemplateRoleRecord[];
+  teamName: string | null;
+  assignedRoleLabel: string | null;
+  team: TeamMemberBadgeRecord[];
   rubric: TrackingRubricItemRecord[];
   resources: TrackingResourceRecord[];
   instructorUserId: string | null;
@@ -160,9 +577,13 @@ export type MilestoneRecord = {
 export type SubmissionRecord = {
   id: string;
   userId: string;
+  submittedByUserId: string | null;
   projectId: string;
   projectKey: string;
   milestoneId: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  teamMemberUserIds: string[];
   commitSha: string;
   repoUrl: string;
   branch: string;
@@ -253,6 +674,7 @@ export type StudentDashboardRecord = {
   course: CourseRecord | null;
   memberships: CourseMembershipRecord[];
   projects: ProjectRecord[];
+  projectTemplatesById?: Record<string, ProjectTemplateRecord>;
   milestonesByProject: Record<string, MilestoneRecord[]>;
   activeProjectId: string | null;
   activity: ActivityRecord[];
@@ -451,6 +873,21 @@ export type StoreData = {
   users: UserRecord[];
   githubAccounts: GitHubAccountRecord[];
   courses: CourseRecord[];
+  programs?: ProgramRecord[];
+  programVersions?: ProgramVersionRecord[];
+  tracks?: TrackRecord[];
+  catalogCourses?: CatalogCourseRecord[];
+  requirementGroups?: RequirementGroupRecord[];
+  studentPrograms?: StudentProgramRecord[];
+  studentPlannedCourses?: StudentPlannedCourseRecord[];
+  studentRequirementDecisions?: StudentRequirementDecisionRecord[];
+  petitions?: PetitionRecord[];
+  programApprovals?: ProgramApprovalRecord[];
+  programSheetSnapshots?: ProgramSheetSnapshotRecord[];
+  projectTemplates?: ProjectTemplateRecord[];
+  projectRoleApplications?: ProjectRoleApplicationRecord[];
+  teamFormationRuns?: TeamFormationRunRecord[];
+  teams?: TeamRecord[];
   courseMemberships: CourseMembershipRecord[];
   courseInvites: CourseInviteRecord[];
   deviceCodes: DeviceCodeRecord[];
@@ -547,6 +984,182 @@ export interface AppStore {
     payload: { slug: string; title: string; termLabel: string; courseCode: string }
   ): Promise<CourseRecord>;
   deleteTrackingCourse(apiBaseUrl: string, courseId: string): Promise<boolean>;
+  listPrograms(apiBaseUrl: string): Promise<ProgramRecord[]>;
+  createProgram(
+    apiBaseUrl: string,
+    userId: string,
+    payload: {
+      slug: string;
+      title: string;
+      code: string;
+      academicYear: string;
+      totalUnitRequirement: number;
+      status: ProgramStatus;
+    }
+  ): Promise<ProgramRecord>;
+  createProgramVersion(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    payload: {
+      versionLabel: string;
+      effectiveFrom: string | null;
+      effectiveTo: string | null;
+      isActive: boolean;
+      policyText: string;
+      trackSelectionMinYear: number;
+    }
+  ): Promise<ProgramVersionRecord>;
+  getProgramVersionDetail(
+    apiBaseUrl: string,
+    programId: string,
+    versionId: string
+  ): Promise<ProgramVersionDetailRecord | null>;
+  createCatalogCourse(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    payload: {
+      subjectCode: string;
+      catalogNumber: string;
+      title: string;
+      defaultUnits: number;
+      department: string;
+    }
+  ): Promise<CatalogCourseRecord>;
+  createRequirementGroup(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    payload: {
+      programVersionId: string;
+      trackId: string | null;
+      title: string;
+      category: RequirementGroupCategory;
+      minUnits: number;
+      minCourses: number;
+      notes: string;
+      sortOrder: number;
+      noDoubleCount: boolean;
+      rules: Array<{
+        ruleType: RequirementRuleType;
+        pickCount: number | null;
+        note: string;
+        sortOrder: number;
+        courses: Array<{ catalogCourseId: string }>;
+      }>;
+    }
+  ): Promise<RequirementGroupRecord>;
+  updateRequirementGroup(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    groupId: string,
+    payload: Partial<{
+      trackId: string | null;
+      title: string;
+      category: RequirementGroupCategory;
+      minUnits: number;
+      minCourses: number;
+      notes: string;
+      sortOrder: number;
+      noDoubleCount: boolean;
+      rules: Array<{
+        ruleType: RequirementRuleType;
+        pickCount: number | null;
+        note: string;
+        sortOrder: number;
+        courses: Array<{ catalogCourseId: string }>;
+      }>;
+    }>
+  ): Promise<RequirementGroupRecord | null>;
+  createTrack(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    payload: {
+      programVersionId: string;
+      slug: string;
+      title: string;
+      description: string;
+      selectionYearStart: number;
+    }
+  ): Promise<TrackRecord>;
+  updateTrack(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string,
+    trackId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      selectionYearStart: number;
+    }>
+  ): Promise<TrackRecord | null>;
+  enrollInProgram(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string
+  ): Promise<StudentProgramPlanRecord>;
+  getStudentProgramPlan(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<StudentProgramPlanRecord | null>;
+  selectStudentTrack(
+    apiBaseUrl: string,
+    userId: string,
+    trackId: string
+  ): Promise<StudentProgramPlanRecord | null>;
+  updateStudentProgramPlan(
+    apiBaseUrl: string,
+    userId: string,
+    payload: {
+      plannedCourses: Array<{
+        catalogCourseId: string;
+        plannedYear: number;
+        plannedTerm: AcademicTerm;
+        sourceType: PlannedCourseSourceType;
+        note: string | null;
+      }>;
+    }
+  ): Promise<StudentProgramPlanRecord | null>;
+  getStudentProgramSheet(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<ProgramSheetViewRecord | null>;
+  generateStudentProgramSheet(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<ProgramSheetViewRecord | null>;
+  createStudentPetition(
+    apiBaseUrl: string,
+    userId: string,
+    payload: {
+      type: PetitionType;
+      justification: string;
+      targetRequirementGroupId: string | null;
+      originalCatalogCourseId: string | null;
+      substituteCatalogCourseId: string | null;
+    }
+  ): Promise<PetitionRecord | null>;
+  listStudentPetitions(apiBaseUrl: string, userId: string): Promise<PetitionRecord[]>;
+  listProgramPetitions(apiBaseUrl: string, programId: string): Promise<PetitionRecord[]>;
+  updateProgramPetition(
+    apiBaseUrl: string,
+    programId: string,
+    petitionId: string,
+    reviewerUserId: string,
+    payload: { status: PetitionStatus; reviewerNotes: string | null }
+  ): Promise<PetitionRecord | null>;
+  setProgramApproval(
+    apiBaseUrl: string,
+    programId: string,
+    studentProgramId: string,
+    stage: ApprovalStage,
+    reviewerUserId: string,
+    payload: { status: ApprovalStatus; notes: string | null }
+  ): Promise<ProgramApprovalRecord | null>;
   listCourseMembersForInstructor(
     apiBaseUrl: string,
     courseId: string
@@ -608,6 +1221,11 @@ export interface AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId?: string | null;
+      applicationOpenAt?: string | null;
+      applicationCloseAt?: string | null;
+      teamLockAt?: string | null;
+      teamSize?: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }
@@ -622,10 +1240,99 @@ export interface AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId: string | null;
+      applicationOpenAt: string | null;
+      applicationCloseAt: string | null;
+      teamLockAt: string | null;
+      teamSize: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }>
   ): Promise<ProjectRecord | null>;
+  listCourseProjectTemplates(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<ProjectTemplateRecord[]>;
+  createCourseProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    courseId: string,
+    payload: {
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }
+  ): Promise<ProjectTemplateRecord>;
+  getProjectTemplateById(
+    apiBaseUrl: string,
+    templateId: string
+  ): Promise<ProjectTemplateRecord | null>;
+  updateProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    templateId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }>
+  ): Promise<ProjectTemplateRecord | null>;
+  createProjectRoleApplication(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload: {
+      statement: string;
+      availabilityNote: string;
+      preferences: Array<{ templateRoleId: string; rank: number }>;
+    }
+  ): Promise<ProjectRoleApplicationRecord>;
+  getProjectRoleApplicationForUser(
+    apiBaseUrl: string,
+    projectId: string,
+    userId: string
+  ): Promise<ProjectRoleApplicationRecord | null>;
+  listProjectRoleApplications(
+    apiBaseUrl: string,
+    projectId: string
+  ): Promise<ProjectRoleApplicationRecord[]>;
+  generateProjectTeamFormation(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { algorithmVersion?: string }
+  ): Promise<TeamFormationRunRecord>;
+  lockProjectTeams(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { formationRunId?: string }
+  ): Promise<TeamRecord[]>;
+  listProjectTeams(apiBaseUrl: string, projectId: string): Promise<TeamRecord[]>;
+  updateProjectTeam(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    teamId: string,
+    payload: Partial<{
+      name: string;
+      members: Array<{ userId: string; roleKey: string; roleLabel: string }>;
+    }>
+  ): Promise<TeamRecord | null>;
   setTrackingProjectStatus(
     apiBaseUrl: string,
     userId: string,
@@ -844,6 +1551,305 @@ function branchNameFromRef(ref: string): string {
   return ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : ref;
 }
 
+const TEAM_BADGE_COLORS = ['#0f766e', '#0369a1', '#7c3aed', '#b45309', '#be123c', '#1d4ed8'];
+
+function initialsForName(value: string): string {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('');
+}
+
+function colorForUser(userId: string): string {
+  const total = userId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return TEAM_BADGE_COLORS[total % TEAM_BADGE_COLORS.length];
+}
+
+export function resolveProjectTemplateRecord(
+  data: StoreData,
+  project: Pick<ProjectRecord, 'templateId' | 'teamRoles' | 'teamSize'> & { id: string }
+): ProjectTemplateRecord | null {
+  if (project.templateId) {
+    return data.projectTemplates?.find((entry) => entry.id === project.templateId) || null;
+  }
+  if ((project.teamRoles?.length || 0) > 0 || project.teamSize) {
+    return {
+      id: `inline-template-${project.id}`,
+      courseId: '',
+      slug: '',
+      title: '',
+      description: '',
+      deliveryMode: 'team',
+      teamSize: project.teamSize,
+      status: 'active',
+      rubric: [],
+      resources: [],
+      roles: project.teamRoles || [],
+      milestones: [],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+  }
+  return null;
+}
+
+export function buildProjectTeamBadges(
+  data: StoreData,
+  projectId: string,
+  userId: string
+): { teamName: string | null; assignedRoleLabel: string | null; team: TeamMemberBadgeRecord[] } {
+  const team = (data.teams || []).find(
+    (entry) =>
+      entry.projectId === projectId &&
+      entry.members.some((member) => member.userId === userId && member.status === 'active')
+  );
+  if (!team) {
+    return { teamName: null, assignedRoleLabel: null, team: [] };
+  }
+  const currentMember = team.members.find((entry) => entry.userId === userId) || null;
+  return {
+    teamName: team.name,
+    assignedRoleLabel: currentMember?.roleLabel || null,
+    team: team.members.map((member) => ({
+      userId: member.userId,
+      name: member.username,
+      initials: initialsForName(member.username),
+      color: colorForUser(member.userId),
+      roleKey: member.roleKey,
+      roleLabel: member.roleLabel,
+    })),
+  };
+}
+
+export function projectWithTeamContext(
+  data: StoreData,
+  project: ProjectRecord,
+  userId: string
+): ProjectRecord {
+  const team = buildProjectTeamBadges(data, project.id, userId);
+  return {
+    ...project,
+    teamName: team.teamName,
+    assignedRoleLabel: team.assignedRoleLabel,
+    team: team.team,
+  };
+}
+
+export function teamMemberUserIdsForSubmission(
+  data: StoreData,
+  submission: SubmissionRecord
+): string[] {
+  if (submission.teamMemberUserIds.length > 0) {
+    return submission.teamMemberUserIds;
+  }
+  if (!submission.teamId) {
+    return [];
+  }
+  const team = (data.teams || []).find((entry) => entry.id === submission.teamId);
+  return team?.members.map((member) => member.userId) || [];
+}
+
+export function submissionBelongsToUser(
+  data: StoreData,
+  submission: SubmissionRecord,
+  userId: string
+): boolean {
+  if (submission.userId === userId || submission.submittedByUserId === userId) {
+    return true;
+  }
+  return teamMemberUserIdsForSubmission(data, submission).includes(userId);
+}
+
+function templateRoleForPreference(
+  template: ProjectTemplateRecord,
+  templateRoleId: string
+): ProjectTemplateRoleRecord | null {
+  return template.roles.find((role) => role.id === templateRoleId) || null;
+}
+
+export function generateTeamFormationResult(args: {
+  applications: ProjectRoleApplicationRecord[];
+  template: ProjectTemplateRecord;
+  users: UserRecord[];
+  memberships: CourseMembershipRecord[];
+}): TeamFormationRunRecord['result'] {
+  const teamSize = args.template.teamSize || 0;
+  const warnings: string[] = [];
+  if (teamSize <= 0) {
+    return { teams: [], waitlist: [], warnings: ['Team size must be configured before matching.'] };
+  }
+  const activeApplications = args.applications
+    .filter((entry) => entry.status === 'submitted')
+    .slice()
+    .sort((left, right) => left.userId.localeCompare(right.userId));
+  const maxTeams = Math.floor(activeApplications.length / teamSize);
+  if (maxTeams === 0) {
+    return {
+      teams: [],
+      waitlist: activeApplications.map((application) => {
+        const user = args.users.find((entry) => entry.id === application.userId);
+        const membership = args.memberships.find((entry) => entry.userId === application.userId);
+        return {
+          userId: application.userId,
+          username: user?.username || application.userId,
+          level: membership?.level || 1,
+        };
+      }),
+      warnings: ['Not enough applications to form a complete team.'],
+    };
+  }
+
+  const rolePool: Array<{ roleKey: string; roleLabel: string }> = [];
+  for (const role of args.template.roles.slice().sort((a, b) => a.sortOrder - b.sortOrder)) {
+    for (let index = 0; index < role.count; index += 1) {
+      rolePool.push({ roleKey: role.key, roleLabel: role.label });
+    }
+  }
+  if (rolePool.length !== teamSize) {
+    warnings.push('Template role counts do not equal the configured team size.');
+  }
+
+  const teamCount = Math.min(
+    maxTeams,
+    Math.max(1, Math.floor(activeApplications.length / teamSize))
+  );
+  const teams: TeamFormationSuggestionRecord[] = Array.from({ length: teamCount }, (_, index) => ({
+    name: `Team ${index + 1}`,
+    members: [],
+    averageLevel: 0,
+  }));
+
+  const remainingApplications = [...activeApplications];
+  const remainingByUserId = new Set(remainingApplications.map((entry) => entry.userId));
+  const userLevel = (userId: string) =>
+    args.memberships.find((entry) => entry.userId === userId)?.level ||
+    args.users.find((entry) => entry.id === userId)?.yearLevel ||
+    1;
+  const usernameFor = (userId: string) =>
+    args.users.find((entry) => entry.id === userId)?.username || userId;
+  const averageLevelForTeam = (team: TeamFormationSuggestionRecord) =>
+    team.members.length === 0
+      ? 0
+      : team.members.reduce((sum, member) => sum + member.level, 0) / team.members.length;
+
+  const preferenceRank = (application: ProjectRoleApplicationRecord, roleId: string) =>
+    application.preferences.find((entry) => entry.templateRoleId === roleId)?.rank ?? 999;
+
+  for (const role of args.template.roles.slice().sort((a, b) => a.sortOrder - b.sortOrder)) {
+    const slots = Math.min(role.count * teamCount, remainingApplications.length);
+    for (let slotIndex = 0; slotIndex < slots; slotIndex += 1) {
+      const candidateApplications = remainingApplications.filter((entry) =>
+        remainingByUserId.has(entry.userId)
+      );
+      if (candidateApplications.length === 0) {
+        break;
+      }
+      candidateApplications.sort((left, right) => {
+        const rankDelta = preferenceRank(left, role.id) - preferenceRank(right, role.id);
+        if (rankDelta !== 0) return rankDelta;
+        const levelDelta = userLevel(left.userId) - userLevel(right.userId);
+        if (levelDelta !== 0) return levelDelta;
+        return left.userId.localeCompare(right.userId);
+      });
+      const selected = candidateApplications[0];
+      const eligibleTeams = teams
+        .map((team, index) => ({ team, index }))
+        .filter(
+          ({ team }) =>
+            team.members.length < teamSize && !team.members.some((m) => m.roleKey === role.key)
+        )
+        .sort((left, right) => {
+          const avgDelta = averageLevelForTeam(left.team) - averageLevelForTeam(right.team);
+          if (avgDelta !== 0) return avgDelta;
+          return left.index - right.index;
+        });
+      if (eligibleTeams.length === 0) {
+        break;
+      }
+      const target = eligibleTeams[0].team;
+      target.members.push({
+        userId: selected.userId,
+        username: usernameFor(selected.userId),
+        level: userLevel(selected.userId),
+        roleKey: role.key,
+        roleLabel: role.label,
+      });
+      remainingByUserId.delete(selected.userId);
+    }
+  }
+
+  const leftovers = remainingApplications.filter((entry) => remainingByUserId.has(entry.userId));
+  for (const application of leftovers) {
+    const availableRoles = rolePool.filter(
+      (role) =>
+        !teams.every(
+          (team) =>
+            team.members.length >= teamSize ||
+            team.members.some((member) => member.roleKey === role.roleKey)
+        )
+    );
+    const preferredRole =
+      application.preferences
+        .slice()
+        .sort((left, right) => left.rank - right.rank)
+        .map((entry) => templateRoleForPreference(args.template, entry.templateRoleId))
+        .find(Boolean) || null;
+    const fallbackRole = preferredRole
+      ? { roleKey: preferredRole.key, roleLabel: preferredRole.label }
+      : availableRoles[0] || rolePool[0];
+    const target = teams
+      .slice()
+      .sort((left, right) => {
+        const fillDelta = left.members.length - right.members.length;
+        if (fillDelta !== 0) return fillDelta;
+        return averageLevelForTeam(left) - averageLevelForTeam(right);
+      })
+      .find((team) => team.members.length < teamSize);
+    if (!target || !fallbackRole) {
+      continue;
+    }
+    target.members.push({
+      userId: application.userId,
+      username: usernameFor(application.userId),
+      level: userLevel(application.userId),
+      roleKey: fallbackRole.roleKey,
+      roleLabel: fallbackRole.roleLabel,
+    });
+    remainingByUserId.delete(application.userId);
+  }
+
+  const completeTeams = teams.filter((team) => team.members.length === teamSize);
+  const incompleteMembers = teams
+    .filter((team) => team.members.length !== teamSize)
+    .flatMap((team) => team.members);
+  if (incompleteMembers.length > 0) {
+    warnings.push('Some suggested teams were incomplete and moved to the waitlist.');
+  }
+
+  for (const team of completeTeams) {
+    team.averageLevel = averageLevelForTeam(team);
+  }
+
+  const waitlist = [
+    ...incompleteMembers.map((member) => ({
+      userId: member.userId,
+      username: member.username,
+      level: member.level,
+    })),
+    ...remainingApplications
+      .filter((entry) => remainingByUserId.has(entry.userId))
+      .map((entry) => ({
+        userId: entry.userId,
+        username: usernameFor(entry.userId),
+        level: userLevel(entry.userId),
+      })),
+  ].sort((left, right) => left.userId.localeCompare(right.userId));
+
+  return { teams: completeTeams, waitlist, warnings };
+}
+
 function calculateProjectStats(
   milestones: MilestoneRecord[],
   submissions: SubmissionRecord[],
@@ -926,6 +1932,185 @@ function seedData(apiBaseUrl: string): StoreData {
   const milestone1Id = 'milestone_exam1_design';
   const milestone2Id = 'milestone_exam1_final';
   const cs106lProjects = listCs106lProjectDefinitions();
+  const programSeed = buildDefaultProgramSeed();
+  const programId = 'program_cs';
+  const programVersionId = 'program_version_cs_2026';
+  const trackIds = new Map<string, string>();
+  const catalogCourseIds = new Map<string, string>();
+
+  for (const track of programSeed.tracks) {
+    trackIds.set(track.slug, `track_${track.slug}`);
+  }
+  for (const course of programSeed.catalogCourses) {
+    catalogCourseIds.set(
+      course.key,
+      `catalog_${course.subjectCode.toLowerCase()}_${course.catalogNumber.toLowerCase()}`
+    );
+  }
+
+  const programs: ProgramRecord[] = [
+    {
+      id: programId,
+      slug: programSeed.program.slug,
+      title: programSeed.program.title,
+      code: programSeed.program.code,
+      academicYear: programSeed.program.academicYear,
+      totalUnitRequirement: programSeed.program.totalUnitRequirement,
+      status: programSeed.program.status,
+      activeVersionId: programVersionId,
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
+
+  const programVersions: ProgramVersionRecord[] = [
+    {
+      id: programVersionId,
+      programId,
+      versionLabel: programSeed.version.versionLabel,
+      effectiveFrom: createdAt,
+      effectiveTo: null,
+      isActive: true,
+      policyText: programSeed.version.policyText,
+      trackSelectionMinYear: programSeed.version.trackSelectionMinYear,
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
+
+  const tracks: TrackRecord[] = programSeed.tracks.map((track) => ({
+    id: trackIds.get(track.slug) || `track_${track.slug}`,
+    programVersionId,
+    slug: track.slug,
+    title: track.title,
+    description: track.description,
+    selectionYearStart: track.selectionYearStart,
+    createdAt,
+    updatedAt: createdAt,
+  }));
+
+  const catalogCourses: CatalogCourseRecord[] = programSeed.catalogCourses.map((course) => ({
+    id: catalogCourseIds.get(course.key) || `catalog_${course.key.toLowerCase()}`,
+    programId,
+    subjectCode: course.subjectCode,
+    catalogNumber: course.catalogNumber,
+    title: course.title,
+    defaultUnits: course.defaultUnits,
+    department: course.department,
+    createdAt,
+    updatedAt: createdAt,
+  }));
+
+  let requirementRuleCounter = 0;
+  let requirementCourseCounter = 0;
+  const requirementGroups: RequirementGroupRecord[] = [
+    ...programSeed.sharedGroups.map((group, index) => ({
+      id: `requirement_group_shared_${index + 1}`,
+      programVersionId,
+      trackId: null,
+      title: group.title,
+      category: group.category,
+      minUnits: group.minUnits,
+      minCourses: group.minCourses,
+      notes: group.notes,
+      sortOrder: group.sortOrder,
+      noDoubleCount: group.noDoubleCount,
+      rules: group.rules.map((rule) => {
+        const requirementRuleId = `requirement_rule_${++requirementRuleCounter}`;
+        return {
+          id: requirementRuleId,
+          requirementGroupId: `requirement_group_shared_${index + 1}`,
+          ruleType: rule.ruleType,
+          pickCount: rule.pickCount,
+          note: rule.note,
+          sortOrder: rule.sortOrder,
+          courses: rule.courseKeys.map((courseKey) => ({
+            id: `requirement_course_${++requirementCourseCounter}`,
+            requirementRuleId,
+            catalogCourseId:
+              catalogCourseIds.get(courseKey) || `catalog_${courseKey.toLowerCase()}`,
+          })),
+        };
+      }),
+      createdAt,
+      updatedAt: createdAt,
+    })),
+    ...programSeed.tracks.flatMap((track, trackIndex) =>
+      track.groups.map((group, groupIndex) => {
+        const groupId = `requirement_group_track_${trackIndex + 1}_${groupIndex + 1}`;
+        const trackId = trackIds.get(track.slug) || `track_${track.slug}`;
+        return {
+          id: groupId,
+          programVersionId,
+          trackId,
+          title: group.title,
+          category: group.category,
+          minUnits: group.minUnits,
+          minCourses: group.minCourses,
+          notes: group.notes,
+          sortOrder: group.sortOrder,
+          noDoubleCount: group.noDoubleCount,
+          rules: group.rules.map((rule) => {
+            const requirementRuleId = `requirement_rule_${++requirementRuleCounter}`;
+            return {
+              id: requirementRuleId,
+              requirementGroupId: groupId,
+              ruleType: rule.ruleType,
+              pickCount: rule.pickCount,
+              note: rule.note,
+              sortOrder: rule.sortOrder,
+              courses: rule.courseKeys.map((courseKey) => ({
+                id: `requirement_course_${++requirementCourseCounter}`,
+                requirementRuleId,
+                catalogCourseId:
+                  catalogCourseIds.get(courseKey) || `catalog_${courseKey.toLowerCase()}`,
+              })),
+            };
+          }),
+          createdAt,
+          updatedAt: createdAt,
+        };
+      })
+    ),
+  ];
+
+  const studentPrograms: StudentProgramRecord[] = [
+    {
+      id: 'student_program_demo',
+      userId: studentId,
+      programVersionId,
+      selectedTrackId: null,
+      status: 'enrolled',
+      isLocked: false,
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
+
+  const programApprovals: ProgramApprovalRecord[] = [
+    {
+      id: 'approval_demo_advisor',
+      studentProgramId: 'student_program_demo',
+      stage: 'advisor',
+      status: 'pending',
+      reviewerUserId: null,
+      notes: null,
+      decidedAt: null,
+      createdAt,
+      updatedAt: createdAt,
+    },
+    {
+      id: 'approval_demo_department',
+      studentProgramId: 'student_program_demo',
+      stage: 'department',
+      status: 'pending',
+      reviewerUserId: null,
+      notes: null,
+      decidedAt: null,
+      createdAt,
+      updatedAt: createdAt,
+    },
+  ];
 
   return {
     users: [
@@ -986,6 +2171,21 @@ function seedData(apiBaseUrl: string): StoreData {
         updatedAt: createdAt,
       },
     ],
+    programs,
+    programVersions,
+    tracks,
+    catalogCourses,
+    requirementGroups,
+    studentPrograms,
+    studentPlannedCourses: [],
+    studentRequirementDecisions: [],
+    petitions: [],
+    programApprovals,
+    programSheetSnapshots: [],
+    projectTemplates: [],
+    projectRoleApplications: [],
+    teamFormationRuns: [],
+    teams: [],
     courseMemberships: [
       {
         id: 'membership_demo_cs161',
@@ -1035,12 +2235,22 @@ function seedData(apiBaseUrl: string): StoreData {
         projectKey: 'cs161/exam1',
         slug: 'cs161/exam1',
         courseId: cs161CourseId,
+        templateId: null,
         title: 'Exam 1',
         description:
           'Design, implement, and defend your solution for the first project milestone sequence.',
         status: 'published',
         level: 1,
         deliveryMode: 'individual',
+        teamFormationStatus: 'not_started',
+        applicationOpenAt: null,
+        applicationCloseAt: null,
+        teamLockAt: null,
+        teamSize: null,
+        teamRoles: [],
+        teamName: null,
+        assignedRoleLabel: null,
+        team: [],
         rubric: [
           { criterion: 'Correctness', maxScore: 50 },
           { criterion: 'Clarity', maxScore: 30 },
@@ -1063,11 +2273,21 @@ function seedData(apiBaseUrl: string): StoreData {
         projectKey: project.projectKey,
         slug: project.projectKey,
         courseId: cs106lCourseId,
+        templateId: null,
         title: project.title,
         description: project.description,
         status: 'published' as const,
         level: 1,
         deliveryMode: 'individual' as const,
+        teamFormationStatus: 'not_started' as const,
+        applicationOpenAt: null,
+        applicationCloseAt: null,
+        teamLockAt: null,
+        teamSize: null,
+        teamRoles: [],
+        teamName: null,
+        assignedRoleLabel: null,
+        team: [],
         rubric: [],
         resources: [],
         instructorUserId: instructorId,
@@ -1156,6 +2376,51 @@ export class FileStore implements AppStore {
       if (!parsed.githubAccounts) {
         parsed.githubAccounts = [];
       }
+      if (!parsed.programs) {
+        parsed.programs = [];
+      }
+      if (!parsed.programVersions) {
+        parsed.programVersions = [];
+      }
+      if (!parsed.tracks) {
+        parsed.tracks = [];
+      }
+      if (!parsed.catalogCourses) {
+        parsed.catalogCourses = [];
+      }
+      if (!parsed.requirementGroups) {
+        parsed.requirementGroups = [];
+      }
+      if (!parsed.studentPrograms) {
+        parsed.studentPrograms = [];
+      }
+      if (!parsed.studentPlannedCourses) {
+        parsed.studentPlannedCourses = [];
+      }
+      if (!parsed.studentRequirementDecisions) {
+        parsed.studentRequirementDecisions = [];
+      }
+      if (!parsed.petitions) {
+        parsed.petitions = [];
+      }
+      if (!parsed.programApprovals) {
+        parsed.programApprovals = [];
+      }
+      if (!parsed.programSheetSnapshots) {
+        parsed.programSheetSnapshots = [];
+      }
+      if (!parsed.projectTemplates) {
+        parsed.projectTemplates = [];
+      }
+      if (!parsed.projectRoleApplications) {
+        parsed.projectRoleApplications = [];
+      }
+      if (!parsed.teamFormationRuns) {
+        parsed.teamFormationRuns = [];
+      }
+      if (!parsed.teams) {
+        parsed.teams = [];
+      }
       return parsed;
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
@@ -1201,6 +2466,99 @@ export class FileStore implements AppStore {
       this.write(data);
     }
     return submission;
+  }
+
+  private findProgramBundle(
+    data: StoreData,
+    studentProgramId: string
+  ): {
+    studentProgram: StudentProgramRecord;
+    user: UserRecord;
+    program: ProgramRecord;
+    version: ProgramVersionRecord;
+    tracks: TrackRecord[];
+    selectedTrack: TrackRecord | null;
+    catalogCourses: CatalogCourseRecord[];
+    requirementGroups: RequirementGroupRecord[];
+    plannedCourses: StudentPlannedCourseRecord[];
+    petitions: PetitionRecord[];
+    approvals: ProgramApprovalRecord[];
+    decisions: StudentRequirementDecisionRecord[];
+    latestSheetGeneratedAt: string | null;
+  } | null {
+    const studentProgram = (data.studentPrograms || []).find(
+      (entry) => entry.id === studentProgramId
+    );
+    if (!studentProgram) return null;
+    const user = data.users.find((entry) => entry.id === studentProgram.userId);
+    const version = (data.programVersions || []).find(
+      (entry) => entry.id === studentProgram.programVersionId
+    );
+    if (!user || !version) return null;
+    const program = (data.programs || []).find((entry) => entry.id === version.programId);
+    if (!program) return null;
+    const tracks = (data.tracks || []).filter((entry) => entry.programVersionId === version.id);
+    const selectedTrack =
+      tracks.find((entry) => entry.id === studentProgram.selectedTrackId) || null;
+    const catalogCourses = (data.catalogCourses || []).filter(
+      (entry) => entry.programId === program.id
+    );
+    const requirementGroups = (data.requirementGroups || []).filter(
+      (entry) => entry.programVersionId === version.id
+    );
+    const plannedCourses = (data.studentPlannedCourses || []).filter(
+      (entry) => entry.studentProgramId === studentProgram.id
+    );
+    const petitions = (data.petitions || []).filter(
+      (entry) => entry.studentProgramId === studentProgram.id
+    );
+    const approvals = (data.programApprovals || []).filter(
+      (entry) => entry.studentProgramId === studentProgram.id
+    );
+    const decisions = (data.studentRequirementDecisions || []).filter(
+      (entry) => entry.studentProgramId === studentProgram.id
+    );
+    const snapshots = (data.programSheetSnapshots || [])
+      .filter((entry) => entry.studentProgramId === studentProgram.id)
+      .sort((left, right) => right.generatedAt.localeCompare(left.generatedAt));
+
+    return {
+      studentProgram,
+      user,
+      program,
+      version,
+      tracks,
+      selectedTrack,
+      catalogCourses,
+      requirementGroups,
+      plannedCourses,
+      petitions,
+      approvals,
+      decisions,
+      latestSheetGeneratedAt: snapshots[0]?.generatedAt ?? null,
+    };
+  }
+
+  private syncProgramDecisions(
+    data: StoreData,
+    studentProgramId: string
+  ): StudentProgramPlanRecord | null {
+    const bundle = this.findProgramBundle(data, studentProgramId);
+    if (!bundle) return null;
+    const plan = buildStudentProgramPlan(bundle);
+    data.studentRequirementDecisions = [
+      ...(data.studentRequirementDecisions || []).filter(
+        (entry) => entry.studentProgramId !== studentProgramId
+      ),
+      ...plan.decisions,
+    ];
+    this.write(data);
+    return plan;
+  }
+
+  private getActiveProgramVersion(data: StoreData, programId: string): ProgramVersionRecord | null {
+    const versions = (data.programVersions || []).filter((entry) => entry.programId === programId);
+    return versions.find((entry) => entry.isActive) || versions[0] || null;
   }
 
   async createDeviceCode(apiBaseUrl: string): Promise<DeviceCodeRecord> {
@@ -1558,9 +2916,13 @@ export class FileStore implements AppStore {
     const record: SubmissionRecord = {
       id: randomUUID(),
       userId: payload.userId,
+      submittedByUserId: payload.userId,
       projectId: project.id,
       projectKey: payload.projectKey,
       milestoneId: null,
+      teamId: null,
+      teamName: null,
+      teamMemberUserIds: [],
       commitSha: payload.commitSha,
       repoUrl: payload.repoUrl,
       branch: payload.branch,
@@ -2001,6 +3363,639 @@ export class FileStore implements AppStore {
     return true;
   }
 
+  async listPrograms(apiBaseUrl: string): Promise<ProgramRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return [...(data.programs || [])].sort((left, right) =>
+      left.createdAt.localeCompare(right.createdAt)
+    );
+  }
+
+  async createProgram(
+    apiBaseUrl: string,
+    _userId: string,
+    payload: {
+      slug: string;
+      title: string;
+      code: string;
+      academicYear: string;
+      totalUnitRequirement: number;
+      status: ProgramStatus;
+    }
+  ): Promise<ProgramRecord> {
+    const data = this.read(apiBaseUrl);
+    const program: ProgramRecord = {
+      id: randomUUID(),
+      slug: payload.slug,
+      title: payload.title,
+      code: payload.code,
+      academicYear: payload.academicYear,
+      totalUnitRequirement: payload.totalUnitRequirement,
+      status: payload.status,
+      activeVersionId: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.programs = [...(data.programs || []), program];
+    this.write(data);
+    return program;
+  }
+
+  async createProgramVersion(
+    apiBaseUrl: string,
+    _userId: string,
+    programId: string,
+    payload: {
+      versionLabel: string;
+      effectiveFrom: string | null;
+      effectiveTo: string | null;
+      isActive: boolean;
+      policyText: string;
+      trackSelectionMinYear: number;
+    }
+  ): Promise<ProgramVersionRecord> {
+    const data = this.read(apiBaseUrl);
+    const version: ProgramVersionRecord = {
+      id: randomUUID(),
+      programId,
+      versionLabel: payload.versionLabel,
+      effectiveFrom: payload.effectiveFrom,
+      effectiveTo: payload.effectiveTo,
+      isActive: payload.isActive,
+      policyText: payload.policyText,
+      trackSelectionMinYear: payload.trackSelectionMinYear,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.programVersions = [...(data.programVersions || []), version];
+    if (payload.isActive) {
+      data.programVersions = data.programVersions.map((entry) =>
+        entry.programId === programId ? { ...entry, isActive: entry.id === version.id } : entry
+      );
+      const program = (data.programs || []).find((entry) => entry.id === programId);
+      if (program) {
+        program.activeVersionId = version.id;
+        program.updatedAt = nowIso();
+      }
+    }
+    this.write(data);
+    return version;
+  }
+
+  async getProgramVersionDetail(
+    apiBaseUrl: string,
+    programId: string,
+    versionId: string
+  ): Promise<ProgramVersionDetailRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const program = (data.programs || []).find((entry) => entry.id === programId);
+    const version = (data.programVersions || []).find(
+      (entry) => entry.id === versionId && entry.programId === programId
+    );
+    if (!program || !version) return null;
+    return {
+      program,
+      version,
+      tracks: (data.tracks || []).filter((entry) => entry.programVersionId === versionId),
+      catalogCourses: (data.catalogCourses || []).filter((entry) => entry.programId === programId),
+      requirementGroups: (data.requirementGroups || []).filter(
+        (entry) => entry.programVersionId === versionId
+      ),
+    };
+  }
+
+  async createCatalogCourse(
+    apiBaseUrl: string,
+    _userId: string,
+    programId: string,
+    payload: {
+      subjectCode: string;
+      catalogNumber: string;
+      title: string;
+      defaultUnits: number;
+      department: string;
+    }
+  ): Promise<CatalogCourseRecord> {
+    const data = this.read(apiBaseUrl);
+    const course: CatalogCourseRecord = {
+      id: randomUUID(),
+      programId,
+      subjectCode: payload.subjectCode,
+      catalogNumber: payload.catalogNumber,
+      title: payload.title,
+      defaultUnits: payload.defaultUnits,
+      department: payload.department,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.catalogCourses = [...(data.catalogCourses || []), course];
+    this.write(data);
+    return course;
+  }
+
+  async createRequirementGroup(
+    apiBaseUrl: string,
+    _userId: string,
+    _programId: string,
+    payload: {
+      programVersionId: string;
+      trackId: string | null;
+      title: string;
+      category: RequirementGroupCategory;
+      minUnits: number;
+      minCourses: number;
+      notes: string;
+      sortOrder: number;
+      noDoubleCount: boolean;
+      rules: Array<{
+        ruleType: RequirementRuleType;
+        pickCount: number | null;
+        note: string;
+        sortOrder: number;
+        courses: Array<{ catalogCourseId: string }>;
+      }>;
+    }
+  ): Promise<RequirementGroupRecord> {
+    const data = this.read(apiBaseUrl);
+    const groupId = randomUUID();
+    const group: RequirementGroupRecord = {
+      id: groupId,
+      programVersionId: payload.programVersionId,
+      trackId: payload.trackId,
+      title: payload.title,
+      category: payload.category,
+      minUnits: payload.minUnits,
+      minCourses: payload.minCourses,
+      notes: payload.notes,
+      sortOrder: payload.sortOrder,
+      noDoubleCount: payload.noDoubleCount,
+      rules: payload.rules.map((rule) => {
+        const ruleId = randomUUID();
+        return {
+          id: ruleId,
+          requirementGroupId: groupId,
+          ruleType: rule.ruleType,
+          pickCount: rule.pickCount,
+          note: rule.note,
+          sortOrder: rule.sortOrder,
+          courses: rule.courses.map((course) => ({
+            id: randomUUID(),
+            requirementRuleId: ruleId,
+            catalogCourseId: course.catalogCourseId,
+          })),
+        };
+      }),
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.requirementGroups = [...(data.requirementGroups || []), group];
+    this.write(data);
+    return group;
+  }
+
+  async updateRequirementGroup(
+    apiBaseUrl: string,
+    _userId: string,
+    _programId: string,
+    groupId: string,
+    payload: Partial<{
+      trackId: string | null;
+      title: string;
+      category: RequirementGroupCategory;
+      minUnits: number;
+      minCourses: number;
+      notes: string;
+      sortOrder: number;
+      noDoubleCount: boolean;
+      rules: Array<{
+        ruleType: RequirementRuleType;
+        pickCount: number | null;
+        note: string;
+        sortOrder: number;
+        courses: Array<{ catalogCourseId: string }>;
+      }>;
+    }>
+  ): Promise<RequirementGroupRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const group = (data.requirementGroups || []).find((entry) => entry.id === groupId);
+    if (!group) return null;
+    if (payload.trackId !== undefined) group.trackId = payload.trackId;
+    if (payload.title !== undefined) group.title = payload.title;
+    if (payload.category !== undefined) group.category = payload.category;
+    if (payload.minUnits !== undefined) group.minUnits = payload.minUnits;
+    if (payload.minCourses !== undefined) group.minCourses = payload.minCourses;
+    if (payload.notes !== undefined) group.notes = payload.notes;
+    if (payload.sortOrder !== undefined) group.sortOrder = payload.sortOrder;
+    if (payload.noDoubleCount !== undefined) group.noDoubleCount = payload.noDoubleCount;
+    if (payload.rules !== undefined) {
+      group.rules = payload.rules.map((rule) => {
+        const ruleId = randomUUID();
+        return {
+          id: ruleId,
+          requirementGroupId: group.id,
+          ruleType: rule.ruleType,
+          pickCount: rule.pickCount,
+          note: rule.note,
+          sortOrder: rule.sortOrder,
+          courses: rule.courses.map((course) => ({
+            id: randomUUID(),
+            requirementRuleId: ruleId,
+            catalogCourseId: course.catalogCourseId,
+          })),
+        };
+      });
+    }
+    group.updatedAt = nowIso();
+    this.write(data);
+    return group;
+  }
+
+  async createTrack(
+    apiBaseUrl: string,
+    _userId: string,
+    _programId: string,
+    payload: {
+      programVersionId: string;
+      slug: string;
+      title: string;
+      description: string;
+      selectionYearStart: number;
+    }
+  ): Promise<TrackRecord> {
+    const data = this.read(apiBaseUrl);
+    const track: TrackRecord = {
+      id: randomUUID(),
+      programVersionId: payload.programVersionId,
+      slug: payload.slug,
+      title: payload.title,
+      description: payload.description,
+      selectionYearStart: payload.selectionYearStart,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.tracks = [...(data.tracks || []), track];
+    this.write(data);
+    return track;
+  }
+
+  async updateTrack(
+    apiBaseUrl: string,
+    _userId: string,
+    _programId: string,
+    trackId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      selectionYearStart: number;
+    }>
+  ): Promise<TrackRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const track = (data.tracks || []).find((entry) => entry.id === trackId);
+    if (!track) return null;
+    if (payload.slug !== undefined) track.slug = payload.slug;
+    if (payload.title !== undefined) track.title = payload.title;
+    if (payload.description !== undefined) track.description = payload.description;
+    if (payload.selectionYearStart !== undefined)
+      track.selectionYearStart = payload.selectionYearStart;
+    track.updatedAt = nowIso();
+    this.write(data);
+    return track;
+  }
+
+  async enrollInProgram(
+    apiBaseUrl: string,
+    userId: string,
+    programId: string
+  ): Promise<StudentProgramPlanRecord> {
+    const data = this.read(apiBaseUrl);
+    const version = this.getActiveProgramVersion(data, programId);
+    if (!version) {
+      throw new Error('No active program version found.');
+    }
+    let studentProgram = (data.studentPrograms || []).find((entry) => {
+      if (entry.userId !== userId) return false;
+      const studentVersion = (data.programVersions || []).find(
+        (versionEntry) => versionEntry.id === entry.programVersionId
+      );
+      return studentVersion?.programId === programId;
+    });
+    if (!studentProgram) {
+      studentProgram = {
+        id: randomUUID(),
+        userId,
+        programVersionId: version.id,
+        selectedTrackId: null,
+        status: 'enrolled',
+        isLocked: false,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      };
+      data.studentPrograms = [...(data.studentPrograms || []), studentProgram];
+      data.programApprovals = [
+        ...(data.programApprovals || []),
+        {
+          id: randomUUID(),
+          studentProgramId: studentProgram.id,
+          stage: 'advisor',
+          status: 'pending',
+          reviewerUserId: null,
+          notes: null,
+          decidedAt: null,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        },
+        {
+          id: randomUUID(),
+          studentProgramId: studentProgram.id,
+          stage: 'department',
+          status: 'pending',
+          reviewerUserId: null,
+          notes: null,
+          decidedAt: null,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        },
+      ];
+      this.write(data);
+    }
+    const plan = this.syncProgramDecisions(data, studentProgram.id);
+    if (!plan) {
+      throw new Error('Failed to create student program plan.');
+    }
+    return plan;
+  }
+
+  async getStudentProgramPlan(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<StudentProgramPlanRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram) return null;
+    return this.syncProgramDecisions(data, studentProgram.id);
+  }
+
+  async selectStudentTrack(
+    apiBaseUrl: string,
+    userId: string,
+    trackId: string
+  ): Promise<StudentProgramPlanRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    const track = (data.tracks || []).find((entry) => entry.id === trackId);
+    const user = data.users.find((entry) => entry.id === userId);
+    if (!studentProgram || !track || !user) return null;
+    const version = (data.programVersions || []).find(
+      (entry) => entry.id === studentProgram.programVersionId
+    );
+    if (!version || user.yearLevel < version.trackSelectionMinYear) return null;
+    studentProgram.selectedTrackId = track.id;
+    studentProgram.status = 'track_selected';
+    studentProgram.updatedAt = nowIso();
+    this.write(data);
+    return this.syncProgramDecisions(data, studentProgram.id);
+  }
+
+  async updateStudentProgramPlan(
+    apiBaseUrl: string,
+    userId: string,
+    payload: {
+      plannedCourses: Array<{
+        catalogCourseId: string;
+        plannedYear: number;
+        plannedTerm: AcademicTerm;
+        sourceType: PlannedCourseSourceType;
+        note: string | null;
+      }>;
+    }
+  ): Promise<StudentProgramPlanRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram || studentProgram.isLocked) return null;
+    const now = nowIso();
+    data.studentPlannedCourses = [
+      ...(data.studentPlannedCourses || []).filter(
+        (entry) => entry.studentProgramId !== studentProgram.id
+      ),
+      ...payload.plannedCourses.map((course) => ({
+        id: randomUUID(),
+        studentProgramId: studentProgram.id,
+        catalogCourseId: course.catalogCourseId,
+        plannedYear: course.plannedYear,
+        plannedTerm: course.plannedTerm,
+        sourceType: course.sourceType,
+        note: course.note,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    ];
+    studentProgram.updatedAt = now;
+    this.write(data);
+    return this.syncProgramDecisions(data, studentProgram.id);
+  }
+
+  async getStudentProgramSheet(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<ProgramSheetViewRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram) return null;
+    const bundle = this.findProgramBundle(data, studentProgram.id);
+    if (!bundle) return null;
+    return buildProgramSheet(bundle);
+  }
+
+  async generateStudentProgramSheet(
+    apiBaseUrl: string,
+    userId: string
+  ): Promise<ProgramSheetViewRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram) return null;
+    const plan = this.syncProgramDecisions(data, studentProgram.id);
+    if (!plan) return null;
+    const generatedAt = nowIso();
+    const sheet = buildProgramSheet({
+      studentProgram: {
+        id: plan.id,
+        userId: plan.userId,
+        programVersionId: plan.version.id,
+        selectedTrackId: plan.selectedTrack?.id || null,
+        status: plan.status,
+        isLocked: plan.isLocked,
+        createdAt: studentProgram.createdAt,
+        updatedAt: studentProgram.updatedAt,
+      },
+      user: data.users.find((entry) => entry.id === userId) || {
+        id: userId,
+        username: userId,
+        email: `${userId}@example.com`,
+        githubLogin: userId,
+        githubLinked: false,
+        githubAppInstalled: false,
+        systemRole: 'user',
+        yearLevel: 1,
+      },
+      program: plan.program,
+      version: plan.version,
+      selectedTrack: plan.selectedTrack,
+      requirementGroups: (data.requirementGroups || []).filter(
+        (entry) => entry.programVersionId === plan.version.id
+      ),
+      plannedCourses: plan.plannedCourses,
+      catalogCourses: plan.catalogCourses,
+      petitions: plan.petitions,
+      approvals: plan.approvals,
+      decisions: plan.decisions,
+      generatedAt,
+    });
+    data.programSheetSnapshots = [
+      ...(data.programSheetSnapshots || []),
+      {
+        id: randomUUID(),
+        studentProgramId: studentProgram.id,
+        versionId: plan.version.id,
+        renderedPayload: sheet as unknown as Record<string, unknown>,
+        generatedAt,
+      },
+    ];
+    this.write(data);
+    return sheet;
+  }
+
+  async createStudentPetition(
+    apiBaseUrl: string,
+    userId: string,
+    payload: {
+      type: PetitionType;
+      justification: string;
+      targetRequirementGroupId: string | null;
+      originalCatalogCourseId: string | null;
+      substituteCatalogCourseId: string | null;
+    }
+  ): Promise<PetitionRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram) return null;
+    const petition: PetitionRecord = {
+      id: randomUUID(),
+      studentProgramId: studentProgram.id,
+      type: payload.type,
+      status: 'pending_advisor',
+      justification: payload.justification,
+      targetRequirementGroupId: payload.targetRequirementGroupId,
+      submittedByUserId: userId,
+      reviewerUserId: null,
+      reviewerNotes: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+      courseLinks:
+        payload.originalCatalogCourseId || payload.substituteCatalogCourseId
+          ? [
+              {
+                id: randomUUID(),
+                petitionId: '',
+                originalCatalogCourseId: payload.originalCatalogCourseId,
+                substituteCatalogCourseId: payload.substituteCatalogCourseId,
+              },
+            ]
+          : [],
+    };
+    petition.courseLinks = petition.courseLinks.map((entry) => ({
+      ...entry,
+      petitionId: petition.id,
+    }));
+    data.petitions = [...(data.petitions || []), petition];
+    this.write(data);
+    return petition;
+  }
+
+  async listStudentPetitions(apiBaseUrl: string, userId: string): Promise<PetitionRecord[]> {
+    const data = this.read(apiBaseUrl);
+    const studentProgram = (data.studentPrograms || []).find((entry) => entry.userId === userId);
+    if (!studentProgram) return [];
+    return (data.petitions || []).filter((entry) => entry.studentProgramId === studentProgram.id);
+  }
+
+  async listProgramPetitions(apiBaseUrl: string, programId: string): Promise<PetitionRecord[]> {
+    const data = this.read(apiBaseUrl);
+    const versionIds = new Set(
+      (data.programVersions || [])
+        .filter((entry) => entry.programId === programId)
+        .map((entry) => entry.id)
+    );
+    const studentProgramIds = new Set(
+      (data.studentPrograms || [])
+        .filter((entry) => versionIds.has(entry.programVersionId))
+        .map((entry) => entry.id)
+    );
+    return (data.petitions || []).filter((entry) => studentProgramIds.has(entry.studentProgramId));
+  }
+
+  async updateProgramPetition(
+    apiBaseUrl: string,
+    _programId: string,
+    petitionId: string,
+    reviewerUserId: string,
+    payload: { status: PetitionStatus; reviewerNotes: string | null }
+  ): Promise<PetitionRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const petition = (data.petitions || []).find((entry) => entry.id === petitionId);
+    if (!petition) return null;
+    petition.status = payload.status;
+    petition.reviewerUserId = reviewerUserId;
+    petition.reviewerNotes = payload.reviewerNotes;
+    petition.updatedAt = nowIso();
+    this.write(data);
+    return petition;
+  }
+
+  async setProgramApproval(
+    apiBaseUrl: string,
+    _programId: string,
+    studentProgramId: string,
+    stage: ApprovalStage,
+    reviewerUserId: string,
+    payload: { status: ApprovalStatus; notes: string | null }
+  ): Promise<ProgramApprovalRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const approval = (data.programApprovals || []).find(
+      (entry) => entry.studentProgramId === studentProgramId && entry.stage === stage
+    );
+    const studentProgram = (data.studentPrograms || []).find(
+      (entry) => entry.id === studentProgramId
+    );
+    if (!approval || !studentProgram) return null;
+    if (stage === 'department') {
+      const advisor = (data.programApprovals || []).find(
+        (entry) => entry.studentProgramId === studentProgramId && entry.stage === 'advisor'
+      );
+      if (advisor?.status !== 'approved') {
+        return null;
+      }
+    }
+    approval.status = payload.status;
+    approval.notes = payload.notes;
+    approval.reviewerUserId = reviewerUserId;
+    approval.decidedAt = nowIso();
+    approval.updatedAt = nowIso();
+
+    if (stage === 'advisor' && payload.status === 'approved') {
+      studentProgram.status = 'advisor_approved';
+      studentProgram.isLocked = true;
+    } else if (stage === 'department' && payload.status === 'approved') {
+      studentProgram.status = 'department_approved';
+      studentProgram.isLocked = true;
+    } else if (payload.status === 'rejected') {
+      studentProgram.status = studentProgram.selectedTrackId ? 'track_selected' : 'enrolled';
+      studentProgram.isLocked = false;
+    }
+    studentProgram.updatedAt = nowIso();
+    this.write(data);
+    return approval;
+  }
+
   async listTrackingProjects(
     apiBaseUrl: string,
     courseId: string,
@@ -2037,23 +4032,50 @@ export class FileStore implements AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId?: string | null;
+      applicationOpenAt?: string | null;
+      applicationCloseAt?: string | null;
+      teamLockAt?: string | null;
+      teamSize?: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }
   ): Promise<ProjectRecord> {
     const data = this.read(apiBaseUrl);
+    const template =
+      payload.templateId && data.projectTemplates
+        ? data.projectTemplates.find((entry) => entry.id === payload.templateId) || null
+        : null;
+    const deliveryMode = template?.deliveryMode || payload.deliveryMode;
+    const teamRoles = template?.roles || [];
+    const teamSize = template?.teamSize ?? payload.teamSize ?? null;
     const record: ProjectRecord = {
       id: randomUUID(),
       projectKey: payload.slug,
       slug: payload.slug,
       courseId: payload.courseId,
+      templateId: template?.id || payload.templateId || null,
       title: payload.title,
       description: payload.description,
       status: payload.status,
       level: 1,
-      deliveryMode: payload.deliveryMode,
-      rubric: payload.rubric,
-      resources: payload.resources,
+      deliveryMode,
+      teamFormationStatus:
+        deliveryMode === 'team'
+          ? payload.applicationOpenAt
+            ? 'application_open'
+            : 'not_started'
+          : 'not_started',
+      applicationOpenAt: payload.applicationOpenAt || null,
+      applicationCloseAt: payload.applicationCloseAt || null,
+      teamLockAt: payload.teamLockAt || null,
+      teamSize,
+      teamRoles,
+      teamName: null,
+      assignedRoleLabel: null,
+      team: [],
+      rubric: template?.rubric || payload.rubric,
+      resources: template?.resources || payload.resources,
       instructorUserId: userId,
       manifest: {
         ...defaultManifest(apiBaseUrl),
@@ -2066,6 +4088,21 @@ export class FileStore implements AppStore {
       updatedAt: nowIso(),
     };
     data.projects.push(record);
+    if (template) {
+      for (const milestone of template.milestones) {
+        data.milestones.push({
+          id: randomUUID(),
+          projectId: record.id,
+          title: milestone.title,
+          description: milestone.description,
+          order: milestone.order,
+          dueAt: milestone.dueAt,
+          isFinal: milestone.isFinal,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        });
+      }
+    }
     data.activity.unshift(
       makeActivityRecord({
         actorUserId: userId,
@@ -2091,6 +4128,11 @@ export class FileStore implements AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId: string | null;
+      applicationOpenAt: string | null;
+      applicationCloseAt: string | null;
+      teamLockAt: string | null;
+      teamSize: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }>
@@ -2109,8 +4151,24 @@ export class FileStore implements AppStore {
     if (payload.description !== undefined) project.description = payload.description;
     if (payload.status !== undefined) project.status = payload.status;
     if (payload.deliveryMode !== undefined) project.deliveryMode = payload.deliveryMode;
+    if (payload.templateId !== undefined) project.templateId = payload.templateId;
+    if (payload.applicationOpenAt !== undefined) {
+      project.applicationOpenAt = payload.applicationOpenAt;
+    }
+    if (payload.applicationCloseAt !== undefined) {
+      project.applicationCloseAt = payload.applicationCloseAt;
+    }
+    if (payload.teamLockAt !== undefined) {
+      project.teamLockAt = payload.teamLockAt;
+    }
+    if (payload.teamSize !== undefined) {
+      project.teamSize = payload.teamSize;
+    }
     if (payload.rubric !== undefined) project.rubric = payload.rubric;
     if (payload.resources !== undefined) project.resources = payload.resources;
+    if (project.deliveryMode === 'team' && project.teamFormationStatus === 'not_started') {
+      project.teamFormationStatus = project.applicationOpenAt ? 'application_open' : 'not_started';
+    }
     project.updatedAt = nowIso();
     data.activity.unshift(
       makeActivityRecord({
@@ -2125,6 +4183,399 @@ export class FileStore implements AppStore {
     );
     this.write(data);
     return project;
+  }
+
+  async listCourseProjectTemplates(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<ProjectTemplateRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectTemplates || [])
+      .filter((entry) => entry.courseId === courseId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }
+
+  async createCourseProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    courseId: string,
+    payload: {
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }
+  ): Promise<ProjectTemplateRecord> {
+    const data = this.read(apiBaseUrl);
+    const record: ProjectTemplateRecord = {
+      id: randomUUID(),
+      courseId,
+      slug: payload.slug,
+      title: payload.title,
+      description: payload.description,
+      deliveryMode: payload.deliveryMode,
+      teamSize: payload.teamSize,
+      status: payload.status,
+      rubric: payload.rubric,
+      resources: payload.resources,
+      roles: payload.roles.map((role, index) => ({
+        id: randomUUID(),
+        key: role.key,
+        label: role.label,
+        count: role.count,
+        sortOrder: role.sortOrder ?? index,
+      })),
+      milestones: payload.milestones.map((milestone, index) => ({
+        id: randomUUID(),
+        title: milestone.title,
+        description: milestone.description,
+        order: milestone.order ?? index,
+        dueAt: milestone.dueAt,
+        isFinal: milestone.isFinal,
+      })),
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.projectTemplates = data.projectTemplates || [];
+    data.projectTemplates.push(record);
+    data.activity.unshift(
+      makeActivityRecord({
+        actorUserId: userId,
+        courseId,
+        projectId: null,
+        milestoneId: null,
+        submissionId: null,
+        action: 'template.created',
+        summary: `${record.title} template was created.`,
+      })
+    );
+    this.write(data);
+    return record;
+  }
+
+  async getProjectTemplateById(
+    apiBaseUrl: string,
+    templateId: string
+  ): Promise<ProjectTemplateRecord | null> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectTemplates || []).find((entry) => entry.id === templateId) || null;
+  }
+
+  async updateProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    templateId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }>
+  ): Promise<ProjectTemplateRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const template = (data.projectTemplates || []).find((entry) => entry.id === templateId);
+    if (!template) {
+      return null;
+    }
+    if (payload.slug !== undefined) template.slug = payload.slug;
+    if (payload.title !== undefined) template.title = payload.title;
+    if (payload.description !== undefined) template.description = payload.description;
+    if (payload.deliveryMode !== undefined) template.deliveryMode = payload.deliveryMode;
+    if (payload.teamSize !== undefined) template.teamSize = payload.teamSize;
+    if (payload.status !== undefined) template.status = payload.status;
+    if (payload.rubric !== undefined) template.rubric = payload.rubric;
+    if (payload.resources !== undefined) template.resources = payload.resources;
+    if (payload.roles !== undefined) {
+      template.roles = payload.roles.map((role, index) => ({
+        id: randomUUID(),
+        key: role.key,
+        label: role.label,
+        count: role.count,
+        sortOrder: role.sortOrder ?? index,
+      }));
+    }
+    if (payload.milestones !== undefined) {
+      template.milestones = payload.milestones.map((milestone, index) => ({
+        id: randomUUID(),
+        title: milestone.title,
+        description: milestone.description,
+        order: milestone.order ?? index,
+        dueAt: milestone.dueAt,
+        isFinal: milestone.isFinal,
+      }));
+    }
+    template.updatedAt = nowIso();
+    data.activity.unshift(
+      makeActivityRecord({
+        actorUserId: userId,
+        courseId: template.courseId,
+        projectId: null,
+        milestoneId: null,
+        submissionId: null,
+        action: 'template.updated',
+        summary: `${template.title} template was updated.`,
+      })
+    );
+    this.write(data);
+    return template;
+  }
+
+  async createProjectRoleApplication(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload: {
+      statement: string;
+      availabilityNote: string;
+      preferences: Array<{ templateRoleId: string; rank: number }>;
+    }
+  ): Promise<ProjectRoleApplicationRecord> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const template = resolveProjectTemplateRecord(data, project);
+    if (!template) {
+      throw new Error('Team template is not configured for this project.');
+    }
+    const preferences = payload.preferences
+      .slice()
+      .sort((left, right) => left.rank - right.rank)
+      .map((entry) => {
+        const role = template.roles.find((item) => item.id === entry.templateRoleId);
+        if (!role) {
+          throw new Error('Template role not found.');
+        }
+        return {
+          templateRoleId: role.id,
+          roleKey: role.key,
+          roleLabel: role.label,
+          rank: entry.rank,
+        };
+      });
+    data.projectRoleApplications = data.projectRoleApplications || [];
+    const existing = data.projectRoleApplications.find(
+      (entry) => entry.projectId === projectId && entry.userId === userId
+    );
+    const now = nowIso();
+    if (existing) {
+      existing.statement = payload.statement;
+      existing.availabilityNote = payload.availabilityNote;
+      existing.preferences = preferences;
+      existing.status = 'submitted';
+      existing.submittedAt = now;
+      existing.updatedAt = now;
+      this.write(data);
+      return existing;
+    }
+    const record: ProjectRoleApplicationRecord = {
+      id: randomUUID(),
+      projectId,
+      userId,
+      statement: payload.statement,
+      availabilityNote: payload.availabilityNote,
+      status: 'submitted',
+      submittedAt: now,
+      updatedAt: now,
+      preferences,
+    };
+    data.projectRoleApplications.push(record);
+    this.write(data);
+    return record;
+  }
+
+  async getProjectRoleApplicationForUser(
+    apiBaseUrl: string,
+    projectId: string,
+    userId: string
+  ): Promise<ProjectRoleApplicationRecord | null> {
+    const data = this.read(apiBaseUrl);
+    return (
+      (data.projectRoleApplications || []).find(
+        (entry) => entry.projectId === projectId && entry.userId === userId
+      ) || null
+    );
+  }
+
+  async listProjectRoleApplications(
+    apiBaseUrl: string,
+    projectId: string
+  ): Promise<ProjectRoleApplicationRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectRoleApplications || [])
+      .filter((entry) => entry.projectId === projectId)
+      .sort((left, right) => (left.submittedAt || '').localeCompare(right.submittedAt || ''));
+  }
+
+  async generateProjectTeamFormation(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { algorithmVersion?: string }
+  ): Promise<TeamFormationRunRecord> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const template = resolveProjectTemplateRecord(data, project);
+    if (!template) {
+      throw new Error('Project template not found.');
+    }
+    const applications = (data.projectRoleApplications || []).filter(
+      (entry) => entry.projectId === projectId && entry.status === 'submitted'
+    );
+    const courseMemberships = data.courseMemberships.filter(
+      (entry) => entry.courseId === project.courseId
+    );
+    const result = generateTeamFormationResult({
+      applications,
+      template,
+      users: data.users,
+      memberships: courseMemberships,
+    });
+    const run: TeamFormationRunRecord = {
+      id: randomUUID(),
+      projectId,
+      algorithmVersion: payload?.algorithmVersion || 'v1',
+      config: {
+        teamSize: template.teamSize,
+        roleCount: template.roles.length,
+      },
+      result,
+      createdByUserId: userId,
+      createdAt: nowIso(),
+    };
+    data.teamFormationRuns = data.teamFormationRuns || [];
+    data.teamFormationRuns.push(run);
+    project.teamFormationStatus = 'team_review';
+    project.updatedAt = nowIso();
+    this.write(data);
+    return run;
+  }
+
+  async lockProjectTeams(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { formationRunId?: string }
+  ): Promise<TeamRecord[]> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const run = payload?.formationRunId
+      ? (data.teamFormationRuns || []).find((entry) => entry.id === payload.formationRunId) || null
+      : (data.teamFormationRuns || [])
+          .filter((entry) => entry.projectId === projectId)
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null;
+    if (!run) {
+      throw new Error('No generated team formation run found.');
+    }
+    data.teams = (data.teams || []).filter((entry) => entry.projectId !== projectId);
+    const lockedAt = nowIso();
+    const teams = run.result.teams.map((entry) => {
+      const teamId = randomUUID();
+      const firstMember = entry.members[0];
+      const repo: TeamProjectRepoRecord = {
+        id: randomUUID(),
+        teamId,
+        owner: firstMember ? firstMember.username : 'nibras-team',
+        name: `nibras-${project.slug.replace(/\//g, '-')}-${entry.name.toLowerCase().replace(/\s+/g, '-')}`,
+        githubRepoId: null,
+        cloneUrl: null,
+        defaultBranch: 'main',
+        visibility: 'private',
+        installStatus: 'provisioned',
+        createdAt: lockedAt,
+        updatedAt: lockedAt,
+      };
+      return {
+        id: teamId,
+        projectId,
+        name: entry.name,
+        status: 'locked' as const,
+        lockedAt,
+        members: entry.members.map((member) => ({
+          id: randomUUID(),
+          teamId,
+          userId: member.userId,
+          username: member.username,
+          roleKey: member.roleKey,
+          roleLabel: member.roleLabel,
+          status: 'active',
+          createdAt: lockedAt,
+        })),
+        repo,
+        createdAt: lockedAt,
+        updatedAt: lockedAt,
+      };
+    });
+    data.teams.push(...teams);
+    project.teamFormationStatus = 'teams_locked';
+    project.teamLockAt = project.teamLockAt || lockedAt;
+    project.updatedAt = lockedAt;
+    this.write(data);
+    return teams;
+  }
+
+  async listProjectTeams(apiBaseUrl: string, projectId: string): Promise<TeamRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.teams || [])
+      .filter((entry) => entry.projectId === projectId)
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async updateProjectTeam(
+    apiBaseUrl: string,
+    _userId: string,
+    projectId: string,
+    teamId: string,
+    payload: Partial<{
+      name: string;
+      members: Array<{ userId: string; roleKey: string; roleLabel: string }>;
+    }>
+  ): Promise<TeamRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const team = (data.teams || []).find(
+      (entry) => entry.id === teamId && entry.projectId === projectId
+    );
+    if (!team) {
+      return null;
+    }
+    if (payload.name !== undefined) {
+      team.name = payload.name;
+    }
+    if (payload.members !== undefined) {
+      const userLookup = Object.fromEntries(data.users.map((user) => [user.id, user.username]));
+      team.members = payload.members.map((member) => ({
+        id: randomUUID(),
+        teamId: team.id,
+        userId: member.userId,
+        username: userLookup[member.userId] || member.userId,
+        roleKey: member.roleKey,
+        roleLabel: member.roleLabel,
+        status: 'active',
+        createdAt: nowIso(),
+      }));
+    }
+    team.updatedAt = nowIso();
+    this.write(data);
+    return team;
   }
 
   async setTrackingProjectStatus(
@@ -2321,19 +4772,54 @@ export class FileStore implements AppStore {
     if (!project) {
       throw new Error('Project not found.');
     }
+    const now = nowIso();
+    let teamId: string | null = null;
+    let teamName: string | null = null;
+    let teamMemberUserIds: string[] = [];
+    let repoUrl = payload.repoUrl || payload.submissionValue;
+    let branch = payload.branch || 'main';
+    if (project.deliveryMode === 'team') {
+      if (project.teamFormationStatus !== 'teams_locked') {
+        throw new Error('Teams must be locked before team projects can accept submissions.');
+      }
+      const team = (data.teams || []).find(
+        (entry) =>
+          entry.projectId === project.id &&
+          entry.members.some((member) => member.userId === userId && member.status === 'active')
+      );
+      if (!team) {
+        throw new Error('You are not assigned to a locked team for this project.');
+      }
+      teamId = team.id;
+      teamName = team.name;
+      teamMemberUserIds = team.members.map((member) => member.userId);
+      if (team.repo) {
+        if (payload.repoUrl || payload.submissionValue) {
+          team.repo.cloneUrl = payload.repoUrl || payload.submissionValue;
+          team.repo.defaultBranch = branch;
+          team.repo.updatedAt = now;
+        }
+        repoUrl = team.repo.cloneUrl || repoUrl;
+        branch = team.repo.defaultBranch || branch;
+      }
+    }
     const record: SubmissionRecord = {
       id: randomUUID(),
       userId,
+      submittedByUserId: userId,
       projectId: project.id,
       projectKey: project.projectKey,
       milestoneId,
+      teamId,
+      teamName,
+      teamMemberUserIds,
       commitSha:
         payload.commitSha ||
         (payload.submissionType === 'github'
           ? `github-pending-${randomUUID().slice(0, 8)}`
           : `manual-${randomUUID().slice(0, 8)}`),
-      repoUrl: payload.repoUrl || payload.submissionValue,
-      branch: payload.branch || 'main',
+      repoUrl,
+      branch,
       status: payload.submissionType === 'github' ? 'running' : 'needs_review',
       summary:
         payload.submissionType === 'github'
@@ -2342,9 +4828,9 @@ export class FileStore implements AppStore {
       submissionType: payload.submissionType,
       submissionValue: payload.submissionValue,
       notes: payload.notes || null,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-      submittedAt: nowIso(),
+      createdAt: now,
+      updatedAt: now,
+      submittedAt: now,
       localTestExitCode: null,
     };
     data.submissions.push(record);
@@ -2565,9 +5051,9 @@ export class FileStore implements AppStore {
       };
     }
     const data = this.read(apiBaseUrl);
-    const projects = data.projects.filter(
-      (entry) => entry.courseId === selectedCourse.id && entry.status === 'published'
-    );
+    const projects = data.projects
+      .filter((entry) => entry.courseId === selectedCourse.id && entry.status === 'published')
+      .map((entry) => projectWithTeamContext(data, entry, userId));
     const milestonesByProject: Record<string, MilestoneRecord[]> = {};
     const statsByProject: Record<string, TrackingDashboardStats> = {};
     for (const project of projects) {
@@ -2576,7 +5062,7 @@ export class FileStore implements AppStore {
         .sort((left, right) => left.order - right.order);
       milestonesByProject[project.id] = milestones;
       const submissions = data.submissions.filter(
-        (entry) => entry.projectId === project.id && entry.userId === userId
+        (entry) => entry.projectId === project.id && submissionBelongsToUser(data, entry, userId)
       );
       statsByProject[project.id] = calculateProjectStats(milestones, submissions, data.reviews);
     }
@@ -2584,6 +5070,9 @@ export class FileStore implements AppStore {
       course: selectedCourse,
       memberships,
       projects,
+      projectTemplatesById: Object.fromEntries(
+        (data.projectTemplates || []).map((entry) => [entry.id, entry])
+      ),
       milestonesByProject,
       activeProjectId: projects[0]?.id || null,
       activity: data.activity.filter((entry) => entry.courseId === selectedCourse.id).slice(0, 10),
