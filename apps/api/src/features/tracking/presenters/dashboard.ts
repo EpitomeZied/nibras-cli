@@ -81,6 +81,15 @@ export function presentProject(project: ProjectRecord): TrackingProjectSummary {
     status: project.status,
     level: project.level ?? 1,
     deliveryMode: project.deliveryMode,
+    templateId: project.templateId,
+    teamFormationStatus: project.teamFormationStatus,
+    applicationOpenAt: project.applicationOpenAt,
+    applicationCloseAt: project.applicationCloseAt,
+    teamLockAt: project.teamLockAt,
+    teamSize: project.teamSize,
+    teamRoles: project.teamRoles,
+    teamName: project.teamName,
+    assignedRoleLabel: project.assignedRoleLabel,
     gradeWeight: rubricTotal ? `${rubricTotal} pts rubric` : null,
     startDate: null,
     endDate: null,
@@ -88,7 +97,7 @@ export function presentProject(project: ProjectRecord): TrackingProjectSummary {
     type: project.deliveryMode === 'team' ? 'Team' : 'Individual',
     rubric: project.rubric,
     resources: project.resources,
-    team: [],
+    team: project.team,
   };
 }
 

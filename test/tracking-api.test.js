@@ -51,6 +51,139 @@ test('student dashboard returns the migrated projects view model', async () => {
   }
 });
 
+test('instructor can create and list project templates', async () => {
+  const storePath = makeStorePath();
+  const store = new FileStore(storePath);
+  const app = createSession(store, storePath, 'user_instructor', 'instructor-token');
+
+  try {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/v1/tracking/courses/course_cs161/templates',
+      headers: {
+        authorization: 'Bearer instructor-token',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify({
+        slug: 'team-capstone',
+        title: 'Team Capstone',
+        description: 'Reusable team project template.',
+        deliveryMode: 'team',
+        teamSize: 3,
+        status: 'active',
+        rubric: [{ criterion: 'Delivery', maxScore: 100 }],
+        resources: [{ label: 'Spec', url: 'https://example.com/spec' }],
+        roles: [
+          { key: 'backend', label: 'Backend', count: 1, sortOrder: 0 },
+          { key: 'frontend', label: 'Frontend', count: 1, sortOrder: 1 },
+          { key: 'pm', label: 'Project Manager', count: 1, sortOrder: 2 },
+        ],
+        milestones: [{ title: 'Final', description: '', order: 1, dueAt: null, isFinal: true }],
+      }),
+    });
+    assert.equal(created.statusCode, 201);
+
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/v1/tracking/courses/course_cs161/templates',
+      headers: { authorization: 'Bearer instructor-token' },
+    });
+    assert.equal(listed.statusCode, 200);
+    assert.equal(listed.json()[0].title, 'Team Capstone');
+  } finally {
+    await app.close();
+  }
+});
+
+test('team project application and locking flow works end to end', async () => {
+  const storePath = makeStorePath();
+  const store = new FileStore(storePath);
+  const data = store.read('http://127.0.0.1');
+  data.sessions.push(
+    {
+      accessToken: 'student-token',
+      refreshToken: 'student-refresh',
+      userId: 'user_demo',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      accessToken: 'instructor-token',
+      refreshToken: 'instructor-refresh',
+      userId: 'user_instructor',
+      createdAt: new Date().toISOString(),
+    }
+  );
+  data.projectTemplates.push({
+    id: 'template_team_exam1',
+    courseId: 'course_cs161',
+    slug: 'team-exam1',
+    title: 'Team Exam 1',
+    description: '',
+    deliveryMode: 'team',
+    teamSize: 1,
+    status: 'active',
+    rubric: [],
+    resources: [],
+    roles: [{ id: 'role_backend', key: 'backend', label: 'Backend', count: 1, sortOrder: 0 }],
+    milestones: [{ id: 'tmpl_ms_final', title: 'Final', description: '', order: 1, dueAt: null, isFinal: true }],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  const project = data.projects.find((entry) => entry.id === 'project_cs161_exam1');
+  project.deliveryMode = 'team';
+  project.templateId = 'template_team_exam1';
+  project.teamSize = 1;
+  project.teamRoles = [{ id: 'role_backend', key: 'backend', label: 'Backend', count: 1, sortOrder: 0 }];
+  project.teamFormationStatus = 'application_open';
+  project.applicationOpenAt = new Date(Date.now() - 1000).toISOString();
+  project.applicationCloseAt = new Date(Date.now() + 60_000).toISOString();
+  store.write(data);
+  const app = buildApp(new FileStore(storePath));
+
+  try {
+    const application = await app.inject({
+      method: 'POST',
+      url: '/v1/tracking/projects/project_cs161_exam1/applications',
+      headers: {
+        authorization: 'Bearer student-token',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify({
+        statement: 'I can own the backend work.',
+        availabilityNote: '',
+        preferences: [{ templateRoleId: 'role_backend', rank: 1 }],
+      }),
+    });
+    assert.equal(application.statusCode, 201);
+
+    const generated = await app.inject({
+      method: 'POST',
+      url: '/v1/tracking/projects/project_cs161_exam1/team-formation/generate',
+      headers: {
+        authorization: 'Bearer instructor-token',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify({ algorithmVersion: 'v1' }),
+    });
+    assert.equal(generated.statusCode, 200);
+    assert.equal(generated.json().result.teams.length, 1);
+
+    const locked = await app.inject({
+      method: 'POST',
+      url: '/v1/tracking/projects/project_cs161_exam1/team-formation/lock',
+      headers: {
+        authorization: 'Bearer instructor-token',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify({ formationRunId: generated.json().id }),
+    });
+    assert.equal(locked.statusCode, 200);
+    assert.equal(locked.json()[0].members[0].userId, 'user_demo');
+  } finally {
+    await app.close();
+  }
+});
+
 test('home dashboard returns the student mode by default for student-only users', async () => {
   const storePath = makeStorePath();
   const store = new FileStore(storePath);

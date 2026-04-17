@@ -3,8 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import type {
+  CreateProjectRoleApplicationRequest,
   CreateTrackingSubmissionRequest,
+  ProjectRoleApplication,
   StudentProjectsDashboardResponse,
+  Team,
   TrackingCourseSummary,
   TrackingMilestone,
   TrackingProjectSummary,
@@ -21,6 +24,7 @@ import {
 } from '../../../lib/levels';
 import { useSession } from '../../_components/session-context';
 import SubmissionModal from './submission-modal';
+import TeamApplicationModal from './team-application-modal';
 import styles from './projects.module.css';
 
 type SessionUser = {
@@ -88,9 +92,11 @@ function Skeleton({ w = '100%', h = 14, r = 6 }: { w?: string; h?: number; r?: n
 
 function MilestoneCard({
   milestone,
+  actionMode,
   onSubmit,
 }: {
   milestone: TrackingMilestone;
+  actionMode: 'submit' | 'apply';
   onSubmit: (m: TrackingMilestone) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -154,7 +160,11 @@ function MilestoneCard({
                   className={styles.submitBtn}
                   onClick={() => onSubmit(milestone)}
                 >
-                  {isSubmitted ? '↩ Resubmit' : '↑ Submit'}
+                  {actionMode === 'apply'
+                    ? 'Apply for Team'
+                    : isSubmitted
+                      ? '↩ Resubmit'
+                      : '↑ Submit'}
                 </button>
               )}
             </div>
@@ -186,6 +196,11 @@ export default function ProjectsDashboard({
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [selectionReady, setSelectionReady] = useState(false);
   const [activeMilestone, setActiveMilestone] = useState<TrackingMilestone | null>(null);
+  const [applicationOpen, setApplicationOpen] = useState(false);
+  const [activeApplication, setActiveApplication] = useState<ProjectRoleApplication | null>(null);
+  const [activeTeams, setActiveTeams] = useState<Team[]>([]);
+  const [applicationSubmitting, setApplicationSubmitting] = useState(false);
+  const [applicationError, setApplicationError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [githubStatus, setGitHubStatus] = useState<GitHubStatus>({
@@ -370,6 +385,8 @@ export default function ProjectsDashboard({
   );
 
   const finalMilestone = activeMilestones.find((m) => m.isFinal) ?? null;
+  const teamApplicationRequired =
+    activeProject?.deliveryMode === 'team' && activeProject.teamFormationStatus !== 'teams_locked';
 
   function handleCourseChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const nextCourseId = event.target.value || null;
@@ -387,9 +404,41 @@ export default function ProjectsDashboard({
     null;
 
   function openSubmit(milestone: TrackingMilestone) {
+    if (teamApplicationRequired) {
+      setApplicationOpen(true);
+      setApplicationError('');
+      return;
+    }
     setActiveMilestone(milestone);
     setSubmitError('');
   }
+
+  async function loadTeamState(projectId: string | null) {
+    if (!projectId) {
+      setActiveApplication(null);
+      setActiveTeams([]);
+      return;
+    }
+    try {
+      const [applicationResponse, teamsResponse] = await Promise.all([
+        apiFetch(`/v1/tracking/projects/${projectId}/applications/me`, { auth: true }),
+        apiFetch(`/v1/tracking/projects/${projectId}/teams`, { auth: true }),
+      ]);
+      setActiveApplication(
+        applicationResponse.ok
+          ? ((await applicationResponse.json()) as ProjectRoleApplication | null)
+          : null
+      );
+      setActiveTeams(teamsResponse.ok ? ((await teamsResponse.json()) as Team[]) : []);
+    } catch {
+      setActiveApplication(null);
+      setActiveTeams([]);
+    }
+  }
+
+  useEffect(() => {
+    void loadTeamState(activeProject?.id ?? null);
+  }, [activeProject?.id]);
 
   async function submitMilestone(payload: CreateTrackingSubmissionRequest) {
     if (!activeMilestone) {
@@ -416,6 +465,35 @@ export default function ProjectsDashboard({
       setSubmitError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function submitApplication(payload: CreateProjectRoleApplicationRequest) {
+    if (!activeProject) {
+      return;
+    }
+    setApplicationSubmitting(true);
+    setApplicationError('');
+    try {
+      const response = await apiFetch(`/v1/tracking/projects/${activeProject.id}/applications`, {
+        auth: true,
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `Application failed (${response.status}).`);
+      }
+      setApplicationOpen(false);
+      await loadTeamState(activeProject.id);
+      setToast('✅ Team application saved.');
+      setTimeout(() => setToast(''), 4000);
+      await loadDashboard(dashboard?.course?.id ?? null);
+    } catch (error) {
+      setApplicationError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setApplicationSubmitting(false);
     }
   }
 
@@ -646,6 +724,26 @@ export default function ProjectsDashboard({
                 {activeProject?.description && (
                   <p className={styles.overviewDesc}>{activeProject.description}</p>
                 )}
+                {activeProject?.deliveryMode === 'team' && (
+                  <div className={styles.overviewMeta}>
+                    <span className={styles.metaChip}>
+                      <span className={styles.metaChipLabel}>Formation</span>
+                      {activeProject.teamFormationStatus.replace(/_/g, ' ')}
+                    </span>
+                    {activeProject.teamName && (
+                      <span className={styles.metaChip}>
+                        <span className={styles.metaChipLabel}>Team</span>
+                        {activeProject.teamName}
+                      </span>
+                    )}
+                    {activeProject.assignedRoleLabel && (
+                      <span className={styles.metaChip}>
+                        <span className={styles.metaChipLabel}>Role</span>
+                        {activeProject.assignedRoleLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className={styles.overviewMeta}>
                   {activeProject?.gradeWeight && (
                     <span className={styles.metaChip}>
@@ -666,6 +764,24 @@ export default function ProjectsDashboard({
                     </span>
                   )}
                 </div>
+                {activeProject?.deliveryMode === 'team' && activeProject.team.length > 0 && (
+                  <div className={styles.segLegend}>
+                    {activeProject.team.map((member) => (
+                      <span key={member.userId}>
+                        <span className={styles.dot} style={{ background: member.color }} />
+                        {member.name}
+                        {member.roleLabel ? ` · ${member.roleLabel}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {activeProject?.deliveryMode === 'team' &&
+                  activeProject.team.length === 0 &&
+                  activeTeams.length > 0 && (
+                    <p className={styles.overviewDesc}>
+                      Teams are locked. Your visible team workspace is ready.
+                    </p>
+                  )}
               </div>
 
               {/* Milestones panel */}
@@ -685,7 +801,12 @@ export default function ProjectsDashboard({
                 ) : (
                   <div className={styles.milestoneList}>
                     {activeMilestones.map((m) => (
-                      <MilestoneCard key={m.id} milestone={m} onSubmit={openSubmit} />
+                      <MilestoneCard
+                        key={m.id}
+                        milestone={m}
+                        actionMode={teamApplicationRequired ? 'apply' : 'submit'}
+                        onSubmit={openSubmit}
+                      />
                     ))}
                   </div>
                 )}
@@ -703,23 +824,35 @@ export default function ProjectsDashboard({
                 </div>
                 <div className={styles.finalBox}>
                   <p className={styles.finalDesc}>
-                    {finalMilestone?.description ??
-                      'Submit the final repository state and write-up for instructor review.'}
+                    {teamApplicationRequired
+                      ? activeApplication
+                        ? 'Your application is saved. Update it any time before applications close.'
+                        : 'Rank your preferred roles so the system can place you into a balanced team.'
+                      : (finalMilestone?.description ??
+                        'Submit the final repository state and write-up for instructor review.')}
                   </p>
                   <button
                     type="button"
                     className={`${styles.submitBtnLg} ${!finalMilestone ? styles.submitBtnDisabled : ''}`}
-                    disabled={!finalMilestone}
-                    onClick={() => finalMilestone && openSubmit(finalMilestone)}
+                    disabled={!finalMilestone && !teamApplicationRequired}
+                    onClick={() =>
+                      teamApplicationRequired
+                        ? setApplicationOpen(true)
+                        : finalMilestone && openSubmit(finalMilestone)
+                    }
                   >
-                    {!finalMilestone
-                      ? '🔒 No final milestone configured'
-                      : finalMilestone.status === 'approved' || finalMilestone.status === 'graded'
-                        ? '✓ Final Project Approved'
-                        : finalMilestone.status === 'submitted' ||
-                            finalMilestone.status === 'under_review'
-                          ? '↩ Resubmit Final Project'
-                          : '📤 Submit Final Project'}
+                    {teamApplicationRequired
+                      ? activeApplication
+                        ? '✎ Update Team Application'
+                        : '🧩 Apply for Team Roles'
+                      : !finalMilestone
+                        ? '🔒 No final milestone configured'
+                        : finalMilestone.status === 'approved' || finalMilestone.status === 'graded'
+                          ? '✓ Final Project Approved'
+                          : finalMilestone.status === 'submitted' ||
+                              finalMilestone.status === 'under_review'
+                            ? '↩ Resubmit Final Project'
+                            : '📤 Submit Final Project'}
                   </button>
                 </div>
               </section>
@@ -902,6 +1035,16 @@ export default function ProjectsDashboard({
           submitError={submitError}
           onClose={() => setActiveMilestone(null)}
           onSubmit={submitMilestone}
+        />
+      )}
+      {applicationOpen && activeProject && (
+        <TeamApplicationModal
+          project={activeProject}
+          application={activeApplication}
+          submitting={applicationSubmitting}
+          submitError={applicationError}
+          onClose={() => setApplicationOpen(false)}
+          onSubmit={submitApplication}
         />
       )}
     </main>

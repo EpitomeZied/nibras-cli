@@ -46,6 +46,10 @@ export type SystemRole = 'user' | 'admin';
 export type MembershipRole = 'student' | 'instructor' | 'ta';
 export type ProjectStatus = 'draft' | 'published' | 'archived';
 export type DeliveryMode = 'individual' | 'team';
+export type ProjectTemplateStatus = 'draft' | 'active';
+export type TeamFormationStatus = 'not_started' | 'application_open' | 'team_review' | 'teams_locked';
+export type ProjectRoleApplicationStatus = 'submitted' | 'withdrawn';
+export type TeamStatus = 'suggested' | 'locked';
 export type SubmissionWorkflowStatus = 'queued' | 'running' | 'passed' | 'failed' | 'needs_review';
 export type SubmissionType = 'github' | 'link' | 'text';
 export type ReviewStatus = 'pending' | 'approved' | 'changes_requested' | 'graded';
@@ -111,6 +115,139 @@ export type TrackingRubricItemRecord = {
   earned?: number;
 };
 
+export type ProjectTemplateRoleRecord = {
+  id: string;
+  key: string;
+  label: string;
+  count: number;
+  sortOrder: number;
+};
+
+export type ProjectTemplateMilestoneRecord = {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  dueAt: string | null;
+  isFinal: boolean;
+};
+
+export type ProjectTemplateRecord = {
+  id: string;
+  courseId: string;
+  slug: string;
+  title: string;
+  description: string;
+  deliveryMode: DeliveryMode;
+  teamSize: number | null;
+  status: ProjectTemplateStatus;
+  rubric: TrackingRubricItemRecord[];
+  resources: TrackingResourceRecord[];
+  roles: ProjectTemplateRoleRecord[];
+  milestones: ProjectTemplateMilestoneRecord[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProjectRolePreferenceRecord = {
+  templateRoleId: string;
+  roleKey: string;
+  roleLabel: string;
+  rank: number;
+};
+
+export type ProjectRoleApplicationRecord = {
+  id: string;
+  projectId: string;
+  userId: string;
+  statement: string;
+  availabilityNote: string;
+  status: ProjectRoleApplicationStatus;
+  submittedAt: string | null;
+  updatedAt: string;
+  preferences: ProjectRolePreferenceRecord[];
+};
+
+export type TeamFormationSuggestionMemberRecord = {
+  userId: string;
+  username: string;
+  level: number;
+  roleKey: string;
+  roleLabel: string;
+};
+
+export type TeamFormationSuggestionRecord = {
+  name: string;
+  members: TeamFormationSuggestionMemberRecord[];
+  averageLevel: number;
+};
+
+export type TeamFormationWaitlistEntryRecord = {
+  userId: string;
+  username: string;
+  level: number;
+};
+
+export type TeamFormationRunRecord = {
+  id: string;
+  projectId: string;
+  algorithmVersion: string;
+  config: Record<string, unknown>;
+  result: {
+    teams: TeamFormationSuggestionRecord[];
+    waitlist: TeamFormationWaitlistEntryRecord[];
+    warnings: string[];
+  };
+  createdByUserId: string;
+  createdAt: string;
+};
+
+export type TeamMemberRecord = {
+  id: string;
+  teamId: string;
+  userId: string;
+  username: string;
+  roleKey: string;
+  roleLabel: string;
+  status: string;
+  createdAt: string;
+};
+
+export type TeamProjectRepoRecord = {
+  id: string;
+  teamId: string;
+  owner: string;
+  name: string;
+  githubRepoId: string | null;
+  cloneUrl: string | null;
+  defaultBranch: string;
+  visibility: 'private' | 'public';
+  installStatus: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TeamRecord = {
+  id: string;
+  projectId: string;
+  name: string;
+  status: TeamStatus;
+  lockedAt: string | null;
+  members: TeamMemberRecord[];
+  repo: TeamProjectRepoRecord | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TeamMemberBadgeRecord = {
+  userId: string;
+  name: string;
+  initials: string;
+  color: string;
+  roleKey: string | null;
+  roleLabel: string | null;
+};
+
 export type RepoRecord = {
   owner: string;
   name: string;
@@ -129,11 +266,21 @@ export type ProjectRecord = {
   projectKey: string;
   slug: string;
   courseId: string | null;
+  templateId: string | null;
   title: string;
   description: string;
   status: ProjectStatus;
   level: number;
   deliveryMode: DeliveryMode;
+  teamFormationStatus: TeamFormationStatus;
+  applicationOpenAt: string | null;
+  applicationCloseAt: string | null;
+  teamLockAt: string | null;
+  teamSize: number | null;
+  teamRoles: ProjectTemplateRoleRecord[];
+  teamName: string | null;
+  assignedRoleLabel: string | null;
+  team: TeamMemberBadgeRecord[];
   rubric: TrackingRubricItemRecord[];
   resources: TrackingResourceRecord[];
   instructorUserId: string | null;
@@ -160,9 +307,13 @@ export type MilestoneRecord = {
 export type SubmissionRecord = {
   id: string;
   userId: string;
+  submittedByUserId: string | null;
   projectId: string;
   projectKey: string;
   milestoneId: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  teamMemberUserIds: string[];
   commitSha: string;
   repoUrl: string;
   branch: string;
@@ -253,6 +404,7 @@ export type StudentDashboardRecord = {
   course: CourseRecord | null;
   memberships: CourseMembershipRecord[];
   projects: ProjectRecord[];
+  projectTemplatesById?: Record<string, ProjectTemplateRecord>;
   milestonesByProject: Record<string, MilestoneRecord[]>;
   activeProjectId: string | null;
   activity: ActivityRecord[];
@@ -451,6 +603,10 @@ export type StoreData = {
   users: UserRecord[];
   githubAccounts: GitHubAccountRecord[];
   courses: CourseRecord[];
+  projectTemplates?: ProjectTemplateRecord[];
+  projectRoleApplications?: ProjectRoleApplicationRecord[];
+  teamFormationRuns?: TeamFormationRunRecord[];
+  teams?: TeamRecord[];
   courseMemberships: CourseMembershipRecord[];
   courseInvites: CourseInviteRecord[];
   deviceCodes: DeviceCodeRecord[];
@@ -608,6 +764,11 @@ export interface AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId?: string | null;
+      applicationOpenAt?: string | null;
+      applicationCloseAt?: string | null;
+      teamLockAt?: string | null;
+      teamSize?: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }
@@ -622,10 +783,93 @@ export interface AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId: string | null;
+      applicationOpenAt: string | null;
+      applicationCloseAt: string | null;
+      teamLockAt: string | null;
+      teamSize: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }>
   ): Promise<ProjectRecord | null>;
+  listCourseProjectTemplates(apiBaseUrl: string, courseId: string): Promise<ProjectTemplateRecord[]>;
+  createCourseProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    courseId: string,
+    payload: {
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }
+  ): Promise<ProjectTemplateRecord>;
+  getProjectTemplateById(apiBaseUrl: string, templateId: string): Promise<ProjectTemplateRecord | null>;
+  updateProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    templateId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }>
+  ): Promise<ProjectTemplateRecord | null>;
+  createProjectRoleApplication(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload: {
+      statement: string;
+      availabilityNote: string;
+      preferences: Array<{ templateRoleId: string; rank: number }>;
+    }
+  ): Promise<ProjectRoleApplicationRecord>;
+  getProjectRoleApplicationForUser(
+    apiBaseUrl: string,
+    projectId: string,
+    userId: string
+  ): Promise<ProjectRoleApplicationRecord | null>;
+  listProjectRoleApplications(
+    apiBaseUrl: string,
+    projectId: string
+  ): Promise<ProjectRoleApplicationRecord[]>;
+  generateProjectTeamFormation(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { algorithmVersion?: string }
+  ): Promise<TeamFormationRunRecord>;
+  lockProjectTeams(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { formationRunId?: string }
+  ): Promise<TeamRecord[]>;
+  listProjectTeams(apiBaseUrl: string, projectId: string): Promise<TeamRecord[]>;
+  updateProjectTeam(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    teamId: string,
+    payload: Partial<{
+      name: string;
+      members: Array<{ userId: string; roleKey: string; roleLabel: string }>;
+    }>
+  ): Promise<TeamRecord | null>;
   setTrackingProjectStatus(
     apiBaseUrl: string,
     userId: string,
@@ -844,6 +1088,295 @@ function branchNameFromRef(ref: string): string {
   return ref.startsWith('refs/heads/') ? ref.slice('refs/heads/'.length) : ref;
 }
 
+const TEAM_BADGE_COLORS = ['#0f766e', '#0369a1', '#7c3aed', '#b45309', '#be123c', '#1d4ed8'];
+
+function initialsForName(value: string): string {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('');
+}
+
+function colorForUser(userId: string): string {
+  const total = userId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return TEAM_BADGE_COLORS[total % TEAM_BADGE_COLORS.length];
+}
+
+export function resolveProjectTemplateRecord(
+  data: StoreData,
+  project: Pick<ProjectRecord, 'templateId' | 'teamRoles' | 'teamSize'> & { id: string }
+): ProjectTemplateRecord | null {
+  if (project.templateId) {
+    return data.projectTemplates?.find((entry) => entry.id === project.templateId) || null;
+  }
+  if ((project.teamRoles?.length || 0) > 0 || project.teamSize) {
+    return {
+      id: `inline-template-${project.id}`,
+      courseId: '',
+      slug: '',
+      title: '',
+      description: '',
+      deliveryMode: 'team',
+      teamSize: project.teamSize,
+      status: 'active',
+      rubric: [],
+      resources: [],
+      roles: project.teamRoles || [],
+      milestones: [],
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+  }
+  return null;
+}
+
+export function buildProjectTeamBadges(
+  data: StoreData,
+  projectId: string,
+  userId: string
+): { teamName: string | null; assignedRoleLabel: string | null; team: TeamMemberBadgeRecord[] } {
+  const team = (data.teams || []).find(
+    (entry) =>
+      entry.projectId === projectId &&
+      entry.members.some((member) => member.userId === userId && member.status === 'active')
+  );
+  if (!team) {
+    return { teamName: null, assignedRoleLabel: null, team: [] };
+  }
+  const currentMember = team.members.find((entry) => entry.userId === userId) || null;
+  return {
+    teamName: team.name,
+    assignedRoleLabel: currentMember?.roleLabel || null,
+    team: team.members.map((member) => ({
+      userId: member.userId,
+      name: member.username,
+      initials: initialsForName(member.username),
+      color: colorForUser(member.userId),
+      roleKey: member.roleKey,
+      roleLabel: member.roleLabel,
+    })),
+  };
+}
+
+export function projectWithTeamContext(
+  data: StoreData,
+  project: ProjectRecord,
+  userId: string
+): ProjectRecord {
+  const team = buildProjectTeamBadges(data, project.id, userId);
+  return {
+    ...project,
+    teamName: team.teamName,
+    assignedRoleLabel: team.assignedRoleLabel,
+    team: team.team,
+  };
+}
+
+export function teamMemberUserIdsForSubmission(data: StoreData, submission: SubmissionRecord): string[] {
+  if (submission.teamMemberUserIds.length > 0) {
+    return submission.teamMemberUserIds;
+  }
+  if (!submission.teamId) {
+    return [];
+  }
+  const team = (data.teams || []).find((entry) => entry.id === submission.teamId);
+  return team?.members.map((member) => member.userId) || [];
+}
+
+export function submissionBelongsToUser(
+  data: StoreData,
+  submission: SubmissionRecord,
+  userId: string
+): boolean {
+  if (submission.userId === userId || submission.submittedByUserId === userId) {
+    return true;
+  }
+  return teamMemberUserIdsForSubmission(data, submission).includes(userId);
+}
+
+function templateRoleForPreference(
+  template: ProjectTemplateRecord,
+  templateRoleId: string
+): ProjectTemplateRoleRecord | null {
+  return template.roles.find((role) => role.id === templateRoleId) || null;
+}
+
+export function generateTeamFormationResult(args: {
+  applications: ProjectRoleApplicationRecord[];
+  template: ProjectTemplateRecord;
+  users: UserRecord[];
+  memberships: CourseMembershipRecord[];
+}): TeamFormationRunRecord['result'] {
+  const teamSize = args.template.teamSize || 0;
+  const warnings: string[] = [];
+  if (teamSize <= 0) {
+    return { teams: [], waitlist: [], warnings: ['Team size must be configured before matching.'] };
+  }
+  const activeApplications = args.applications
+    .filter((entry) => entry.status === 'submitted')
+    .slice()
+    .sort((left, right) => left.userId.localeCompare(right.userId));
+  const maxTeams = Math.floor(activeApplications.length / teamSize);
+  if (maxTeams === 0) {
+    return {
+      teams: [],
+      waitlist: activeApplications.map((application) => {
+        const user = args.users.find((entry) => entry.id === application.userId);
+        const membership = args.memberships.find((entry) => entry.userId === application.userId);
+        return {
+          userId: application.userId,
+          username: user?.username || application.userId,
+          level: membership?.level || 1,
+        };
+      }),
+      warnings: ['Not enough applications to form a complete team.'],
+    };
+  }
+
+  const rolePool: Array<{ roleKey: string; roleLabel: string }> = [];
+  for (const role of args.template.roles.slice().sort((a, b) => a.sortOrder - b.sortOrder)) {
+    for (let index = 0; index < role.count; index += 1) {
+      rolePool.push({ roleKey: role.key, roleLabel: role.label });
+    }
+  }
+  if (rolePool.length !== teamSize) {
+    warnings.push('Template role counts do not equal the configured team size.');
+  }
+
+  const teamCount = Math.min(maxTeams, Math.max(1, Math.floor(activeApplications.length / teamSize)));
+  const teams: TeamFormationSuggestionRecord[] = Array.from({ length: teamCount }, (_, index) => ({
+    name: `Team ${index + 1}`,
+    members: [],
+    averageLevel: 0,
+  }));
+
+  const remainingApplications = [...activeApplications];
+  const remainingByUserId = new Set(remainingApplications.map((entry) => entry.userId));
+  const userLevel = (userId: string) =>
+    args.memberships.find((entry) => entry.userId === userId)?.level ||
+    args.users.find((entry) => entry.id === userId)?.yearLevel ||
+    1;
+  const usernameFor = (userId: string) =>
+    args.users.find((entry) => entry.id === userId)?.username || userId;
+  const averageLevelForTeam = (team: TeamFormationSuggestionRecord) =>
+    team.members.length === 0
+      ? 0
+      : team.members.reduce((sum, member) => sum + member.level, 0) / team.members.length;
+
+  const preferenceRank = (application: ProjectRoleApplicationRecord, roleId: string) =>
+    application.preferences.find((entry) => entry.templateRoleId === roleId)?.rank ?? 999;
+
+  for (const role of args.template.roles.slice().sort((a, b) => a.sortOrder - b.sortOrder)) {
+    const slots = Math.min(role.count * teamCount, remainingApplications.length);
+    for (let slotIndex = 0; slotIndex < slots; slotIndex += 1) {
+      const candidateApplications = remainingApplications.filter((entry) =>
+        remainingByUserId.has(entry.userId)
+      );
+      if (candidateApplications.length === 0) {
+        break;
+      }
+      candidateApplications.sort((left, right) => {
+        const rankDelta = preferenceRank(left, role.id) - preferenceRank(right, role.id);
+        if (rankDelta !== 0) return rankDelta;
+        const levelDelta = userLevel(left.userId) - userLevel(right.userId);
+        if (levelDelta !== 0) return levelDelta;
+        return left.userId.localeCompare(right.userId);
+      });
+      const selected = candidateApplications[0];
+      const eligibleTeams = teams
+        .map((team, index) => ({ team, index }))
+        .filter(({ team }) => team.members.length < teamSize && !team.members.some((m) => m.roleKey === role.key))
+        .sort((left, right) => {
+          const avgDelta = averageLevelForTeam(left.team) - averageLevelForTeam(right.team);
+          if (avgDelta !== 0) return avgDelta;
+          return left.index - right.index;
+        });
+      if (eligibleTeams.length === 0) {
+        break;
+      }
+      const target = eligibleTeams[0].team;
+      target.members.push({
+        userId: selected.userId,
+        username: usernameFor(selected.userId),
+        level: userLevel(selected.userId),
+        roleKey: role.key,
+        roleLabel: role.label,
+      });
+      remainingByUserId.delete(selected.userId);
+    }
+  }
+
+  const leftovers = remainingApplications.filter((entry) => remainingByUserId.has(entry.userId));
+  for (const application of leftovers) {
+    const availableRoles = rolePool.filter(
+      (role) =>
+        !teams.every(
+          (team) =>
+            team.members.length >= teamSize || team.members.some((member) => member.roleKey === role.roleKey)
+        )
+    );
+    const preferredRole =
+      application.preferences
+        .slice()
+        .sort((left, right) => left.rank - right.rank)
+        .map((entry) => templateRoleForPreference(args.template, entry.templateRoleId))
+        .find(Boolean) || null;
+    const fallbackRole = preferredRole
+      ? { roleKey: preferredRole.key, roleLabel: preferredRole.label }
+      : availableRoles[0] || rolePool[0];
+    const target = teams
+      .slice()
+      .sort((left, right) => {
+        const fillDelta = left.members.length - right.members.length;
+        if (fillDelta !== 0) return fillDelta;
+        return averageLevelForTeam(left) - averageLevelForTeam(right);
+      })
+      .find((team) => team.members.length < teamSize);
+    if (!target || !fallbackRole) {
+      continue;
+    }
+    target.members.push({
+      userId: application.userId,
+      username: usernameFor(application.userId),
+      level: userLevel(application.userId),
+      roleKey: fallbackRole.roleKey,
+      roleLabel: fallbackRole.roleLabel,
+    });
+    remainingByUserId.delete(application.userId);
+  }
+
+  const completeTeams = teams.filter((team) => team.members.length === teamSize);
+  const incompleteMembers = teams
+    .filter((team) => team.members.length !== teamSize)
+    .flatMap((team) => team.members);
+  if (incompleteMembers.length > 0) {
+    warnings.push('Some suggested teams were incomplete and moved to the waitlist.');
+  }
+
+  for (const team of completeTeams) {
+    team.averageLevel = averageLevelForTeam(team);
+  }
+
+  const waitlist = [
+    ...incompleteMembers.map((member) => ({
+      userId: member.userId,
+      username: member.username,
+      level: member.level,
+    })),
+    ...remainingApplications
+      .filter((entry) => remainingByUserId.has(entry.userId))
+      .map((entry) => ({
+        userId: entry.userId,
+        username: usernameFor(entry.userId),
+        level: userLevel(entry.userId),
+      })),
+  ].sort((left, right) => left.userId.localeCompare(right.userId));
+
+  return { teams: completeTeams, waitlist, warnings };
+}
+
 function calculateProjectStats(
   milestones: MilestoneRecord[],
   submissions: SubmissionRecord[],
@@ -986,6 +1519,10 @@ function seedData(apiBaseUrl: string): StoreData {
         updatedAt: createdAt,
       },
     ],
+    projectTemplates: [],
+    projectRoleApplications: [],
+    teamFormationRuns: [],
+    teams: [],
     courseMemberships: [
       {
         id: 'membership_demo_cs161',
@@ -1035,12 +1572,22 @@ function seedData(apiBaseUrl: string): StoreData {
         projectKey: 'cs161/exam1',
         slug: 'cs161/exam1',
         courseId: cs161CourseId,
+        templateId: null,
         title: 'Exam 1',
         description:
           'Design, implement, and defend your solution for the first project milestone sequence.',
         status: 'published',
         level: 1,
         deliveryMode: 'individual',
+        teamFormationStatus: 'not_started',
+        applicationOpenAt: null,
+        applicationCloseAt: null,
+        teamLockAt: null,
+        teamSize: null,
+        teamRoles: [],
+        teamName: null,
+        assignedRoleLabel: null,
+        team: [],
         rubric: [
           { criterion: 'Correctness', maxScore: 50 },
           { criterion: 'Clarity', maxScore: 30 },
@@ -1063,11 +1610,21 @@ function seedData(apiBaseUrl: string): StoreData {
         projectKey: project.projectKey,
         slug: project.projectKey,
         courseId: cs106lCourseId,
+        templateId: null,
         title: project.title,
         description: project.description,
         status: 'published' as const,
         level: 1,
         deliveryMode: 'individual' as const,
+        teamFormationStatus: 'not_started' as const,
+        applicationOpenAt: null,
+        applicationCloseAt: null,
+        teamLockAt: null,
+        teamSize: null,
+        teamRoles: [],
+        teamName: null,
+        assignedRoleLabel: null,
+        team: [],
         rubric: [],
         resources: [],
         instructorUserId: instructorId,
@@ -1155,6 +1712,18 @@ export class FileStore implements AppStore {
       const parsed = JSON.parse(raw) as StoreData;
       if (!parsed.githubAccounts) {
         parsed.githubAccounts = [];
+      }
+      if (!parsed.projectTemplates) {
+        parsed.projectTemplates = [];
+      }
+      if (!parsed.projectRoleApplications) {
+        parsed.projectRoleApplications = [];
+      }
+      if (!parsed.teamFormationRuns) {
+        parsed.teamFormationRuns = [];
+      }
+      if (!parsed.teams) {
+        parsed.teams = [];
       }
       return parsed;
     } catch (err) {
@@ -1558,9 +2127,13 @@ export class FileStore implements AppStore {
     const record: SubmissionRecord = {
       id: randomUUID(),
       userId: payload.userId,
+      submittedByUserId: payload.userId,
       projectId: project.id,
       projectKey: payload.projectKey,
       milestoneId: null,
+      teamId: null,
+      teamName: null,
+      teamMemberUserIds: [],
       commitSha: payload.commitSha,
       repoUrl: payload.repoUrl,
       branch: payload.branch,
@@ -2037,23 +2610,50 @@ export class FileStore implements AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId?: string | null;
+      applicationOpenAt?: string | null;
+      applicationCloseAt?: string | null;
+      teamLockAt?: string | null;
+      teamSize?: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }
   ): Promise<ProjectRecord> {
     const data = this.read(apiBaseUrl);
+    const template =
+      payload.templateId && data.projectTemplates
+        ? data.projectTemplates.find((entry) => entry.id === payload.templateId) || null
+        : null;
+    const deliveryMode = template?.deliveryMode || payload.deliveryMode;
+    const teamRoles = template?.roles || [];
+    const teamSize = template?.teamSize ?? payload.teamSize ?? null;
     const record: ProjectRecord = {
       id: randomUUID(),
       projectKey: payload.slug,
       slug: payload.slug,
       courseId: payload.courseId,
+      templateId: template?.id || payload.templateId || null,
       title: payload.title,
       description: payload.description,
       status: payload.status,
       level: 1,
-      deliveryMode: payload.deliveryMode,
-      rubric: payload.rubric,
-      resources: payload.resources,
+      deliveryMode,
+      teamFormationStatus:
+        deliveryMode === 'team'
+          ? payload.applicationOpenAt
+            ? 'application_open'
+            : 'not_started'
+          : 'not_started',
+      applicationOpenAt: payload.applicationOpenAt || null,
+      applicationCloseAt: payload.applicationCloseAt || null,
+      teamLockAt: payload.teamLockAt || null,
+      teamSize,
+      teamRoles,
+      teamName: null,
+      assignedRoleLabel: null,
+      team: [],
+      rubric: template?.rubric || payload.rubric,
+      resources: template?.resources || payload.resources,
       instructorUserId: userId,
       manifest: {
         ...defaultManifest(apiBaseUrl),
@@ -2066,6 +2666,21 @@ export class FileStore implements AppStore {
       updatedAt: nowIso(),
     };
     data.projects.push(record);
+    if (template) {
+      for (const milestone of template.milestones) {
+        data.milestones.push({
+          id: randomUUID(),
+          projectId: record.id,
+          title: milestone.title,
+          description: milestone.description,
+          order: milestone.order,
+          dueAt: milestone.dueAt,
+          isFinal: milestone.isFinal,
+          createdAt: nowIso(),
+          updatedAt: nowIso(),
+        });
+      }
+    }
     data.activity.unshift(
       makeActivityRecord({
         actorUserId: userId,
@@ -2091,6 +2706,11 @@ export class FileStore implements AppStore {
       description: string;
       status: ProjectStatus;
       deliveryMode: DeliveryMode;
+      templateId: string | null;
+      applicationOpenAt: string | null;
+      applicationCloseAt: string | null;
+      teamLockAt: string | null;
+      teamSize: number | null;
       rubric: TrackingRubricItemRecord[];
       resources: TrackingResourceRecord[];
     }>
@@ -2109,8 +2729,24 @@ export class FileStore implements AppStore {
     if (payload.description !== undefined) project.description = payload.description;
     if (payload.status !== undefined) project.status = payload.status;
     if (payload.deliveryMode !== undefined) project.deliveryMode = payload.deliveryMode;
+    if (payload.templateId !== undefined) project.templateId = payload.templateId;
+    if (payload.applicationOpenAt !== undefined) {
+      project.applicationOpenAt = payload.applicationOpenAt;
+    }
+    if (payload.applicationCloseAt !== undefined) {
+      project.applicationCloseAt = payload.applicationCloseAt;
+    }
+    if (payload.teamLockAt !== undefined) {
+      project.teamLockAt = payload.teamLockAt;
+    }
+    if (payload.teamSize !== undefined) {
+      project.teamSize = payload.teamSize;
+    }
     if (payload.rubric !== undefined) project.rubric = payload.rubric;
     if (payload.resources !== undefined) project.resources = payload.resources;
+    if (project.deliveryMode === 'team' && project.teamFormationStatus === 'not_started') {
+      project.teamFormationStatus = project.applicationOpenAt ? 'application_open' : 'not_started';
+    }
     project.updatedAt = nowIso();
     data.activity.unshift(
       makeActivityRecord({
@@ -2125,6 +2761,395 @@ export class FileStore implements AppStore {
     );
     this.write(data);
     return project;
+  }
+
+  async listCourseProjectTemplates(
+    apiBaseUrl: string,
+    courseId: string
+  ): Promise<ProjectTemplateRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectTemplates || [])
+      .filter((entry) => entry.courseId === courseId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }
+
+  async createCourseProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    courseId: string,
+    payload: {
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }
+  ): Promise<ProjectTemplateRecord> {
+    const data = this.read(apiBaseUrl);
+    const record: ProjectTemplateRecord = {
+      id: randomUUID(),
+      courseId,
+      slug: payload.slug,
+      title: payload.title,
+      description: payload.description,
+      deliveryMode: payload.deliveryMode,
+      teamSize: payload.teamSize,
+      status: payload.status,
+      rubric: payload.rubric,
+      resources: payload.resources,
+      roles: payload.roles.map((role, index) => ({
+        id: randomUUID(),
+        key: role.key,
+        label: role.label,
+        count: role.count,
+        sortOrder: role.sortOrder ?? index,
+      })),
+      milestones: payload.milestones.map((milestone, index) => ({
+        id: randomUUID(),
+        title: milestone.title,
+        description: milestone.description,
+        order: milestone.order ?? index,
+        dueAt: milestone.dueAt,
+        isFinal: milestone.isFinal,
+      })),
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    data.projectTemplates = data.projectTemplates || [];
+    data.projectTemplates.push(record);
+    data.activity.unshift(
+      makeActivityRecord({
+        actorUserId: userId,
+        courseId,
+        projectId: null,
+        milestoneId: null,
+        submissionId: null,
+        action: 'template.created',
+        summary: `${record.title} template was created.`,
+      })
+    );
+    this.write(data);
+    return record;
+  }
+
+  async getProjectTemplateById(
+    apiBaseUrl: string,
+    templateId: string
+  ): Promise<ProjectTemplateRecord | null> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectTemplates || []).find((entry) => entry.id === templateId) || null;
+  }
+
+  async updateProjectTemplate(
+    apiBaseUrl: string,
+    userId: string,
+    templateId: string,
+    payload: Partial<{
+      slug: string;
+      title: string;
+      description: string;
+      deliveryMode: DeliveryMode;
+      teamSize: number | null;
+      status: ProjectTemplateStatus;
+      rubric: TrackingRubricItemRecord[];
+      resources: TrackingResourceRecord[];
+      roles: Array<Omit<ProjectTemplateRoleRecord, 'id'>>;
+      milestones: Array<Omit<ProjectTemplateMilestoneRecord, 'id'>>;
+    }>
+  ): Promise<ProjectTemplateRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const template = (data.projectTemplates || []).find((entry) => entry.id === templateId);
+    if (!template) {
+      return null;
+    }
+    if (payload.slug !== undefined) template.slug = payload.slug;
+    if (payload.title !== undefined) template.title = payload.title;
+    if (payload.description !== undefined) template.description = payload.description;
+    if (payload.deliveryMode !== undefined) template.deliveryMode = payload.deliveryMode;
+    if (payload.teamSize !== undefined) template.teamSize = payload.teamSize;
+    if (payload.status !== undefined) template.status = payload.status;
+    if (payload.rubric !== undefined) template.rubric = payload.rubric;
+    if (payload.resources !== undefined) template.resources = payload.resources;
+    if (payload.roles !== undefined) {
+      template.roles = payload.roles.map((role, index) => ({
+        id: randomUUID(),
+        key: role.key,
+        label: role.label,
+        count: role.count,
+        sortOrder: role.sortOrder ?? index,
+      }));
+    }
+    if (payload.milestones !== undefined) {
+      template.milestones = payload.milestones.map((milestone, index) => ({
+        id: randomUUID(),
+        title: milestone.title,
+        description: milestone.description,
+        order: milestone.order ?? index,
+        dueAt: milestone.dueAt,
+        isFinal: milestone.isFinal,
+      }));
+    }
+    template.updatedAt = nowIso();
+    data.activity.unshift(
+      makeActivityRecord({
+        actorUserId: userId,
+        courseId: template.courseId,
+        projectId: null,
+        milestoneId: null,
+        submissionId: null,
+        action: 'template.updated',
+        summary: `${template.title} template was updated.`,
+      })
+    );
+    this.write(data);
+    return template;
+  }
+
+  async createProjectRoleApplication(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload: {
+      statement: string;
+      availabilityNote: string;
+      preferences: Array<{ templateRoleId: string; rank: number }>;
+    }
+  ): Promise<ProjectRoleApplicationRecord> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const template = resolveProjectTemplateRecord(data, project);
+    if (!template) {
+      throw new Error('Team template is not configured for this project.');
+    }
+    const preferences = payload.preferences
+      .slice()
+      .sort((left, right) => left.rank - right.rank)
+      .map((entry) => {
+        const role = template.roles.find((item) => item.id === entry.templateRoleId);
+        if (!role) {
+          throw new Error('Template role not found.');
+        }
+        return {
+          templateRoleId: role.id,
+          roleKey: role.key,
+          roleLabel: role.label,
+          rank: entry.rank,
+        };
+      });
+    data.projectRoleApplications = data.projectRoleApplications || [];
+    const existing = data.projectRoleApplications.find(
+      (entry) => entry.projectId === projectId && entry.userId === userId
+    );
+    const now = nowIso();
+    if (existing) {
+      existing.statement = payload.statement;
+      existing.availabilityNote = payload.availabilityNote;
+      existing.preferences = preferences;
+      existing.status = 'submitted';
+      existing.submittedAt = now;
+      existing.updatedAt = now;
+      this.write(data);
+      return existing;
+    }
+    const record: ProjectRoleApplicationRecord = {
+      id: randomUUID(),
+      projectId,
+      userId,
+      statement: payload.statement,
+      availabilityNote: payload.availabilityNote,
+      status: 'submitted',
+      submittedAt: now,
+      updatedAt: now,
+      preferences,
+    };
+    data.projectRoleApplications.push(record);
+    this.write(data);
+    return record;
+  }
+
+  async getProjectRoleApplicationForUser(
+    apiBaseUrl: string,
+    projectId: string,
+    userId: string
+  ): Promise<ProjectRoleApplicationRecord | null> {
+    const data = this.read(apiBaseUrl);
+    return (
+      (data.projectRoleApplications || []).find(
+        (entry) => entry.projectId === projectId && entry.userId === userId
+      ) || null
+    );
+  }
+
+  async listProjectRoleApplications(
+    apiBaseUrl: string,
+    projectId: string
+  ): Promise<ProjectRoleApplicationRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.projectRoleApplications || [])
+      .filter((entry) => entry.projectId === projectId)
+      .sort((left, right) => (left.submittedAt || '').localeCompare(right.submittedAt || ''));
+  }
+
+  async generateProjectTeamFormation(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { algorithmVersion?: string }
+  ): Promise<TeamFormationRunRecord> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const template = resolveProjectTemplateRecord(data, project);
+    if (!template) {
+      throw new Error('Project template not found.');
+    }
+    const applications = (data.projectRoleApplications || []).filter(
+      (entry) => entry.projectId === projectId && entry.status === 'submitted'
+    );
+    const courseMemberships = data.courseMemberships.filter((entry) => entry.courseId === project.courseId);
+    const result = generateTeamFormationResult({
+      applications,
+      template,
+      users: data.users,
+      memberships: courseMemberships,
+    });
+    const run: TeamFormationRunRecord = {
+      id: randomUUID(),
+      projectId,
+      algorithmVersion: payload?.algorithmVersion || 'v1',
+      config: {
+        teamSize: template.teamSize,
+        roleCount: template.roles.length,
+      },
+      result,
+      createdByUserId: userId,
+      createdAt: nowIso(),
+    };
+    data.teamFormationRuns = data.teamFormationRuns || [];
+    data.teamFormationRuns.push(run);
+    project.teamFormationStatus = 'team_review';
+    project.updatedAt = nowIso();
+    this.write(data);
+    return run;
+  }
+
+  async lockProjectTeams(
+    apiBaseUrl: string,
+    userId: string,
+    projectId: string,
+    payload?: { formationRunId?: string }
+  ): Promise<TeamRecord[]> {
+    const data = this.read(apiBaseUrl);
+    const project = data.projects.find((entry) => entry.id === projectId);
+    if (!project) {
+      throw new Error('Project not found.');
+    }
+    const run = payload?.formationRunId
+      ? (data.teamFormationRuns || []).find((entry) => entry.id === payload.formationRunId) || null
+      : (data.teamFormationRuns || [])
+          .filter((entry) => entry.projectId === projectId)
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null;
+    if (!run) {
+      throw new Error('No generated team formation run found.');
+    }
+    data.teams = (data.teams || []).filter((entry) => entry.projectId !== projectId);
+    const lockedAt = nowIso();
+    const teams = run.result.teams.map((entry) => {
+      const teamId = randomUUID();
+      const firstMember = entry.members[0];
+      const repo: TeamProjectRepoRecord = {
+        id: randomUUID(),
+        teamId,
+        owner: firstMember ? firstMember.username : 'nibras-team',
+        name: `nibras-${project.slug.replace(/\//g, '-')}-${entry.name.toLowerCase().replace(/\s+/g, '-')}`,
+        githubRepoId: null,
+        cloneUrl: null,
+        defaultBranch: 'main',
+        visibility: 'private',
+        installStatus: 'provisioned',
+        createdAt: lockedAt,
+        updatedAt: lockedAt,
+      };
+      return {
+        id: teamId,
+        projectId,
+        name: entry.name,
+        status: 'locked' as const,
+        lockedAt,
+        members: entry.members.map((member) => ({
+          id: randomUUID(),
+          teamId,
+          userId: member.userId,
+          username: member.username,
+          roleKey: member.roleKey,
+          roleLabel: member.roleLabel,
+          status: 'active',
+          createdAt: lockedAt,
+        })),
+        repo,
+        createdAt: lockedAt,
+        updatedAt: lockedAt,
+      };
+    });
+    data.teams.push(...teams);
+    project.teamFormationStatus = 'teams_locked';
+    project.teamLockAt = project.teamLockAt || lockedAt;
+    project.updatedAt = lockedAt;
+    this.write(data);
+    return teams;
+  }
+
+  async listProjectTeams(apiBaseUrl: string, projectId: string): Promise<TeamRecord[]> {
+    const data = this.read(apiBaseUrl);
+    return (data.teams || [])
+      .filter((entry) => entry.projectId === projectId)
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async updateProjectTeam(
+    apiBaseUrl: string,
+    _userId: string,
+    projectId: string,
+    teamId: string,
+    payload: Partial<{
+      name: string;
+      members: Array<{ userId: string; roleKey: string; roleLabel: string }>;
+    }>
+  ): Promise<TeamRecord | null> {
+    const data = this.read(apiBaseUrl);
+    const team = (data.teams || []).find((entry) => entry.id === teamId && entry.projectId === projectId);
+    if (!team) {
+      return null;
+    }
+    if (payload.name !== undefined) {
+      team.name = payload.name;
+    }
+    if (payload.members !== undefined) {
+      const userLookup = Object.fromEntries(data.users.map((user) => [user.id, user.username]));
+      team.members = payload.members.map((member) => ({
+        id: randomUUID(),
+        teamId: team.id,
+        userId: member.userId,
+        username: userLookup[member.userId] || member.userId,
+        roleKey: member.roleKey,
+        roleLabel: member.roleLabel,
+        status: 'active',
+        createdAt: nowIso(),
+      }));
+    }
+    team.updatedAt = nowIso();
+    this.write(data);
+    return team;
   }
 
   async setTrackingProjectStatus(
@@ -2321,19 +3346,54 @@ export class FileStore implements AppStore {
     if (!project) {
       throw new Error('Project not found.');
     }
+    const now = nowIso();
+    let teamId: string | null = null;
+    let teamName: string | null = null;
+    let teamMemberUserIds: string[] = [];
+    let repoUrl = payload.repoUrl || payload.submissionValue;
+    let branch = payload.branch || 'main';
+    if (project.deliveryMode === 'team') {
+      if (project.teamFormationStatus !== 'teams_locked') {
+        throw new Error('Teams must be locked before team projects can accept submissions.');
+      }
+      const team = (data.teams || []).find(
+        (entry) =>
+          entry.projectId === project.id &&
+          entry.members.some((member) => member.userId === userId && member.status === 'active')
+      );
+      if (!team) {
+        throw new Error('You are not assigned to a locked team for this project.');
+      }
+      teamId = team.id;
+      teamName = team.name;
+      teamMemberUserIds = team.members.map((member) => member.userId);
+      if (team.repo) {
+        if (payload.repoUrl || payload.submissionValue) {
+          team.repo.cloneUrl = payload.repoUrl || payload.submissionValue;
+          team.repo.defaultBranch = branch;
+          team.repo.updatedAt = now;
+        }
+        repoUrl = team.repo.cloneUrl || repoUrl;
+        branch = team.repo.defaultBranch || branch;
+      }
+    }
     const record: SubmissionRecord = {
       id: randomUUID(),
       userId,
+      submittedByUserId: userId,
       projectId: project.id,
       projectKey: project.projectKey,
       milestoneId,
+      teamId,
+      teamName,
+      teamMemberUserIds,
       commitSha:
         payload.commitSha ||
         (payload.submissionType === 'github'
           ? `github-pending-${randomUUID().slice(0, 8)}`
           : `manual-${randomUUID().slice(0, 8)}`),
-      repoUrl: payload.repoUrl || payload.submissionValue,
-      branch: payload.branch || 'main',
+      repoUrl,
+      branch,
       status: payload.submissionType === 'github' ? 'running' : 'needs_review',
       summary:
         payload.submissionType === 'github'
@@ -2342,9 +3402,9 @@ export class FileStore implements AppStore {
       submissionType: payload.submissionType,
       submissionValue: payload.submissionValue,
       notes: payload.notes || null,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-      submittedAt: nowIso(),
+      createdAt: now,
+      updatedAt: now,
+      submittedAt: now,
       localTestExitCode: null,
     };
     data.submissions.push(record);
@@ -2565,9 +3625,9 @@ export class FileStore implements AppStore {
       };
     }
     const data = this.read(apiBaseUrl);
-    const projects = data.projects.filter(
-      (entry) => entry.courseId === selectedCourse.id && entry.status === 'published'
-    );
+    const projects = data.projects
+      .filter((entry) => entry.courseId === selectedCourse.id && entry.status === 'published')
+      .map((entry) => projectWithTeamContext(data, entry, userId));
     const milestonesByProject: Record<string, MilestoneRecord[]> = {};
     const statsByProject: Record<string, TrackingDashboardStats> = {};
     for (const project of projects) {
@@ -2576,7 +3636,7 @@ export class FileStore implements AppStore {
         .sort((left, right) => left.order - right.order);
       milestonesByProject[project.id] = milestones;
       const submissions = data.submissions.filter(
-        (entry) => entry.projectId === project.id && entry.userId === userId
+        (entry) => entry.projectId === project.id && submissionBelongsToUser(data, entry, userId)
       );
       statsByProject[project.id] = calculateProjectStats(milestones, submissions, data.reviews);
     }
@@ -2584,6 +3644,9 @@ export class FileStore implements AppStore {
       course: selectedCourse,
       memberships,
       projects,
+      projectTemplatesById: Object.fromEntries(
+        (data.projectTemplates || []).map((entry) => [entry.id, entry])
+      ),
       milestonesByProject,
       activeProjectId: projects[0]?.id || null,
       activity: data.activity.filter((entry) => entry.courseId === selectedCourse.id).slice(0, 10),

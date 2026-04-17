@@ -28,7 +28,12 @@ export function canViewSubmission(
   project: ProjectRecord | null,
   submission: SubmissionRecord
 ): boolean {
-  if (auth.user.systemRole === 'admin' || submission.userId === auth.user.id) {
+  if (
+    auth.user.systemRole === 'admin' ||
+    submission.userId === auth.user.id ||
+    submission.submittedByUserId === auth.user.id ||
+    submission.teamMemberUserIds.includes(auth.user.id)
+  ) {
     return true;
   }
   if (!project) {

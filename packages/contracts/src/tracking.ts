@@ -3,6 +3,15 @@ import { z } from 'zod';
 export const TrackingMembershipRoleSchema = z.enum(['student', 'instructor', 'ta']);
 export const TrackingProjectStatusSchema = z.enum(['draft', 'published', 'archived']);
 export const TrackingDeliveryModeSchema = z.enum(['individual', 'team']);
+export const ProjectTemplateStatusSchema = z.enum(['draft', 'active']);
+export const TeamFormationStatusSchema = z.enum([
+  'not_started',
+  'application_open',
+  'team_review',
+  'teams_locked',
+]);
+export const ProjectRoleApplicationStatusSchema = z.enum(['submitted', 'withdrawn']);
+export const TeamStatusSchema = z.enum(['suggested', 'locked']);
 export const TrackingSubmissionTypeSchema = z.enum(['github', 'link', 'text']);
 export const TrackingSubmissionStatusSchema = z.enum([
   'queued',
@@ -45,6 +54,49 @@ export const TrackingMembershipSchema = z.object({
   level: z.number().int().min(1).max(4).default(1),
 });
 
+export const TeamMemberBadgeSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().min(1),
+  initials: z.string().min(1),
+  color: z.string().min(1),
+  roleKey: z.string().min(1).nullable().default(null),
+  roleLabel: z.string().min(1).nullable().default(null),
+});
+
+export const ProjectTemplateRoleSchema = z.object({
+  id: z.string().min(1),
+  key: z.string().min(1),
+  label: z.string().min(1),
+  count: z.number().int().positive(),
+  sortOrder: z.number().int().nonnegative(),
+});
+
+export const ProjectTemplateMilestoneSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().default(''),
+  order: z.number().int().nonnegative(),
+  dueAt: z.string().datetime().nullable(),
+  isFinal: z.boolean(),
+});
+
+export const ProjectTemplateSchema = z.object({
+  id: z.string().min(1),
+  courseId: z.string().min(1),
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().default(''),
+  deliveryMode: TrackingDeliveryModeSchema,
+  teamSize: z.number().int().positive().nullable(),
+  status: ProjectTemplateStatusSchema,
+  rubric: z.array(TrackingRubricItemSchema),
+  resources: z.array(TrackingResourceSchema),
+  roles: z.array(ProjectTemplateRoleSchema),
+  milestones: z.array(ProjectTemplateMilestoneSchema),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
 export const TrackingProjectSummarySchema = z.object({
   id: z.string().min(1),
   projectKey: z.string().min(1),
@@ -54,6 +106,15 @@ export const TrackingProjectSummarySchema = z.object({
   status: TrackingProjectStatusSchema,
   level: z.number().int().min(1).max(4).default(1),
   deliveryMode: TrackingDeliveryModeSchema,
+  templateId: z.string().nullable().default(null),
+  teamFormationStatus: TeamFormationStatusSchema.default('not_started'),
+  applicationOpenAt: z.string().datetime().nullable().default(null),
+  applicationCloseAt: z.string().datetime().nullable().default(null),
+  teamLockAt: z.string().datetime().nullable().default(null),
+  teamSize: z.number().int().positive().nullable().default(null),
+  teamRoles: z.array(ProjectTemplateRoleSchema).default([]),
+  teamName: z.string().nullable().default(null),
+  assignedRoleLabel: z.string().nullable().default(null),
   gradeWeight: z.string().nullable(),
   startDate: z.string().nullable(),
   endDate: z.string().nullable(),
@@ -61,13 +122,7 @@ export const TrackingProjectSummarySchema = z.object({
   type: z.string().min(1),
   rubric: z.array(TrackingRubricItemSchema),
   resources: z.array(TrackingResourceSchema),
-  team: z.array(
-    z.object({
-      name: z.string().min(1),
-      initials: z.string().min(1),
-      color: z.string().min(1),
-    })
-  ),
+  team: z.array(TeamMemberBadgeSchema),
 });
 
 export const TrackingMilestoneSchema = z.object({
@@ -85,14 +140,19 @@ export const TrackingMilestoneSchema = z.object({
 
 export const TrackingProjectDetailSchema = TrackingProjectSummarySchema.extend({
   milestones: z.array(TrackingMilestoneSchema),
+  template: ProjectTemplateSchema.nullable().default(null),
 });
 
 export const TrackingSubmissionSchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),
+  submittedByUserId: z.string().nullable().default(null),
   projectId: z.string().min(1),
   projectKey: z.string().min(1),
   milestoneId: z.string().nullable(),
+  teamId: z.string().nullable().default(null),
+  teamName: z.string().nullable().default(null),
+  teamMemberUserIds: z.array(z.string().min(1)).default([]),
   commitSha: z.string().min(1),
   repoUrl: z.string().min(1),
   branch: z.string().min(1),
@@ -348,6 +408,96 @@ export const InstructorDashboardResponseSchema = z.object({
   activity: z.array(TrackingActivityEventSchema),
 });
 
+export const ProjectRolePreferenceSchema = z.object({
+  templateRoleId: z.string().min(1),
+  roleKey: z.string().min(1),
+  roleLabel: z.string().min(1),
+  rank: z.number().int().positive(),
+});
+
+export const ProjectRoleApplicationSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  userId: z.string().min(1),
+  statement: z.string().default(''),
+  availabilityNote: z.string().default(''),
+  status: ProjectRoleApplicationStatusSchema,
+  submittedAt: z.string().datetime().nullable(),
+  updatedAt: z.string().datetime(),
+  preferences: z.array(ProjectRolePreferenceSchema),
+});
+
+export const TeamMemberSchema = z.object({
+  id: z.string().min(1),
+  teamId: z.string().min(1),
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  roleKey: z.string().min(1),
+  roleLabel: z.string().min(1),
+  status: z.string().min(1),
+  createdAt: z.string().datetime(),
+});
+
+export const TeamProjectRepoSchema = z.object({
+  id: z.string().min(1),
+  teamId: z.string().min(1),
+  owner: z.string().min(1),
+  name: z.string().min(1),
+  githubRepoId: z.string().nullable(),
+  cloneUrl: z.string().nullable(),
+  defaultBranch: z.string().min(1),
+  visibility: z.enum(['private', 'public']),
+  installStatus: z.string().min(1),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const TeamSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  name: z.string().min(1),
+  status: TeamStatusSchema,
+  lockedAt: z.string().datetime().nullable(),
+  members: z.array(TeamMemberSchema),
+  repo: TeamProjectRepoSchema.nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const TeamFormationSuggestionMemberSchema = z.object({
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  level: z.number().int().min(1).max(4),
+  roleKey: z.string().min(1),
+  roleLabel: z.string().min(1),
+});
+
+export const TeamFormationSuggestionSchema = z.object({
+  name: z.string().min(1),
+  members: z.array(TeamFormationSuggestionMemberSchema),
+  averageLevel: z.number(),
+});
+
+export const TeamFormationWaitlistEntrySchema = z.object({
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  level: z.number().int().min(1).max(4),
+});
+
+export const TeamFormationRunSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  algorithmVersion: z.string().min(1),
+  config: z.record(z.string(), z.unknown()),
+  result: z.object({
+    teams: z.array(TeamFormationSuggestionSchema),
+    waitlist: z.array(TeamFormationWaitlistEntrySchema),
+    warnings: z.array(z.string()),
+  }),
+  createdByUserId: z.string().min(1),
+  createdAt: z.string().datetime(),
+});
+
 export const AddCourseMemberRequestSchema = z.object({
   githubLogin: z.string().min(1),
   role: TrackingMembershipRoleSchema,
@@ -381,6 +531,11 @@ export const CreateTrackingProjectRequestSchema = z.object({
   description: z.string().default(''),
   status: TrackingProjectStatusSchema.default('draft'),
   deliveryMode: TrackingDeliveryModeSchema.default('individual'),
+  templateId: z.string().min(1).nullable().default(null),
+  applicationOpenAt: z.string().datetime().nullable().default(null),
+  applicationCloseAt: z.string().datetime().nullable().default(null),
+  teamLockAt: z.string().datetime().nullable().default(null),
+  teamSize: z.number().int().positive().nullable().default(null),
   rubric: z.array(TrackingRubricItemSchema).default([]),
   resources: z.array(TrackingResourceSchema).default([]),
 });
@@ -424,6 +579,53 @@ export const ReviewQueueResponseSchema = z.object({
   submissions: z.array(TrackingSubmissionSchema),
 });
 
+export const CreateProjectTemplateRequestSchema = z.object({
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().default(''),
+  deliveryMode: TrackingDeliveryModeSchema.default('team'),
+  teamSize: z.number().int().positive().nullable().default(null),
+  status: ProjectTemplateStatusSchema.default('active'),
+  rubric: z.array(TrackingRubricItemSchema).default([]),
+  resources: z.array(TrackingResourceSchema).default([]),
+  roles: z.array(ProjectTemplateRoleSchema.omit({ id: true })).default([]),
+  milestones: z.array(ProjectTemplateMilestoneSchema.omit({ id: true })).default([]),
+});
+
+export const UpdateProjectTemplateRequestSchema = CreateProjectTemplateRequestSchema.partial();
+
+export const CreateProjectRoleApplicationRequestSchema = z.object({
+  statement: z.string().default(''),
+  availabilityNote: z.string().default(''),
+  preferences: z.array(
+    z.object({
+      templateRoleId: z.string().min(1),
+      rank: z.number().int().positive(),
+    })
+  ),
+});
+
+export const GenerateTeamFormationRequestSchema = z.object({
+  algorithmVersion: z.string().min(1).default('v1'),
+});
+
+export const LockTeamFormationRequestSchema = z.object({
+  formationRunId: z.string().min(1).optional(),
+});
+
+export const UpdateTeamRequestSchema = z.object({
+  name: z.string().min(1).optional(),
+  members: z
+    .array(
+      z.object({
+        userId: z.string().min(1),
+        roleKey: z.string().min(1),
+        roleLabel: z.string().min(1),
+      })
+    )
+    .optional(),
+});
+
 export const CourseInvitePreviewSchema = z.object({
   code: z.string().min(1),
   courseTitle: z.string().min(1),
@@ -447,6 +649,9 @@ export type CourseInvitePreview = z.infer<typeof CourseInvitePreviewSchema>;
 
 export type TrackingCourseSummary = z.infer<typeof TrackingCourseSummarySchema>;
 export type TrackingMembership = z.infer<typeof TrackingMembershipSchema>;
+export type ProjectTemplateRole = z.infer<typeof ProjectTemplateRoleSchema>;
+export type ProjectTemplateMilestone = z.infer<typeof ProjectTemplateMilestoneSchema>;
+export type ProjectTemplate = z.infer<typeof ProjectTemplateSchema>;
 export type TrackingProjectSummary = z.infer<typeof TrackingProjectSummarySchema>;
 export type TrackingProjectDetail = z.infer<typeof TrackingProjectDetailSchema>;
 export type TrackingMilestone = z.infer<typeof TrackingMilestoneSchema>;
@@ -463,6 +668,13 @@ export type DashboardHomeResponse = z.infer<typeof DashboardHomeResponseSchema>;
 export type DashboardMode = z.infer<typeof DashboardModeSchema>;
 export type StudentHomeDashboard = z.infer<typeof StudentHomeDashboardSchema>;
 export type InstructorHomeDashboard = z.infer<typeof InstructorHomeDashboardSchema>;
+export type ProjectRolePreference = z.infer<typeof ProjectRolePreferenceSchema>;
+export type ProjectRoleApplication = z.infer<typeof ProjectRoleApplicationSchema>;
+export type TeamMemberBadge = z.infer<typeof TeamMemberBadgeSchema>;
+export type TeamMember = z.infer<typeof TeamMemberSchema>;
+export type TeamProjectRepo = z.infer<typeof TeamProjectRepoSchema>;
+export type Team = z.infer<typeof TeamSchema>;
+export type TeamFormationRun = z.infer<typeof TeamFormationRunSchema>;
 export type CreateTrackingProjectRequest = z.infer<typeof CreateTrackingProjectRequestSchema>;
 export type UpdateTrackingProjectRequest = z.infer<typeof UpdateTrackingProjectRequestSchema>;
 export type CreateMilestoneRequest = z.infer<typeof CreateMilestoneRequestSchema>;
@@ -471,3 +683,11 @@ export type CreateTrackingSubmissionRequest = z.infer<typeof CreateTrackingSubmi
 export type UpdateTrackingSubmissionRequest = z.infer<typeof UpdateTrackingSubmissionRequestSchema>;
 export type CreateReviewRequest = z.infer<typeof CreateReviewRequestSchema>;
 export type ReviewQueueResponse = z.infer<typeof ReviewQueueResponseSchema>;
+export type CreateProjectTemplateRequest = z.infer<typeof CreateProjectTemplateRequestSchema>;
+export type UpdateProjectTemplateRequest = z.infer<typeof UpdateProjectTemplateRequestSchema>;
+export type CreateProjectRoleApplicationRequest = z.infer<
+  typeof CreateProjectRoleApplicationRequestSchema
+>;
+export type GenerateTeamFormationRequest = z.infer<typeof GenerateTeamFormationRequestSchema>;
+export type LockTeamFormationRequest = z.infer<typeof LockTeamFormationRequestSchema>;
+export type UpdateTeamRequest = z.infer<typeof UpdateTeamRequestSchema>;
