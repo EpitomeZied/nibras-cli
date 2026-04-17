@@ -108,14 +108,14 @@ export default function HomePage() {
         </div>
 
         <h1 className={styles.headline}>
-          <span className={styles.headlineBright}>Run your coding course</span>
-          <span className={styles.headlineGrad}>like a real dev team.</span>
+          <span className={styles.headlineBright}>Run your academic system</span>
+          <span className={styles.headlineGrad}>like a real operating platform.</span>
           <span className={styles.headlineMuted}>Without the chaos.</span>
         </h1>
 
         <p className={styles.sub}>
-          Nibras brings GitHub-native submissions, automated grading, and live student progress into
-          one smooth workflow — so you spend less time managing and more time teaching.
+          Nibras brings project templates, role applications, team formation, university-style
+          program planning, and GitHub-native submissions into one smooth workflow.
         </p>
 
         <div className={styles.heroCtas}>
@@ -153,8 +153,9 @@ export default function HomePage() {
               {[
                 { label: 'Dashboard', active: false },
                 { label: 'My Courses', active: true },
-                { label: 'Submissions', active: false },
-                { label: 'Students', active: false },
+                { label: 'Templates', active: false },
+                { label: 'Team Formation', active: false },
+                { label: 'Planner', active: false },
                 { label: 'Settings', active: false },
               ].map((item) => (
                 <div
@@ -170,16 +171,16 @@ export default function HomePage() {
             {/* Main content */}
             <div className={styles.mockupContent}>
               <div className={styles.mockupHeader}>
-                <h3 className={styles.mockupTitle}>CS101 — Intro to Programming</h3>
-                <span className={styles.mockupBadge}>Active</span>
+                <h3 className={styles.mockupTitle}>Applied Systems — Workflow Overview</h3>
+                <span className={styles.mockupBadge}>Live</span>
               </div>
 
               {/* Stats cards */}
               <div className={styles.mockupCards}>
                 {[
-                  { label: 'Students', value: '32', sub: '↑ 4 this week' },
-                  { label: 'Submissions', value: '148', sub: '↑ 12 today' },
-                  { label: 'Avg. Score', value: '87%', sub: '↑ 3% vs last' },
+                  { label: 'Templates', value: '6', sub: 'Reusable blueprints' },
+                  { label: 'Role Apps', value: '32', sub: 'Waiting for review' },
+                  { label: 'Program Sheets', value: '18', sub: 'Ready to print' },
                 ].map((card) => (
                   <div key={card.label} className={styles.mockupCard}>
                     <span className={styles.mockupCardLabel}>{card.label}</span>
@@ -192,21 +193,36 @@ export default function HomePage() {
               {/* Submissions table */}
               <div className={styles.mockupTable}>
                 <div className={`${styles.mockupTableRow} ${styles.head}`}>
-                  <span>Student</span>
-                  <span>Project</span>
+                  <span>Workflow</span>
+                  <span>Surface</span>
                   <span>Status</span>
-                  <span>Score</span>
+                  <span>State</span>
                 </div>
                 {[
                   {
-                    student: 'Ahmed K.',
-                    project: 'Milestone 3',
+                    student: 'Capstone Team Project',
+                    project: 'Template',
                     status: 'passed',
-                    score: '94/100',
+                    score: 'Active',
                   },
-                  { student: 'Sara L.', project: 'Milestone 3', status: 'pending', score: '—' },
-                  { student: 'Omar B.', project: 'Milestone 2', status: 'passed', score: '88/100' },
-                  { student: 'Nour M.', project: 'Milestone 3', status: 'failed', score: '41/100' },
+                  {
+                    student: 'Role Preferences',
+                    project: 'Team Formation',
+                    status: 'pending',
+                    score: '12 apps',
+                  },
+                  {
+                    student: 'Applied Systems Track',
+                    project: 'Planner',
+                    status: 'passed',
+                    score: 'Selected',
+                  },
+                  {
+                    student: 'Graduation Sheet',
+                    project: 'Program Sheet',
+                    status: 'failed',
+                    score: 'Advisor review',
+                  },
                 ].map((row) => (
                   <div key={row.student} className={styles.mockupTableRow}>
                     <span style={{ color: '#fafafa', fontWeight: 600 }}>{row.student}</span>
@@ -246,13 +262,13 @@ export default function HomePage() {
       {/* ── Stats bar ────────────────────────────────────────────────────────── */}
       <div className={styles.statsBar}>
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>∞</span>
-          <span className={styles.statLabel}>Possibilities unlocked</span>
+          <span className={styles.statNumber}>24/7</span>
+          <span className={styles.statLabel}>Course operations visibility</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>0ms</span>
-          <span className={styles.statLabel}>Manual grading time</span>
+          <span className={styles.statNumber}>1</span>
+          <span className={styles.statLabel}>Platform for courses and planning</span>
         </div>
         <div className={styles.statDivider} />
         <div className={styles.statItem}>
@@ -271,10 +287,11 @@ export default function HomePage() {
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>How it works</span>
           <h2 className={styles.sectionTitle}>
-            From course setup to graded submissions in minutes
+            From blueprint setup to active academic operations
           </h2>
           <p className={styles.sectionSub}>
-            Three simple steps from blank slate to a fully graded, GitHub-tracked coding course.
+            Three simple steps from blank slate to templates, team projects, planning, and
+            GitHub-tracked delivery.
           </p>
         </div>
 
@@ -297,8 +314,8 @@ export default function HomePage() {
                   <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
                 </svg>
               ),
-              title: 'Set up your course',
-              desc: 'Create courses, add projects, define milestones and rubrics — all in one streamlined dashboard. No setup maze, no spreadsheets.',
+              title: 'Define the system',
+              desc: 'Create courses, reusable templates, milestones, team roles, and academic program structure in one place.',
               cta: 'Open dashboard →',
               href: '/dashboard',
             },
@@ -319,8 +336,8 @@ export default function HomePage() {
                   <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                 </svg>
               ),
-              title: 'Students get started fast',
-              desc: 'Invite students to your course. They install the CLI, connect GitHub, and are ready to submit in under five minutes.',
+              title: 'Coordinate people and plans',
+              desc: 'Collect role applications, generate teams, select tracks, and route petitions and approvals without losing the thread.',
               cta: 'View CLI guide →',
               href: '/instructor/onboarding',
             },
@@ -341,8 +358,8 @@ export default function HomePage() {
                   <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
                 </svg>
               ),
-              title: 'Submit. Verify. Grade.',
-              desc: 'Students push from the terminal. Nibras verifies, auto-grades, and surfaces results instantly — you review what matters.',
+              title: 'Run delivery and review',
+              desc: 'Students submit from the terminal, instructors review what matters, and planning state stays visible all semester.',
               cta: null,
               href: null,
             },
@@ -426,10 +443,10 @@ export default function HomePage() {
       <section id="features" className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>Features</span>
-          <h2 className={styles.sectionTitle}>Everything you need to run a modern coding course</h2>
+          <h2 className={styles.sectionTitle}>Everything you need to run a modern academic system</h2>
           <p className={styles.sectionSub}>
-            From course setup to grading, Nibras turns scattered tools and manual work into one
-            clean, developer-first workflow.
+            From templates to team formation to program planning, Nibras turns scattered tools and
+            manual work into one clean operating layer.
           </p>
         </div>
 
@@ -451,8 +468,8 @@ export default function HomePage() {
                   <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
                 </svg>
               ),
-              title: 'Unified Dashboard',
-              desc: 'See every student, milestone, and submission in one live view — no tab switching.',
+              title: 'Project Templates',
+              desc: 'Launch repeatable project blueprints with milestones, team size, roles, and rubric structure already defined.',
             },
             {
               icon: (
@@ -470,8 +487,8 @@ export default function HomePage() {
                   <path d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" />
                 </svg>
               ),
-              title: 'GitHub-Native',
-              desc: 'Every submission is a real commit in a real repo — with history you can actually trust.',
+              title: 'Role Applications',
+              desc: 'Students rank the roles they want, explain fit, and enter team formation through a structured workflow.',
             },
             {
               icon: (
@@ -489,8 +506,8 @@ export default function HomePage() {
                   <path d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
                 </svg>
               ),
-              title: 'Full Course Control',
-              desc: 'Build courses, set rubrics, assign milestones, and review work — without the admin mess.',
+              title: 'Team Formation',
+              desc: 'Review applications, generate suggested teams, and lock final rosters without spreadsheet coordination.',
             },
             {
               icon: (
@@ -508,8 +525,8 @@ export default function HomePage() {
                   <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                 </svg>
               ),
-              title: 'Zero-Friction Onboarding',
-              desc: 'Invite students in, get them set up fast, and let them submit without friction.',
+              title: 'Program Planner',
+              desc: 'Track requirements, choose tracks, manage petitions, approvals, and generate printable program sheets.',
             },
             {
               icon: (
@@ -527,8 +544,8 @@ export default function HomePage() {
                   <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
                 </svg>
               ),
-              title: 'AI-Powered Grading',
-              desc: 'Get fast, consistent grading in the background — with full instructor override whenever you want.',
+              title: 'Course Operations',
+              desc: 'Keep courses, projects, review queues, and instructor actions visible in one system with less switching and less admin drag.',
             },
             {
               icon: (
@@ -546,8 +563,8 @@ export default function HomePage() {
                   <path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
                 </svg>
               ),
-              title: 'Developer CLI',
-              desc: 'A polished CLI your students will actually enjoy using — with clear feedback at every step.',
+              title: 'GitHub + CLI',
+              desc: 'Students still submit through a clean developer workflow with GitHub history, CLI feedback, and verifiable delivery.',
             },
           ].map((f) => (
             <div key={f.title} className={styles.featureCard6}>

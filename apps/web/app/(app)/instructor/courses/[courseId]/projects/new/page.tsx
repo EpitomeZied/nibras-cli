@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use } from 'react';
 import { useFormSubmit } from '../../../../../../lib/use-form-submit';
+import { useFetch } from '../../../../../../lib/use-fetch';
 import { getLevelLabel } from '../../../../../../lib/levels';
 import styles from '../../../../instructor.module.css';
 
@@ -15,8 +16,12 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
   const { courseId } = use(params);
   const router = useRouter();
   const [level, setLevel] = useState(1);
+  const [templateId, setTemplateId] = useState('');
   const [rubric, setRubric] = useState<RubricRow[]>([{ criterion: '', maxScore: 10 }]);
   const [resources, setResources] = useState<ResourceRow[]>([]);
+  const { data: templates } = useFetch<Array<{ id: string; title: string; teamSize: number | null }>>(
+    `/v1/tracking/courses/${courseId}/templates`
+  );
   const { submitting, error, submit } = useFormSubmit({
     url: '/v1/tracking/projects',
     onSuccess: () => router.push(`/instructor/courses/${courseId}`),
@@ -62,6 +67,7 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
       description: (form.get('description') as string).trim(),
       status: 'draft',
       level,
+      templateId: templateId || null,
       deliveryMode: form.get('deliveryMode') as string,
       rubric: rubric
         .filter((row) => row.criterion.trim())
@@ -89,6 +95,35 @@ export default function NewProjectPage({ params }: { params: Promise<{ courseId:
       </div>
 
       <form onSubmit={(e) => void handleSubmit(e)} className={styles.formSection}>
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Start from a template</h2>
+            <Link href={`/instructor/courses/${courseId}/templates`} className={styles.backLink}>
+              Manage templates
+            </Link>
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="templateId">Project blueprint</label>
+            <select
+              id="templateId"
+              value={templateId}
+              onChange={(event) => setTemplateId(event.target.value)}
+            >
+              <option value="">Create from scratch</option>
+              {(templates ?? []).map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.title}
+                  {template.teamSize ? ` · ${template.teamSize} students` : ''}
+                </option>
+              ))}
+            </select>
+            <p className={styles.muted}>
+              Templates carry reusable milestones, rubric structure, team size, and role
+              definitions into new project launches.
+            </p>
+          </div>
+        </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="title">Project Title</label>
           <input

@@ -16,6 +16,25 @@ export function daysUntil(dateStr: string | null | undefined): number | null {
   return Math.round((d.getTime() - now.getTime()) / 86_400_000);
 }
 
+export function minutesUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr).getTime();
+  if (Number.isNaN(target)) return null;
+  return Math.round((target - Date.now()) / 60_000);
+}
+
+export function formatHoursMinutes(totalMinutes: number): string {
+  const absoluteMinutes = Math.abs(totalMinutes);
+  const days = Math.floor(absoluteMinutes / (24 * 60));
+  const hours = Math.floor((absoluteMinutes % (24 * 60)) / 60);
+  const minutes = absoluteMinutes % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  return parts.join(' ');
+}
+
 export function getInitials(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return 'NB';
