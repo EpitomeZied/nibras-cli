@@ -256,7 +256,8 @@ export default function HomePage() {
 
       {/* ── Trusted bar ──────────────────────────────────────────────────────── */}
       <p className={styles.trustedBar}>
-        Trusted by educators building the next generation of developers
+        Trusted by instructors and advisors running courses, teams, and academic planning in one
+        system
       </p>
 
       {/* ── Stats bar ────────────────────────────────────────────────────────── */}
@@ -385,8 +386,13 @@ export default function HomePage() {
       <section className={styles.transformSection}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>The Nibras Difference</span>
-          <h2 className={styles.sectionTitle}>From grading chaos to clean workflow</h2>
-          <p className={styles.sectionSub}>See exactly what changes when you switch to Nibras.</p>
+          <h2 className={styles.sectionTitle}>
+            From scattered academic operations to one clean system
+          </h2>
+          <p className={styles.sectionSub}>
+            See what changes when templates, team formation, planning, and submissions finally live
+            together.
+          </p>
         </div>
 
         <div className={styles.transformGrid}>
@@ -398,11 +404,11 @@ export default function HomePage() {
             </div>
             <div className={styles.transformPanelBody}>
               {[
-                'Chasing students for zip file submissions via email',
-                'Manual grading spreadsheets updated one-by-one',
-                'No audit trail — impossible to verify who submitted what',
-                'Students waiting days for feedback',
-                'Setting up repos and permissions manually each semester',
+                'Project setup recreated manually every time a course runs',
+                'Role preferences and team formation handled in forms and spreadsheets',
+                'Program requirements, tracks, and petitions managed outside the product',
+                'Students jumping between portals to understand what comes next',
+                'Submissions, planning, and review state living in disconnected tools',
               ].map((pain) => (
                 <div key={pain} className={styles.transformPainPoint}>
                   <span className={styles.transformPainIcon}>✕</span>
@@ -423,11 +429,11 @@ export default function HomePage() {
             </div>
             <div className={styles.transformPanelBody}>
               {[
-                'Students submit with one command — `nibras submit`',
-                'AI-powered grading runs automatically in the background',
-                'Every submission is a real GitHub commit with full history',
-                'Instant pass/fail feedback directly in the terminal',
-                'One-click course setup with automatic GitHub repo creation',
+                'Reusable templates define roles, team size, milestones, and rubric structure',
+                'Students apply for roles, instructors generate teams, and final rosters get locked in one flow',
+                'Planner workspaces track requirements, tracks, petitions, approvals, and printable sheets',
+                'Students still submit with one command through a GitHub-native CLI workflow',
+                'Courses, projects, planning, and review stay visible in the same operating layer',
               ].map((gain) => (
                 <div key={gain} className={styles.transformGainPoint}>
                   <span className={styles.transformGainIcon}>✓</span>
@@ -582,10 +588,12 @@ export default function HomePage() {
       <section id="cli" className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>CLI</span>
-          <h2 className={styles.sectionTitle}>A CLI students will actually love</h2>
+          <h2 className={styles.sectionTitle}>
+            A developer workflow that still fits the full system
+          </h2>
           <p className={styles.sectionSub}>
-            Most CLI tools get in the way. Nibras gets out of it — with live feedback, clean output,
-            and human-readable errors that make every submission feel smooth.
+            Nibras still gives students a clean submission CLI, but now it plugs into templates,
+            team projects, review queues, and academic planning instead of standing alone.
           </p>
         </div>
 
@@ -680,7 +688,7 @@ export default function HomePage() {
         <div className={styles.sectionHeader}>
           <span className={styles.sectionEyebrow}>Instructor stories</span>
           <h2 className={styles.sectionTitle}>
-            Less admin. Faster grading. A better experience for everyone.
+            Less fragmentation. Better coordination. A system people can actually follow.
           </h2>
         </div>
 
@@ -688,21 +696,21 @@ export default function HomePage() {
           {[
             {
               quote:
-                'Nibras completely changed how I run my CS course. Submissions are instant, grading happens automatically, and I can finally focus on teaching instead of chasing students.',
+                'Nibras completely changed how I run our capstone sequence. Templates keep projects consistent, role applications are structured, and I no longer have to glue team formation together by hand.',
               name: 'Sarah Chen',
               role: 'CS Instructor, State University',
               avatar: '/testimonials/sarah-chen.svg',
             },
             {
               quote:
-                'My bootcamp went from 4-day grading cycles to same-day results. Students love the CLI, and I love not having to touch a spreadsheet ever again.',
+                'We used to split planning, petitions, and delivery across too many tools. Now students can see their track, sheet, submissions, and project status in one place, which cuts confusion immediately.',
               name: 'Marcus Wright',
-              role: 'Bootcamp Lead, TechPath',
+              role: 'Program Lead, TechPath',
               avatar: '/testimonials/marcus-wright.svg',
             },
             {
               quote:
-                'The GitHub-backed submissions alone are worth it. I can see every commit, diff every submission, and finally have a real audit trail for academic integrity.',
+                'The GitHub-backed submissions are still excellent, but the bigger win is that courses, templates, teams, and program operations now feel like one connected product instead of separate processes.',
               name: 'Priya Nair',
               role: 'Data Science Professor',
               avatar: '/testimonials/priya-nair.svg',
@@ -732,11 +740,11 @@ export default function HomePage() {
       <section className={styles.ctaSection}>
         <div className={styles.ctaCard}>
           <h2 className={styles.ctaTitle}>
-            Ready to build the coding course students actually want to use?
+            Ready to run courses, teams, and planning in one place?
           </h2>
           <p className={styles.ctaSub}>
-            Sign in with GitHub, launch your first course, and start teaching with a workflow built
-            for real developers.
+            Sign in with GitHub, open the full Nibras system, and start using templates, team
+            formation, planner workflows, and GitHub-native submissions together.
           </p>
 
           <div className={styles.ctaFeatures}>
@@ -781,7 +789,7 @@ export default function HomePage() {
               <NibrasLogo variant="inverse" width={100} />
             </div>
             <p className={styles.footerTagline}>
-              The developer education platform for serious instructors.
+              The academic operations platform for serious instructors and students.
             </p>
           </div>
 
