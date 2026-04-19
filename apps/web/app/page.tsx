@@ -1,61 +1,31 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import NibrasLogo from './_components/nibras-logo';
 import { discoverApiBaseUrl } from './lib/session';
+import NibrasLogo from './_components/nibras-logo';
 import styles from './signin.module.css';
-
-const workflowSteps = [
-  {
-    number: '01',
-    title: 'Blueprint',
-    subtitle: 'Define the structure',
-    body: 'Start from a project template, a team-project setup, or a university program blueprint. Nibras organizes the workflow before the work begins.',
-  },
-  {
-    number: '02',
-    title: 'Coordinate',
-    subtitle: 'Set the intent',
-    body: 'Collect role applications, shape team formation, choose tracks, and route petitions and approvals through one coherent system.',
-  },
-  {
-    number: '03',
-    title: 'Deliver',
-    subtitle: 'Run the workflow',
-    body: 'Students use the CLI and GitHub flow, instructors review submissions, and planners keep academic progress visible and printable.',
-  },
-];
-
-const capabilities = [
-  {
-    eyebrow: 'Templates',
-    title: 'Reusable project blueprints',
-    body: 'Define repeatable project structure, delivery mode, team size, and role setup once.',
-  },
-  {
-    eyebrow: 'Team Formation',
-    title: 'Role applications to locked teams',
-    body: 'Students rank preferences, instructors generate suggestions, and final team rosters are locked cleanly.',
-  },
-  {
-    eyebrow: 'Planner',
-    title: 'University-style program planning',
-    body: 'Tracks, petitions, approvals, and printable sheets live in one student-facing planning workspace.',
-  },
-  {
-    eyebrow: 'CLI + GitHub',
-    title: 'Still built for real developer workflows',
-    body: 'Setup, testing, and submission stay GitHub-native while the web app handles coordination and review.',
-  },
-];
 
 function AuthBanner() {
   const searchParams = useSearchParams();
   if (searchParams.get('auth') !== 'required') return null;
   return (
     <div className={styles.authBanner} role="alert">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
       Authentication required. Please sign in to access the dashboard.
     </div>
   );
@@ -91,24 +61,37 @@ export default function HomePage() {
 
   return (
     <main className={styles.page}>
+      {/* Auth required banner */}
       <Suspense>
         <AuthBanner />
       </Suspense>
 
-      <div className={styles.ambientGlow} />
-      <div className={styles.gridOverlay} />
+      {/* Animated orbs */}
+      <div className={`${styles.orb} ${styles.orb1}`} />
+      <div className={`${styles.orb} ${styles.orb2}`} />
+      <div className={`${styles.orb} ${styles.orb3}`} />
 
+      {/* Dot grid */}
+      <div className={styles.grid} />
+
+      {/* ── Top nav ─────────────────────────────────────────────────────────── */}
       <nav className={styles.nav}>
-        <div className={styles.brand}>
-          <NibrasLogo variant="inverse" width={118} priority />
-          <span className={styles.betaPill}>Beta</span>
+        <div className={styles.navLogo}>
+          <NibrasLogo variant="inverse" width={110} priority />
+          <span className={styles.navBadge}>Beta</span>
         </div>
         <div className={styles.navLinks}>
-          <a href="#how-it-works">How it works</a>
-          <a href="#transformation">Transformation</a>
-          <a href="#features">Features</a>
+          <a href="#features" className={styles.navLink}>
+            Features
+          </a>
+          <a href="#how-it-works" className={styles.navLink}>
+            How it works
+          </a>
+          <a href="#cli" className={styles.navLink}>
+            CLI
+          </a>
           <button
-            className={styles.navAction}
+            className={styles.navSignIn}
             onClick={() => void handleSignIn()}
             disabled={submitting}
           >
@@ -117,220 +100,741 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>Beta • Workflows that organize themselves</span>
-          <h1>
-            Other tools only track submissions.
-            <span> Nibras designs the workflow.</span>
-          </h1>
-          <p className={styles.heroText}>
-            Project templates, role applications, team formation, and university-style program
-            planning now live in one structured platform built around how courses actually run.
-          </p>
-
-          <div className={styles.heroActions}>
-            <button
-              className={styles.primaryButton}
-              onClick={() => void handleSignIn()}
-              disabled={submitting}
-            >
-              {submitting ? 'Connecting…' : 'Start with GitHub'}
-            </button>
-            <a href="#features" className={styles.secondaryButton}>
-              Explore platform
-            </a>
-          </div>
-
-          <div className={styles.signalRow}>
-            <span>Project Templates</span>
-            <span>Role Applications</span>
-            <span>Team Formation</span>
-            <span>Program Planner</span>
-          </div>
-
-          {error ? <p className={styles.errorBox}>{error}</p> : null}
+      {/* ── Hero ────────────────────────────────────────────────────────────── */}
+      <div className={styles.hero}>
+        <div className={styles.heroBadge}>
+          <span className={styles.badgeDot} />
+          Early Access · Built for Educators
         </div>
 
-        <div className={styles.heroVisual}>
-          <div className={styles.blueprintCard}>
-            <div className={styles.windowDots}>
-              <span />
-              <span />
-              <span />
+        <h1 className={styles.headline}>
+          <span className={styles.headlineBright}>Run your academic system</span>
+          <span className={styles.headlineGrad}>like a real operating platform.</span>
+          <span className={styles.headlineMuted}>Without the chaos.</span>
+        </h1>
+
+        <p className={styles.sub}>
+          Nibras brings project templates, role applications, team formation, university-style
+          program planning, and GitHub-native submissions into one smooth workflow.
+        </p>
+
+        <div className={styles.heroCtas}>
+          <button
+            className={styles.btnHeroPrimary}
+            onClick={() => void handleSignIn()}
+            disabled={submitting}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            {submitting ? 'Connecting…' : 'Get started free'}
+          </button>
+          <a href="#how-it-works" className={styles.btnHeroGhost}>
+            See how it works →
+          </a>
+        </div>
+      </div>
+
+      {/* ── Product UI Mockup ────────────────────────────────────────────────── */}
+      <div className={styles.productMockupWrap}>
+        <div className={styles.productMockup}>
+          {/* Browser-like title bar */}
+          <div className={styles.mockupBar}>
+            <span className={styles.mockupDot} style={{ background: '#ff5f57' }} />
+            <span className={styles.mockupDot} style={{ background: '#febc2e' }} />
+            <span className={styles.mockupDot} style={{ background: '#28c840' }} />
+            <span className={styles.mockupUrl}>nibras.app/instructor/courses</span>
+          </div>
+
+          {/* App body */}
+          <div className={styles.mockupBody}>
+            {/* Sidebar */}
+            <div className={styles.mockupSidebar}>
+              {[
+                { label: 'Dashboard', active: false },
+                { label: 'My Courses', active: true },
+                { label: 'Templates', active: false },
+                { label: 'Team Formation', active: false },
+                { label: 'Planner', active: false },
+                { label: 'Settings', active: false },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className={`${styles.mockupSidebarItem}${item.active ? ` ${styles.active}` : ''}`}
+                >
+                  <span className={styles.mockupSidebarDot} />
+                  {item.label}
+                </div>
+              ))}
             </div>
-            <div className={styles.blueprintShell}>
-              <aside className={styles.leftRail}>
-                <div className={styles.railSection}>
-                  <span className={styles.railLabel}>Blueprint</span>
-                  <strong>Capstone Course Ops</strong>
-                </div>
-                <div className={styles.railList}>
-                  <span className={styles.activeRailItem}>Project Templates</span>
-                  <span>Role Applications</span>
-                  <span>Team Formation</span>
-                  <span>Program Planner</span>
-                  <span>Printable Sheet</span>
-                </div>
-              </aside>
 
-              <div className={styles.workspace}>
-                <div className={styles.workspaceHeader}>
-                  <div>
-                    <span className={styles.workspaceEyebrow}>Generated Structure</span>
-                    <h2>Applied Systems Track</h2>
-                  </div>
-                  <span className={styles.statusChip}>Early Access</span>
-                </div>
+            {/* Main content */}
+            <div className={styles.mockupContent}>
+              <div className={styles.mockupHeader}>
+                <h3 className={styles.mockupTitle}>Applied Systems — Workflow Overview</h3>
+                <span className={styles.mockupBadge}>Live</span>
+              </div>
 
-                <div className={styles.panelGrid}>
-                  <article className={styles.infoPanel}>
-                    <span className={styles.panelEyebrow}>Template</span>
-                    <strong>Capstone Team Project</strong>
-                    <p>3-person teams • lead / research / QA</p>
-                  </article>
-                  <article className={styles.infoPanel}>
-                    <span className={styles.panelEyebrow}>Formation</span>
-                    <strong>Suggested Teams Ready</strong>
-                    <p>12 applications • 4 teams • 1 waitlist</p>
-                  </article>
-                  <article className={styles.infoPanel}>
-                    <span className={styles.panelEyebrow}>Planner</span>
-                    <strong>Requirement Audit Live</strong>
-                    <p>Track selected • 1 petition pending</p>
-                  </article>
-                </div>
+              {/* Stats cards */}
+              <div className={styles.mockupCards}>
+                {[
+                  { label: 'Templates', value: '6', sub: 'Reusable blueprints' },
+                  { label: 'Role Apps', value: '32', sub: 'Waiting for review' },
+                  { label: 'Program Sheets', value: '18', sub: 'Ready to print' },
+                ].map((card) => (
+                  <div key={card.label} className={styles.mockupCard}>
+                    <span className={styles.mockupCardLabel}>{card.label}</span>
+                    <span className={styles.mockupCardValue}>{card.value}</span>
+                    <span className={styles.mockupCardSub}>{card.sub}</span>
+                  </div>
+                ))}
+              </div>
 
-                <div className={styles.docPanel}>
-                  <div className={styles.docHeader}>
-                    <strong>Program Sheet Snapshot</strong>
-                    <span>Generated view</span>
-                  </div>
-                  <div className={styles.docRows}>
-                    <div>
-                      <span>Foundation</span>
-                      <strong>Satisfied</strong>
-                    </div>
-                    <div>
-                      <span>Core</span>
-                      <strong>2 courses left</strong>
-                    </div>
-                    <div>
-                      <span>Petitions</span>
-                      <strong>Pending advisor</strong>
-                    </div>
-                    <div>
-                      <span>Final output</span>
-                      <strong>Printable sheet</strong>
-                    </div>
-                  </div>
+              {/* Submissions table */}
+              <div className={styles.mockupTable}>
+                <div className={`${styles.mockupTableRow} ${styles.head}`}>
+                  <span>Workflow</span>
+                  <span>Surface</span>
+                  <span>Status</span>
+                  <span>State</span>
                 </div>
+                {[
+                  {
+                    student: 'Capstone Team Project',
+                    project: 'Template',
+                    status: 'passed',
+                    score: 'Active',
+                  },
+                  {
+                    student: 'Role Preferences',
+                    project: 'Team Formation',
+                    status: 'pending',
+                    score: '12 apps',
+                  },
+                  {
+                    student: 'Applied Systems Track',
+                    project: 'Planner',
+                    status: 'passed',
+                    score: 'Selected',
+                  },
+                  {
+                    student: 'Graduation Sheet',
+                    project: 'Program Sheet',
+                    status: 'failed',
+                    score: 'Advisor review',
+                  },
+                ].map((row) => (
+                  <div key={row.student} className={styles.mockupTableRow}>
+                    <span style={{ color: '#fafafa', fontWeight: 600 }}>{row.student}</span>
+                    <span style={{ color: 'rgba(161,161,170,0.6)', fontSize: '12px' }}>
+                      {row.project}
+                    </span>
+                    <span
+                      className={`${styles.mockupStatus} ${styles[row.status as keyof typeof styles]}`}
+                    >
+                      <svg
+                        width="6"
+                        height="6"
+                        viewBox="0 0 6 6"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <circle cx="3" cy="3" r="3" />
+                      </svg>
+                      {row.status}
+                    </span>
+                    <span style={{ color: 'rgba(161,161,170,0.7)', fontSize: '12px' }}>
+                      {row.score}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
+      {/* ── Trusted bar ──────────────────────────────────────────────────────── */}
+      <p className={styles.trustedBar}>
+        Trusted by instructors and advisors running courses, teams, and academic planning in one
+        system
+      </p>
+
+      {/* ── Stats bar ────────────────────────────────────────────────────────── */}
+      <div className={styles.statsBar}>
+        <div className={styles.statItem}>
+          <span className={styles.statNumber}>24/7</span>
+          <span className={styles.statLabel}>Course operations visibility</span>
+        </div>
+        <div className={styles.statDivider} />
+        <div className={styles.statItem}>
+          <span className={styles.statNumber}>1</span>
+          <span className={styles.statLabel}>Platform for courses and planning</span>
+        </div>
+        <div className={styles.statDivider} />
+        <div className={styles.statItem}>
+          <span className={styles.statNumber}>100%</span>
+          <span className={styles.statLabel}>GitHub-native submissions</span>
+        </div>
+        <div className={styles.statDivider} />
+        <div className={styles.statItem}>
+          <span className={styles.statNumber}>99.9%</span>
+          <span className={styles.statLabel}>Platform uptime</span>
+        </div>
+      </div>
+
+      {/* ── How it works ─────────────────────────────────────────────────────── */}
       <section id="how-it-works" className={styles.section}>
-        <div className={styles.sectionIntro}>
-          <span className={styles.eyebrow}>How It Works</span>
-          <h2>From blank workflow to organized delivery.</h2>
-          <p>
-            The same logic Docinit applies to documentation structure is the right visual direction
-            for Nibras: blueprint first, then execution.
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>How it works</span>
+          <h2 className={styles.sectionTitle}>
+            From blueprint setup to active academic operations
+          </h2>
+          <p className={styles.sectionSub}>
+            Three simple steps from blank slate to templates, team projects, planning, and
+            GitHub-tracked delivery.
           </p>
         </div>
 
-        <div className={styles.stepsGrid}>
-          {workflowSteps.map((step) => (
-            <article key={step.number} className={styles.stepCard}>
-              <span className={styles.stepNumber}>{step.number}</span>
-              <h3>{step.title}</h3>
-              <strong>{step.subtitle}</strong>
-              <p>{step.body}</p>
-            </article>
+        <div className={styles.timeline}>
+          {[
+            {
+              step: '01',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+              ),
+              title: 'Define the system',
+              desc: 'Create courses, reusable templates, milestones, team roles, and academic program structure in one place.',
+              cta: 'Open dashboard →',
+              href: '/dashboard',
+            },
+            {
+              step: '02',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                </svg>
+              ),
+              title: 'Coordinate people and plans',
+              desc: 'Collect role applications, generate teams, select tracks, and route petitions and approvals without losing the thread.',
+              cta: 'View CLI guide →',
+              href: '/instructor/onboarding',
+            },
+            {
+              step: '03',
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+                </svg>
+              ),
+              title: 'Run delivery and review',
+              desc: 'Students submit from the terminal, instructors review what matters, and planning state stays visible all semester.',
+              cta: null,
+              href: null,
+            },
+          ].map((step) => (
+            <div key={step.step} className={styles.timelineStep}>
+              <div className={styles.timelineNumber}>{step.step}</div>
+              <div className={styles.timelineContent}>
+                {step.icon}
+                <h3>{step.title}</h3>
+                <p>{step.desc}</p>
+                {step.cta && step.href && (
+                  <Link href={step.href} className={styles.timelineCta}>
+                    {step.cta}
+                  </Link>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
-      <section id="transformation" className={styles.section}>
-        <div className={styles.sectionIntro}>
-          <span className={styles.eyebrow}>Transformation</span>
-          <h2>From scattered operations to a coherent academic system.</h2>
-          <p>
-            Nibras now covers more than submissions. The UI should make the before-and-after
-            obvious.
+      {/* ── Before / After transformation ────────────────────────────────────── */}
+      <section className={styles.transformSection}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>The Nibras Difference</span>
+          <h2 className={styles.sectionTitle}>
+            From scattered academic operations to one clean system
+          </h2>
+          <p className={styles.sectionSub}>
+            See what changes when templates, team formation, planning, and submissions finally live
+            together.
           </p>
         </div>
 
-        <div className={styles.compareGrid}>
-          <article className={styles.compareCard}>
-            <span className={styles.compareLabel}>Before</span>
-            <strong>Course ops scattered across tools</strong>
-            <ul>
-              <li>Templates hidden inside course setup</li>
-              <li>Team applications feel bolted onto submissions</li>
-              <li>Program planning lives outside the main product story</li>
-              <li>Navigation mixes unrelated workflows together</li>
-            </ul>
-          </article>
+        <div className={styles.transformGrid}>
+          {/* Before */}
+          <div className={styles.transformPanel}>
+            <div className={`${styles.transformPanelHeader} ${styles.before}`}>
+              <span className={`${styles.transformPanelDot} ${styles.before}`} />
+              Before Nibras
+            </div>
+            <div className={styles.transformPanelBody}>
+              {[
+                'Project setup recreated manually every time a course runs',
+                'Role preferences and team formation handled in forms and spreadsheets',
+                'Program requirements, tracks, and petitions managed outside the product',
+                'Students jumping between portals to understand what comes next',
+                'Submissions, planning, and review state living in disconnected tools',
+              ].map((pain) => (
+                <div key={pain} className={styles.transformPainPoint}>
+                  <span className={styles.transformPainIcon}>✕</span>
+                  <span className={styles.transformPainText}>{pain}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <article className={`${styles.compareCard} ${styles.compareCardAccent}`}>
-            <span className={styles.compareLabel}>After</span>
-            <strong>Blueprint-driven academic workflows</strong>
-            <ul>
-              <li>Templates are first-class reusable blueprints</li>
-              <li>Role applications lead naturally into team formation</li>
-              <li>Planner, tracks, petitions, and printable sheets are visible</li>
-              <li>Role-based workspaces organize the app around real jobs</li>
-            </ul>
-          </article>
+          {/* Arrow */}
+          <div className={styles.transformArrow}>→</div>
+
+          {/* After */}
+          <div className={styles.transformPanel}>
+            <div className={`${styles.transformPanelHeader} ${styles.after}`}>
+              <span className={`${styles.transformPanelDot} ${styles.after}`} />
+              After Nibras
+            </div>
+            <div className={styles.transformPanelBody}>
+              {[
+                'Reusable templates define roles, team size, milestones, and rubric structure',
+                'Students apply for roles, instructors generate teams, and final rosters get locked in one flow',
+                'Planner workspaces track requirements, tracks, petitions, approvals, and printable sheets',
+                'Students still submit with one command through a GitHub-native CLI workflow',
+                'Courses, projects, planning, and review stay visible in the same operating layer',
+              ].map((gain) => (
+                <div key={gain} className={styles.transformGainPoint}>
+                  <span className={styles.transformGainIcon}>✓</span>
+                  <span className={styles.transformGainText}>{gain}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* ── Features section ─────────────────────────────────────────────────── */}
       <section id="features" className={styles.section}>
-        <div className={styles.sectionIntro}>
-          <span className={styles.eyebrow}>Everything You Need</span>
-          <h2>Four product areas, one design language.</h2>
-          <p>
-            The UI is now organized around the actual shipped feature surface instead of the older
-            grading-only story.
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>Features</span>
+          <h2 className={styles.sectionTitle}>
+            Everything you need to run a modern academic system
+          </h2>
+          <p className={styles.sectionSub}>
+            From templates to team formation to program planning, Nibras turns scattered tools and
+            manual work into one clean operating layer.
           </p>
         </div>
 
-        <div className={styles.featuresGrid}>
-          {capabilities.map((capability) => (
-            <article key={capability.title} className={styles.featureCard}>
-              <span>{capability.eyebrow}</span>
-              <h3>{capability.title}</h3>
-              <p>{capability.body}</p>
-            </article>
+        <div className={styles.featureGrid6}>
+          {[
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                </svg>
+              ),
+              title: 'Project Templates',
+              desc: 'Launch repeatable project blueprints with milestones, team size, roles, and rubric structure already defined.',
+            },
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" />
+                </svg>
+              ),
+              title: 'Role Applications',
+              desc: 'Students rank the roles they want, explain fit, and enter team formation through a structured workflow.',
+            },
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 3.741-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+                </svg>
+              ),
+              title: 'Team Formation',
+              desc: 'Review applications, generate suggested teams, and lock final rosters without spreadsheet coordination.',
+            },
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+                </svg>
+              ),
+              title: 'Program Planner',
+              desc: 'Track requirements, choose tracks, manage petitions, approvals, and generate printable program sheets.',
+            },
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+                </svg>
+              ),
+              title: 'Course Operations',
+              desc: 'Keep courses, projects, review queues, and instructor actions visible in one system with less switching and less admin drag.',
+            },
+            {
+              icon: (
+                <svg
+                  width={20}
+                  height={20}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                </svg>
+              ),
+              title: 'GitHub + CLI',
+              desc: 'Students still submit through a clean developer workflow with GitHub history, CLI feedback, and verifiable delivery.',
+            },
+          ].map((f) => (
+            <div key={f.title} className={styles.featureCard6}>
+              <span className={styles.featureIcon}>{f.icon}</span>
+              <strong>{f.title}</strong>
+              <p>{f.desc}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className={styles.ctaSection}>
-        <div>
-          <span className={styles.eyebrow}>Ready To Open Nibras?</span>
-          <h2>Start from the blueprint, not the chaos.</h2>
-          <p>
-            Sign in to access the redesigned platform with grouped navigation, planner workspaces,
-            template flows, and team formation UI.
+      {/* ── CLI Showcase ─────────────────────────────────────────────────────── */}
+      <section id="cli" className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>CLI</span>
+          <h2 className={styles.sectionTitle}>
+            A developer workflow that still fits the full system
+          </h2>
+          <p className={styles.sectionSub}>
+            Nibras still gives students a clean submission CLI, but now it plugs into templates,
+            team projects, review queues, and academic planning instead of standing alone.
           </p>
         </div>
-        <div className={styles.heroActions}>
+
+        <div className={styles.cliShowcase}>
+          <div className={styles.terminalWindow}>
+            <div className={styles.terminalTitleBar}>
+              <span className={styles.termDot} style={{ background: '#ff5f57' }} />
+              <span className={styles.termDot} style={{ background: '#febc2e' }} />
+              <span className={styles.termDot} style={{ background: '#28c840' }} />
+              <span className={styles.termTitle}>nibras — terminal</span>
+            </div>
+            <div className={styles.terminalBody}>
+              <div className={styles.termLine}>
+                <span className={styles.termPrompt}>~/cs101/project-2</span>
+                <span className={styles.termCmd}> $ nibras submit</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termSpinner} aria-hidden="true" />
+                <span className={styles.termMuted}> Staging allowed files…</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termSuccess}>✓</span>
+                <span className={styles.termMuted}> Staged </span>
+                <span className={styles.termHighlight}>3 files</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termSuccess}>✓</span>
+                <span className={styles.termMuted}> Pushed commit </span>
+                <span className={styles.termHighlight}>a3f7c1d</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termProgress}> Verifying </span>
+                <span className={styles.termBar}>██████████████░░░░░░</span>
+                <span className={styles.termMuted}> 70%</span>
+              </div>
+              <div className={styles.termLine} style={{ marginTop: 8 }}>
+                <span className={styles.termBoxTop}>╭──────────────────────────────────╮</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termBoxSide}>│</span>
+                <span className={styles.termSuccess}> ✓ Submission passed </span>
+                <span className={styles.termBoxSide}>│</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termBoxSide}>│</span>
+                <span className={styles.termDimText}> Score: 94 / 100 </span>
+                <span className={styles.termBoxSide}>│</span>
+              </div>
+              <div className={styles.termLine}>
+                <span className={styles.termBoxBottom}>╰──────────────────────────────────╯</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.cliFeatures}>
+            {[
+              {
+                icon: '◉',
+                label: 'Live feedback on every step',
+                desc: 'Real-time status on every async operation — no silent waiting.',
+              },
+              {
+                icon: '█',
+                label: 'Progress you can actually see',
+                desc: 'Visual verification polling with clear progress indicators.',
+              },
+              {
+                icon: '╭',
+                label: 'Clear pass/fail summaries',
+                desc: 'Boxed result cards with scores and colour-coded borders.',
+              },
+              {
+                icon: '∿',
+                label: 'Built for real developer workflows',
+                desc: 'Feels native to the terminal — not bolted on as an afterthought.',
+              },
+            ].map((f) => (
+              <div key={f.label} className={styles.cliFeat}>
+                <span className={styles.cliFeatIcon}>{f.icon}</span>
+                <div>
+                  <strong>{f.label}</strong>
+                  <p>{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Social proof ─────────────────────────────────────────────────────── */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionEyebrow}>Instructor stories</span>
+          <h2 className={styles.sectionTitle}>
+            Less fragmentation. Better coordination. A system people can actually follow.
+          </h2>
+        </div>
+
+        <div className={styles.testimonials}>
+          {[
+            {
+              quote:
+                'Nibras completely changed how I run our capstone sequence. Templates keep projects consistent, role applications are structured, and I no longer have to glue team formation together by hand.',
+              name: 'Sarah Chen',
+              role: 'CS Instructor, State University',
+              avatar: '/testimonials/sarah-chen.svg',
+            },
+            {
+              quote:
+                'We used to split planning, petitions, and delivery across too many tools. Now students can see their track, sheet, submissions, and project status in one place, which cuts confusion immediately.',
+              name: 'Marcus Wright',
+              role: 'Program Lead, TechPath',
+              avatar: '/testimonials/marcus-wright.svg',
+            },
+            {
+              quote:
+                'The GitHub-backed submissions are still excellent, but the bigger win is that courses, templates, teams, and program operations now feel like one connected product instead of separate processes.',
+              name: 'Priya Nair',
+              role: 'Data Science Professor',
+              avatar: '/testimonials/priya-nair.svg',
+            },
+          ].map((t) => (
+            <div key={t.name} className={styles.testimonialCard}>
+              <p className={styles.testimonialQuote}>&ldquo;{t.quote}&rdquo;</p>
+              <div className={styles.testimonialAuthor}>
+                <img
+                  src={t.avatar}
+                  alt={t.name}
+                  className={styles.testimonialAvatar}
+                  width={40}
+                  height={40}
+                />
+                <div>
+                  <strong>{t.name}</strong>
+                  <span>{t.role}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA section ──────────────────────────────────────────────────────── */}
+      <section className={styles.ctaSection}>
+        <div className={styles.ctaCard}>
+          <h2 className={styles.ctaTitle}>
+            Ready to run courses, teams, and planning in one place?
+          </h2>
+          <p className={styles.ctaSub}>
+            Sign in with GitHub, open the full Nibras system, and start using templates, team
+            formation, planner workflows, and GitHub-native submissions together.
+          </p>
+
+          <div className={styles.ctaFeatures}>
+            {[
+              'Free during early access',
+              'GitHub login — no passwords',
+              'No credit card required',
+            ].map((feat) => (
+              <span key={feat} className={styles.ctaFeatureItem}>
+                <span className={styles.ctaFeatureCheck}>✓</span>
+                {feat}
+              </span>
+            ))}
+          </div>
+
+          {error && <p className={styles.errorMsg}>{error}</p>}
+
           <button
-            className={styles.primaryButton}
+            className={styles.btnGitHub}
+            type="button"
             onClick={() => void handleSignIn()}
             disabled={submitting}
           >
-            {submitting ? 'Connecting…' : 'Sign in with GitHub'}
+            <svg
+              className={styles.githubIcon}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="currentColor"
+            >
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            {submitting ? 'Connecting…' : 'Continue with GitHub'}
           </button>
-          <Link href="/device" className={styles.secondaryButton}>
-            CLI guide
-          </Link>
         </div>
       </section>
+
+      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <div className={styles.footerBrand}>
+            <div className={styles.footerBrandRow}>
+              <NibrasLogo variant="inverse" width={100} />
+            </div>
+            <p className={styles.footerTagline}>
+              The academic operations platform for serious instructors and students.
+            </p>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <div className={styles.footerCol}>
+              <span className={styles.footerColTitle}>Product</span>
+              <a href="#features">Features</a>
+              <a href="#how-it-works">How it works</a>
+              <a href="#cli">CLI</a>
+            </div>
+            <div className={styles.footerCol}>
+              <span className={styles.footerColTitle}>Developers</span>
+              <a href="/instructor/onboarding">CLI Setup Guide</a>
+              <a
+                href="https://github.com/nibras-platform/nibras-cli"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+            </div>
+            <div className={styles.footerCol}>
+              <span className={styles.footerColTitle}>Account</span>
+              <button
+                onClick={() => void handleSignIn()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  padding: 0,
+                  font: 'inherit',
+                }}
+              >
+                Sign in
+              </button>
+              <a href="/dashboard">Dashboard</a>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.footerBottom}>
+          <span>© {new Date().getFullYear()} Nibras Platform. All rights reserved.</span>
+        </div>
+      </footer>
     </main>
   );
 }

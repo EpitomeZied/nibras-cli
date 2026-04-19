@@ -1,230 +1,122 @@
-export type ShellSessionUser = {
-  username: string;
-  email: string;
-  githubLogin: string;
-  githubLinked: boolean;
-  githubAppInstalled: boolean;
-  systemRole?: string;
-  memberships?: Array<{ courseId: string; role: string; level: number }>;
-};
-
-export type AppNavVisibility = 'all' | 'student' | 'instructor' | 'admin';
+export type NavVisibility = 'all' | 'instructor' | 'admin';
 
 export type AppNavItem = {
-  id: string;
   href: string;
   label: string;
   description: string;
-  matchPrefixes: string[];
-  visibility: AppNavVisibility;
+  visibility: NavVisibility;
+  matchPrefixes?: string[];
 };
 
-export type AppNavGroup = {
-  id: string;
-  label: string;
-  visibility: AppNavVisibility;
-  items: AppNavItem[];
+export type ShellMembership = { courseId: string; role: string; level: number };
+
+export type ShellSessionUser = {
+  systemRole?: string;
+  memberships?: ShellMembership[];
 };
 
-export const appNavGroups: AppNavGroup[] = [
+export const appNavItems: AppNavItem[] = [
   {
-    id: 'student',
-    label: 'Student',
-    visibility: 'student',
-    items: [
-      {
-        id: 'dashboard',
-        href: '/dashboard',
-        label: 'Dashboard',
-        description: 'See what needs action across courses, projects, and reviews.',
-        matchPrefixes: ['/dashboard'],
-        visibility: 'student',
-      },
-      {
-        id: 'projects',
-        href: '/projects',
-        label: 'Projects',
-        description: 'Submit work, manage milestones, and track project progress.',
-        matchPrefixes: ['/projects'],
-        visibility: 'student',
-      },
-      {
-        id: 'planner',
-        href: '/planner',
-        label: 'Planner',
-        description: 'Plan your degree path, choose tracks, and manage petitions.',
-        matchPrefixes: ['/planner'],
-        visibility: 'student',
-      },
-      {
-        id: 'submissions',
-        href: '/submissions',
-        label: 'Submissions',
-        description: 'Review recent submissions, grading, and resubmission history.',
-        matchPrefixes: ['/submissions'],
-        visibility: 'student',
-      },
-    ],
-  },
-  {
-    id: 'instructor',
-    label: 'Instructor',
-    visibility: 'instructor',
-    items: [
-      {
-        id: 'courses',
-        href: '/instructor',
-        label: 'Courses',
-        description: 'Manage courses, milestones, and instructor operations.',
-        matchPrefixes: ['/instructor/courses'],
-        visibility: 'instructor',
-      },
-      {
-        id: 'templates',
-        href: '/instructor#templates',
-        label: 'Templates',
-        description: 'Reuse project blueprints with team roles and team sizes.',
-        matchPrefixes: [],
-        visibility: 'instructor',
-      },
-      {
-        id: 'team-projects',
-        href: '/instructor#team-projects',
-        label: 'Team Projects',
-        description: 'Review role applications, generate teams, and lock formation.',
-        matchPrefixes: [],
-        visibility: 'instructor',
-      },
-      {
-        id: 'programs',
-        href: '/instructor/programs',
-        label: 'Programs',
-        description: 'Build academic programs, tracks, requirements, and petitions.',
-        matchPrefixes: ['/instructor/programs'],
-        visibility: 'instructor',
-      },
-    ],
-  },
-  {
-    id: 'admin',
-    label: 'Admin',
-    visibility: 'admin',
-    items: [
-      {
-        id: 'admin-home',
-        href: '/admin',
-        label: 'Admin',
-        description: 'Inspect system-wide courses, projects, and submissions.',
-        matchPrefixes: ['/admin'],
-        visibility: 'admin',
-      },
-    ],
-  },
-  {
-    id: 'system',
-    label: 'System',
+    href: '/dashboard',
+    label: 'Dashboard',
+    description: 'Track account, projects, and milestones.',
     visibility: 'all',
-    items: [
-      {
-        id: 'settings',
-        href: '/settings',
-        label: 'Settings',
-        description: 'Manage account settings and linked services.',
-        matchPrefixes: ['/settings'],
-        visibility: 'all',
-      },
-    ],
+  },
+  {
+    href: '/projects',
+    label: 'Projects',
+    description: 'Manage submissions, progress, and reviews.',
+    visibility: 'all',
+    matchPrefixes: ['/submissions'],
+  },
+  {
+    href: '/planner',
+    label: 'Planner',
+    description: 'Plan your academic path, track petitions, and generate a sheet.',
+    visibility: 'all',
+  },
+  {
+    href: '/instructor',
+    label: 'Instructor',
+    description: 'Manage courses, templates, team formation, and programs.',
+    visibility: 'instructor',
+    matchPrefixes: ['/instructor/programs'],
+  },
+  {
+    href: '/admin',
+    label: 'Admin',
+    description: 'System-wide submissions, projects, and oversight.',
+    visibility: 'admin',
   },
 ];
 
-function isInstructorUser(user: ShellSessionUser | null): boolean {
-  if (!user) return false;
-  if (user.systemRole === 'admin') return true;
+export function canAccessNavItem(item: AppNavItem, user: ShellSessionUser | null): boolean {
+  if (item.visibility === 'all') return true;
+  if (item.visibility === 'admin') return user?.systemRole === 'admin';
   return (
-    user.memberships?.some(
-      (membership) => membership.role === 'instructor' || membership.role === 'ta'
+    user?.systemRole === 'admin' ||
+    (user?.memberships?.some((membership) => {
+      const role = membership.role.toLowerCase();
+      return role === 'instructor' || role === 'ta';
+    }) ??
+      false)
+  );
+}
+
+export function isNavItemActive(item: AppNavItem, pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (pathname === item.href || pathname.startsWith(`${item.href}/`)) return true;
+  return (
+    item.matchPrefixes?.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
     ) ?? false
   );
 }
 
-export function canAccessVisibility(
-  visibility: AppNavVisibility,
-  user: ShellSessionUser | null
-): boolean {
-  if (visibility === 'all' || visibility === 'student') return true;
-  if (visibility === 'admin') return user?.systemRole === 'admin';
-  return isInstructorUser(user);
-}
-
-export function getVisibleNavGroups(user: ShellSessionUser | null): AppNavGroup[] {
-  return appNavGroups
-    .filter((group) => canAccessVisibility(group.visibility, user))
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => canAccessVisibility(item.visibility, user)),
-    }))
-    .filter((group) => group.items.length > 0);
-}
-
-function normalizeHref(href: string): { pathname: string; hash: string } {
-  const [pathname, hash = ''] = href.split('#');
-  return { pathname, hash: hash ? `#${hash}` : '' };
-}
-
-export function isNavItemActive(item: AppNavItem, pathname: string, hash = ''): boolean {
-  const { pathname: itemPathname, hash: itemHash } = normalizeHref(item.href);
-  const pathMatched = item.matchPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
-  if (!itemHash) return pathname === itemPathname || pathMatched;
-  if (pathname === itemPathname) return hash === itemHash;
-  return pathMatched;
-}
-
-export function getActiveNavItem(
-  pathname: string,
-  user: ShellSessionUser | null,
-  hash = ''
-): AppNavItem | null {
-  for (const group of getVisibleNavGroups(user)) {
-    const active = group.items.find((item) => isNavItemActive(item, pathname, hash));
-    if (active) return active;
-  }
-  return null;
-}
-
 export const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': {
-    title: 'Student Dashboard',
-    subtitle: 'See the work, reviews, and course actions that matter right now.',
+    title: 'Dashboard',
+    subtitle: 'Track your current course operations and GitHub-linked progress.',
   },
   '/projects': {
     title: 'Projects',
-    subtitle: 'Track milestones, team workflows, and final submissions.',
-  },
-  '/planner': {
-    title: 'Program Planner',
-    subtitle: 'Plan courses, select tracks, file petitions, and generate a printable sheet.',
+    subtitle: 'Review milestones, role applications, submissions, and grading details.',
   },
   '/submissions': {
     title: 'Submissions',
-    subtitle: 'Review submitted work, grading status, and revision history.',
+    subtitle: 'Review your submission history, statuses, and detailed feedback.',
+  },
+  '/planner': {
+    title: 'Planner',
+    subtitle: 'Track your academic program, petitions, approvals, and printable sheet.',
+  },
+  '/planner/track': {
+    title: 'Track Selection',
+    subtitle: 'Choose the specialization track for your program plan.',
+  },
+  '/planner/petitions': {
+    title: 'Planner Petitions',
+    subtitle: 'Review academic petitions and the current approval status.',
+  },
+  '/planner/sheet': {
+    title: 'Program Sheet',
+    subtitle: 'Generate and review the printable version of your program plan.',
   },
   '/instructor': {
-    title: 'Instructor Workspace',
-    subtitle: 'Run courses, reuse templates, manage team projects, and oversee delivery.',
+    title: 'Instructor',
+    subtitle: 'Manage courses, templates, team formation, and student submissions.',
+  },
+  '/instructor/courses': {
+    title: 'Courses',
+    subtitle: 'Review course activity, projects, templates, and review queues.',
   },
   '/instructor/programs': {
-    title: 'Program Builder',
-    subtitle: 'Design academic programs, tracks, requirements, and petition review flows.',
+    title: 'Programs',
+    subtitle: 'Build academic programs, requirements, tracks, and petitions.',
   },
   '/admin': {
     title: 'Admin',
-    subtitle: 'System-wide oversight across submissions, projects, and activity.',
-  },
-  '/settings': {
-    title: 'Settings',
-    subtitle: 'Manage account preferences and connected services.',
+    subtitle: 'System-wide oversight of submissions, projects, and activity.',
   },
   '/install/complete': {
     title: 'GitHub App',
@@ -234,4 +126,16 @@ export const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: 'CLI Setup Guide',
     subtitle: 'Install the Nibras CLI, authenticate, and submit your first project.',
   },
+  '/settings': {
+    title: 'Settings',
+    subtitle: 'Manage your account preferences and connected services.',
+  },
 };
+
+export function getPageTitle(pathname: string | null): { title: string; subtitle: string } | null {
+  if (!pathname) return null;
+  const matches = Object.entries(pageTitles)
+    .filter(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+    .sort((left, right) => right[0].length - left[0].length);
+  return matches[0]?.[1] ?? null;
+}

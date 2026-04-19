@@ -67,6 +67,7 @@ test('dashboard data loading forwards the requested mode', async () => {
   });
 
   assert.equal(calls[0], '/v1/tracking/dashboard/home?mode=instructor');
+  assert.deepEqual(calls.length, 1);
 });
 
 test('dashboard data loading propagates fetch failures', async () => {
@@ -81,4 +82,37 @@ test('dashboard data loading propagates fetch failures', async () => {
     }),
     /Dashboard unavailable/
   );
+});
+
+test('dashboard data loading marks requests as authenticated', async () => {
+  const { loadDashboardData } =
+    await import('../apps/web/app/(app)/dashboard/load-dashboard-data.js');
+  const calls = [];
+
+  await loadDashboardData({
+    fetchJson: async (path, init) => {
+      calls.push({ path, init });
+      return {
+        availableModes: ['student'],
+        defaultMode: 'student',
+        student: {
+          courses: [],
+          selectedCourseId: null,
+          attentionItems: [],
+          courseSnapshots: [],
+          submissionHealth: {
+            failedChecks: 0,
+            needsReview: 0,
+            awaitingReview: 0,
+            recentlyPassed: 0,
+          },
+          recentSubmissions: [],
+          blockers: [],
+        },
+      };
+    },
+  });
+
+  assert.equal(calls[0].path, '/v1/tracking/dashboard/home');
+  assert.equal(calls[0].init.auth, true);
 });

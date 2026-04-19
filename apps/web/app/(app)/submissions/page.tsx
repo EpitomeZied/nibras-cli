@@ -46,14 +46,26 @@ export default function SubmissionsPage() {
   const submissions = Array.isArray(data) ? data : [];
   const filtered =
     statusFilter === 'all' ? submissions : submissions.filter((s) => s.status === statusFilter);
+  const passedCount = submissions.filter((submission) => submission.status === 'passed').length;
+  const reviewCount = submissions.filter(
+    (submission) => submission.status === 'needs_review'
+  ).length;
+  const pendingCount = submissions.filter(
+    (submission) => submission.status === 'queued' || submission.status === 'running'
+  ).length;
 
   return (
     <main className={styles.page}>
-      {/* ── Page header ────────────────────────────────────────────── */}
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>My Submissions</h1>
-          <p className={styles.pageSub}>View, edit, and resubmit all your milestone submissions.</p>
+          <span className={styles.eyebrow}>Submission History</span>
+          <h1 className={styles.pageTitle}>
+            Review every submission from one structured timeline.
+          </h1>
+          <p className={styles.pageSub}>
+            Track statuses, open details, and jump back into project work without digging through
+            scattered milestone screens.
+          </p>
         </div>
         <select
           className={styles.filterSelect}
@@ -70,19 +82,48 @@ export default function SubmissionsPage() {
         </select>
       </div>
 
-      {/* ── Loading ─────────────────────────────────────────────────── */}
+      <div className={styles.summaryGrid}>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Total</span>
+          <strong>{submissions.length}</strong>
+          <p>Recorded submissions across your active courses.</p>
+        </article>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Passed</span>
+          <strong>{passedCount}</strong>
+          <p>Submissions that cleared automated checks or review.</p>
+        </article>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Needs Review</span>
+          <strong>{reviewCount}</strong>
+          <p>Waiting on manual grading or follow-up review.</p>
+        </article>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>In Flight</span>
+          <strong>{pendingCount}</strong>
+          <p>Queued or currently running verification.</p>
+        </article>
+      </div>
+
       {loading && (
         <div className={styles.panel}>
           <p className={styles.muted}>Loading submissions…</p>
         </div>
       )}
 
-      {/* ── Error ───────────────────────────────────────────────────── */}
       {error && <div className={styles.errorBar}>{error}</div>}
 
-      {/* ── Submissions table ────────────────────────────────────────── */}
       {!loading && !error && (
         <div className={styles.panel}>
+          <div className={styles.panelHead}>
+            <div>
+              <p className={styles.panelTitle}>Submission Ledger</p>
+              <p className={styles.panelCopy}>
+                Filter by outcome, then open the detailed submission record.
+              </p>
+            </div>
+            <span className={styles.panelCount}>{filtered.length} visible</span>
+          </div>
           {filtered.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.emptyEmoji}>📭</span>

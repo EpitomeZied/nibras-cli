@@ -1,18 +1,16 @@
-import type { DashboardHomeResponse } from '@nibras/contracts';
+import type { DashboardHomeResponse, DashboardMode } from '@nibras/contracts';
 
 type FetchJson = (path: string, init?: RequestInit & { auth?: boolean }) => Promise<unknown>;
-
-export type LoadDashboardDataResult = DashboardHomeResponse;
 
 export async function loadDashboardData({
   fetchJson,
   mode,
 }: {
   fetchJson: FetchJson;
-  mode?: 'student' | 'instructor' | null;
-}): Promise<LoadDashboardDataResult> {
-  const path = mode
-    ? `/v1/tracking/dashboard/home?mode=${encodeURIComponent(mode)}`
-    : '/v1/tracking/dashboard/home';
-  return (await fetchJson(path, { auth: true })) as DashboardHomeResponse;
+  mode?: DashboardMode;
+}): Promise<DashboardHomeResponse> {
+  const query = mode ? `?mode=${encodeURIComponent(mode)}` : '';
+  return (await fetchJson(`/v1/tracking/dashboard/home${query}`, {
+    auth: true,
+  })) as DashboardHomeResponse;
 }

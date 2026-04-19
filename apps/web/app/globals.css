@@ -303,12 +303,10 @@ main {
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 18px 14px;
+  gap: 16px;
+  padding: 20px 14px;
   border-right: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
-    var(--sidebar-bg, #090b0c);
+  background: var(--sidebar-bg, #0a0e1a);
   overflow-y: auto;
 }
 
@@ -316,7 +314,7 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 6px 16px;
+  padding: 4px 4px 14px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -335,7 +333,7 @@ main {
 
 .sidebarNav {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .navLink {
@@ -343,8 +341,8 @@ main {
   align-items: center;
   gap: 10px;
   padding: 9px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  border: 1px solid transparent;
   text-decoration: none;
   color: var(--text-muted);
   transition:
@@ -355,18 +353,16 @@ main {
 
 .navLink strong {
   display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
   text-decoration: none;
   transition: color 0.15s;
-  letter-spacing: -0.01em;
 }
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .navLink:hover strong {
@@ -374,17 +370,17 @@ main {
 }
 
 .navLinkActive {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.15);
 }
 
 .navLinkActive strong {
-  color: #fff !important;
+  color: var(--primary-strong) !important;
 }
 
 /* Left-border accent active state */
 .navLinkAccentBorder {
-  border-left: 2px solid rgba(255, 255, 255, 0.8) !important;
+  border-left: 2px solid var(--primary) !important;
   padding-left: 8px;
 }
 
@@ -394,10 +390,10 @@ main {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
   font-size: 14px;
   transition:
     background 0.15s,
@@ -406,9 +402,9 @@ main {
 }
 
 .navLinkActive .navIcon {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.09);
-  color: #fff;
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: var(--primary-strong);
 }
 
 .sidebarStatusCard {
@@ -465,9 +461,9 @@ main {
   gap: 10px;
   align-items: center;
   padding: 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
   min-width: 0;
 }
 
@@ -498,9 +494,9 @@ main {
   align-items: center;
   justify-content: center;
   min-height: 40px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
   color: var(--text-soft);
   font-size: 13px;
   transition:
@@ -509,7 +505,7 @@ main {
 }
 
 .logoutLink:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-strong);
   color: var(--text-muted);
 }
 
@@ -629,7 +625,7 @@ main {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .hamburgerBtn {
     display: flex;
   }

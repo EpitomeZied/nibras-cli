@@ -60,34 +60,27 @@ function QuickStartStep({
 export default function InstructorPage() {
   const { user, loading: sessionLoading } = useSession();
   const isAdmin = user?.systemRole === 'admin';
-  const isInstructor =
-    isAdmin ||
-    (user?.memberships?.some(
-      (membership) => membership.role === 'instructor' || membership.role === 'ta'
-    ) ??
-      false);
   const router = useRouter();
 
-  // Redirect non-instructors away once session is resolved
+  // Redirect non-admins away once session is resolved
   useEffect(() => {
-    if (!sessionLoading && user && !isInstructor) {
+    if (!sessionLoading && user && !isAdmin) {
       router.replace('/dashboard');
     }
-  }, [sessionLoading, user, isInstructor, router]);
+  }, [sessionLoading, user, isAdmin, router]);
 
   const { data: fetchedCourses, loading, error } = useFetch<Course[]>('/v1/tracking/courses');
   const [courses, setCourses] = useState<Course[] | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  // Block render until session resolves; redirect effect handles non-instructors
-  if (sessionLoading || !isInstructor) return null;
+  // Block render until session resolves; redirect effect handles non-admins
+  if (sessionLoading || !isAdmin) return null;
 
   // Use local state if we've done any mutations, otherwise use fetched data
   const allCourses = courses ?? fetchedCourses ?? [];
   const groups = groupByTerm(allCourses);
   const useGroups = groups.length > 1;
-  const firstCourseId = allCourses[0]?.id ?? null;
 
   async function handleDelete(courseId: string) {
     setDeletingId(courseId);
@@ -138,8 +131,7 @@ export default function InstructorPage() {
         <div>
           <h1>Instructor</h1>
           <p className={styles.subtitle}>
-            Run courses, reuse templates, coordinate team projects, and launch program planning
-            workflows from one workspace.
+            Manage courses, reusable templates, team formation, programs, and review workflows.
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -170,83 +162,75 @@ export default function InstructorPage() {
         </div>
       </div>
 
+      <div className={styles.summaryGrid}>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Courses</span>
+          <strong>{allCourses.length}</strong>
+          <p>Course workspaces currently managed in the system.</p>
+        </article>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Templates</span>
+          <strong>{allCourses.length > 0 ? 'Ready' : 'Pending'}</strong>
+          <p>Reusable project blueprints are available from each course workspace.</p>
+        </article>
+        <article className={styles.summaryCard}>
+          <span className={styles.summaryLabel}>Programs</span>
+          <strong>Builder</strong>
+          <p>Academic planning, requirements, tracks, and petitions are managed here too.</p>
+        </article>
+      </div>
+
       <div className={styles.featureWorkbench}>
-        <section id="templates" className={styles.workbenchCard}>
-          <span className={styles.courseCode}>Templates</span>
-          <h2>Reusable project blueprints</h2>
+        <div className={styles.workbenchCard}>
+          <span className={styles.summaryLabel}>Templates</span>
+          <h2>Create repeatable project blueprints.</h2>
           <p className={styles.muted}>
-            Define repeatable project structures, team sizes, and role definitions once, then reuse
-            them across courses and project launches.
+            Use templates to define milestones, team size, and role slots once, then launch new
+            projects from the same structure.
           </p>
           <div className={styles.workbenchActions}>
-            <Link
-              href={
-                firstCourseId
-                  ? `/instructor/courses/${firstCourseId}/templates`
-                  : '/instructor/courses/new'
-              }
-              className={styles.btnSecondary}
-            >
-              Open Templates
-            </Link>
-            <Link
-              href={
-                firstCourseId
-                  ? `/instructor/courses/${firstCourseId}/templates/new`
-                  : '/instructor/courses/new'
-              }
-              className={styles.btnPrimary}
-            >
-              Create Template
+            {allCourses[0] ? (
+              <Link
+                href={`/instructor/courses/${allCourses[0].id}/templates`}
+                className={styles.btnPrimary}
+              >
+                Open Templates
+              </Link>
+            ) : (
+              <Link href="/instructor/courses/new" className={styles.btnPrimary}>
+                Create Course First
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.workbenchCard}>
+          <span className={styles.summaryLabel}>Team Formation</span>
+          <h2>Collect applications and lock team rosters.</h2>
+          <p className={styles.muted}>
+            Team project coordination now runs inside the same instructor workspace, from role
+            preference intake to suggested and locked teams.
+          </p>
+          <div className={styles.workbenchActions}>
+            <Link href="/projects" className={styles.btnSecondary}>
+              View Student Side
             </Link>
           </div>
-        </section>
+        </div>
 
-        <section id="team-projects" className={styles.workbenchCard}>
-          <span className={styles.courseCode}>Team Projects</span>
-          <h2>Role applications and team formation</h2>
+        <div className={styles.workbenchCard}>
+          <span className={styles.summaryLabel}>Programs</span>
+          <h2>Build the academic planning layer.</h2>
           <p className={styles.muted}>
-            Let students rank roles, generate balanced team suggestions, and lock the formation
-            workflow before final submissions begin.
+            Manage program versions, requirement groups, tracks, and petition review in the same
+            system used for course delivery.
           </p>
           <div className={styles.workbenchActions}>
-            <Link
-              href={
-                firstCourseId ? `/instructor/courses/${firstCourseId}` : '/instructor/courses/new'
-              }
-              className={styles.btnSecondary}
-            >
-              Open Course Ops
-            </Link>
-            <Link
-              href={
-                firstCourseId
-                  ? `/instructor/courses/${firstCourseId}/projects/new`
-                  : '/instructor/courses/new'
-              }
-              className={styles.btnPrimary}
-            >
-              New Team Project
-            </Link>
-          </div>
-        </section>
-
-        <section className={styles.workbenchCard}>
-          <span className={styles.courseCode}>Programs</span>
-          <h2>University-style program planning</h2>
-          <p className={styles.muted}>
-            Build catalogs, tracks, requirement groups, and petition review flows that connect
-            directly to the student planner and printable sheet.
-          </p>
-          <div className={styles.workbenchActions}>
-            <Link href="/instructor/programs" className={styles.btnSecondary}>
+            <Link href="/instructor/programs" className={styles.btnPrimary}>
               Open Programs
             </Link>
-            <Link href="/instructor/programs/new" className={styles.btnPrimary}>
-              New Program
-            </Link>
           </div>
-        </section>
+        </div>
       </div>
 
       {loading && (
