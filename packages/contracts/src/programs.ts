@@ -363,6 +363,23 @@ export const ProgramApprovalRequestSchema = z.object({
   notes: z.string().nullable().default(null),
 });
 
+export const TrackRecommendationSchema = z.object({
+  trackId: z.string().min(1),
+  trackTitle: z.string().min(1),
+  trackSlug: z.string().min(1),
+  trackDescription: z.string().default(''),
+  matchScore: z.number().int().min(0).max(100),
+  matchedUnits: z.number().int().nonnegative(),
+  totalTrackUnits: z.number().int().nonnegative(),
+  matchedCourseCount: z.number().int().nonnegative(),
+  reason: z.string().min(1),
+});
+
+export const TrackRecommendationResponseSchema = z.object({
+  recommendations: z.array(TrackRecommendationSchema),
+  year1CourseCount: z.number().int().nonnegative(),
+});
+
 export type ProgramSummary = z.infer<typeof ProgramSummarySchema>;
 export type ProgramVersionSummary = z.infer<typeof ProgramVersionSummarySchema>;
 export type TrackSummary = z.infer<typeof TrackSummarySchema>;
@@ -387,6 +404,8 @@ export type CreateTrackRequest = z.infer<typeof CreateTrackRequestSchema>;
 export type UpdateTrackRequest = z.infer<typeof UpdateTrackRequestSchema>;
 export type SelectTrackRequest = z.infer<typeof SelectTrackRequestSchema>;
 export type UpdateStudentPlanRequest = z.infer<typeof UpdateStudentPlanRequestSchema>;
+export type TrackRecommendation = z.infer<typeof TrackRecommendationSchema>;
+export type TrackRecommendationResponse = z.infer<typeof TrackRecommendationResponseSchema>;
 export type CreatePetitionRequest = z.infer<typeof CreatePetitionRequestSchema>;
 export type UpdatePetitionRequest = z.infer<typeof UpdatePetitionRequestSchema>;
 export type ProgramApprovalRequest = z.infer<typeof ProgramApprovalRequestSchema>;

@@ -20,6 +20,7 @@ import {
   UpdatePetitionRequestSchema,
   UpdateRequirementGroupRequestSchema,
   UpdateStudentPlanRequestSchema,
+  TrackRecommendationResponseSchema,
   UpdateTrackRequestSchema,
 } from '@nibras/contracts';
 import { requireUser } from '../../lib/auth';
@@ -264,6 +265,95 @@ export function registerProgramRoutes(app: FastifyInstance, store: AppStore): vo
         return;
       }
       return StudentProgramPlanSchema.parse(plan);
+    }
+  );
+
+  app.get(
+    '/v1/programs/student/me/recommend-track',
+    { schema: { tags: ['programs'], summary: 'Recommend tracks based on Year 1 planned courses' } },
+    async (request, reply) => {
+      const auth = await requireUser(request, reply, store);
+      if (!auth) return;
+      const plan = await store.getStudentProgramPlan(requestBaseUrl(request), auth.user.id);
+      if (!plan) {
+        reply.code(404).send(Errors.notFound('Student program'));
+        return;
+      }
+
+      // Collect Year 1 planned courses with their unit weights
+      const year1Courses = plan.plannedCourses.filter((c) => c.plannedYear === 1);
+      const year1CourseCount = year1Courses.length;
+
+      if (year1CourseCount === 0) {
+        return TrackRecommendationResponseSchema.parse({
+          recommendations: [],
+          year1CourseCount: 0,
+        });
+      }
+
+      // Build a lookup: catalogCourseId → defaultUnits
+      const unitMap = new Map<string, number>(
+        plan.catalogCourses.map((c) => [c.id, c.defaultUnits])
+      );
+
+      // Score each available track using unit-weighted overlap
+      const scored = plan.availableTracks.map((track) => {
+        // Requirement groups that belong to this track
+        const trackGroups = plan.requirementGroups.filter((g) => g.trackId === track.id);
+
+        // Collect all required catalogCourseIds for this track
+        const requiredCourseIds = new Set<string>();
+        for (const group of trackGroups) {
+          for (const rule of group.rules) {
+            for (const course of rule.courses) {
+              requiredCourseIds.add(course.catalogCourseId);
+            }
+          }
+        }
+
+        // Total units in this track's requirements
+        let totalTrackUnits = 0;
+        for (const courseId of requiredCourseIds) {
+          totalTrackUnits += unitMap.get(courseId) ?? 0;
+        }
+
+        // Unit-weighted overlap with Year 1 courses
+        let matchedUnits = 0;
+        let matchedCourseCount = 0;
+        for (const planned of year1Courses) {
+          if (requiredCourseIds.has(planned.catalogCourseId)) {
+            matchedUnits += unitMap.get(planned.catalogCourseId) ?? 0;
+            matchedCourseCount++;
+          }
+        }
+
+        const matchScore =
+          totalTrackUnits > 0 ? Math.round((matchedUnits / totalTrackUnits) * 100) : 0;
+
+        const reason =
+          matchedCourseCount === 0
+            ? 'None of your Year 1 courses directly overlap with this track yet.'
+            : matchedCourseCount === 1
+              ? `1 of your Year 1 courses (${matchedUnits} units) aligns with this track's core requirements.`
+              : `${matchedCourseCount} of your Year 1 courses (${matchedUnits} units) align with this track's core requirements.`;
+
+        return {
+          trackId: track.id,
+          trackTitle: track.title,
+          trackSlug: track.slug,
+          trackDescription: track.description,
+          matchScore,
+          matchedUnits,
+          totalTrackUnits,
+          matchedCourseCount,
+          reason,
+        };
+      });
+
+      // Sort descending by score, return top 3
+      const recommendations = scored.sort((a, b) => b.matchScore - a.matchScore).slice(0, 3);
+
+      return TrackRecommendationResponseSchema.parse({ recommendations, year1CourseCount });
     }
   );
 

@@ -13,7 +13,11 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import type { ProgramSummary, StudentProgramPlan } from '@nibras/contracts';
+import type {
+  ProgramSummary,
+  StudentProgramPlan,
+  TrackRecommendationResponse,
+} from '@nibras/contracts';
 import { apiFetch } from '../../lib/session';
 import { useFetch } from '../../lib/use-fetch';
 import SectionNav from '../_components/section-nav';
@@ -21,6 +25,7 @@ import { plannerSections } from '../_components/workspace-sections';
 import styles from '../instructor/instructor.module.css';
 import CoursePalette from './_components/CoursePalette';
 import PlannerGrid from './_components/PlannerGrid';
+import RecommendationBanner from './_components/RecommendationBanner';
 import plannerStyles from './_components/planner.module.css';
 
 type DraftPlannedCourse = {
@@ -50,6 +55,10 @@ export default function PlannerPage() {
     reload,
   } = useFetch<StudentProgramPlan>('/v1/programs/student/me');
 
+  const { data: recData, reload: reloadRec } = useFetch<TrackRecommendationResponse>(
+    '/v1/programs/student/me/recommend-track'
+  );
+
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -68,6 +77,12 @@ export default function PlannerPage() {
       }))
     );
   }, [plan]);
+
+  // Re-fetch recommendations whenever draftCourses changes and has year 1 content
+  useEffect(() => {
+    const hasYear1 = draftCourses.some((c) => c.plannedYear === 1);
+    if (hasYear1) reloadRec();
+  }, [draftCourses, reloadRec]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -257,6 +272,19 @@ export default function PlannerPage() {
             <div className={plannerStyles.lockedBanner}>
               ⚠ This plan is locked and cannot be edited.
             </div>
+          )}
+
+          {/* Track recommendation banner — shown when year 1 courses exist and no track selected */}
+          {!plan.selectedTrack && recData && recData.recommendations.length > 0 && (
+            <RecommendationBanner
+              recommendations={recData.recommendations}
+              year1CourseCount={recData.year1CourseCount}
+              canSelectTrack={plan.canSelectTrack}
+              onTrackSelected={() => {
+                reload();
+                reloadRec();
+              }}
+            />
           )}
 
           {/* Two-column layout: palette left, grid right */}
