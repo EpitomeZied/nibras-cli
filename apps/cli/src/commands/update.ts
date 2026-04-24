@@ -1,20 +1,11 @@
 import { createSpinner } from '../ui/spinner';
 import { printBox } from '../ui/box';
 import { runGlobalNpm, uninstallGlobalCli } from './global-install';
+import { parseOption, hasFlag } from '../util/args';
 
 const DEFAULT_RELEASE_API_URL =
   'https://api.github.com/repos/NibrasPlatform/nibras-cli/releases/latest';
 const DEFAULT_GIT_INSTALL_URL = 'git+https://github.com/NibrasPlatform/nibras-cli.git';
-
-function parseOption(args: string[], name: string): string | null {
-  const index = args.indexOf(name);
-  if (index === -1) return null;
-  return args[index + 1] || null;
-}
-
-function hasFlag(args: string[], flag: string): boolean {
-  return args.includes(flag);
-}
 
 function normalizeTag(value: string): string {
   return value.startsWith('v') ? value : `v${value}`;

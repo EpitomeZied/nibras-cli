@@ -10,6 +10,13 @@ import { Counter, Registry, collectDefaultMetrics } from 'prom-client';
 import { PrismaClient } from '@prisma/client';
 import { loadGitHubAppConfig } from '@nibras/github';
 import { PrismaStore } from './prisma-store';
+import {
+  DEFAULT_RATE_LIMIT_MAX,
+  RATE_LIMIT_TIME_WINDOW,
+  DEFAULT_CONNECTION_TIMEOUT_MS,
+  DEFAULT_REQUEST_TIMEOUT_MS,
+  DEFAULT_BODY_LIMIT_BYTES,
+} from './constants';
 import { AppStore, FileStore, getStorePath } from './store';
 import { registerGitHubRoutes } from './features/github/routes';
 import { registerHostedCliRoutes } from './features/hosted-cli/routes';
@@ -50,6 +57,16 @@ function getAllowedCorsOrigins(): string[] {
   return Array.from(origins);
 }
 
+// Singleton Prisma client for health/metrics handlers so we never create a
+// new connection on every probe request.
+let _sharedPrisma: PrismaClient | null = null;
+function getSharedPrisma(): PrismaClient {
+  if (!_sharedPrisma) {
+    _sharedPrisma = new PrismaClient();
+  }
+  return _sharedPrisma;
+}
+
 function createDefaultStore(): AppStore {
   if (process.env.DATABASE_URL) {
     return new PrismaStore();
@@ -63,10 +80,9 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
       level: process.env.LOG_LEVEL || 'info',
     },
     genReqId: () => `req_${Math.random().toString(36).slice(2, 10)}`,
-    connectionTimeout: Number(process.env.CONNECTION_TIMEOUT_MS ?? 10_000),
-    requestTimeout: Number(process.env.REQUEST_TIMEOUT_MS ?? 30_000),
-    // 512 KB default — configurable via BODY_LIMIT_BYTES
-    bodyLimit: Number(process.env.BODY_LIMIT_BYTES ?? 524_288),
+    connectionTimeout: Number(process.env.CONNECTION_TIMEOUT_MS ?? DEFAULT_CONNECTION_TIMEOUT_MS),
+    requestTimeout: Number(process.env.REQUEST_TIMEOUT_MS ?? DEFAULT_REQUEST_TIMEOUT_MS),
+    bodyLimit: Number(process.env.BODY_LIMIT_BYTES ?? DEFAULT_BODY_LIMIT_BYTES),
   });
 
   const githubConfig = loadGitHubAppConfig();
@@ -131,11 +147,13 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     void reply.header('X-Request-Id', request.id);
   });
 
-  const globalRateMax = process.env.RATE_LIMIT_MAX ? parseInt(process.env.RATE_LIMIT_MAX, 10) : 100;
+  const globalRateMax = process.env.RATE_LIMIT_MAX
+    ? parseInt(process.env.RATE_LIMIT_MAX, 10)
+    : DEFAULT_RATE_LIMIT_MAX;
   void app.register(rateLimit, {
     global: true,
     max: globalRateMax,
-    timeWindow: '1 minute',
+    timeWindow: RATE_LIMIT_TIME_WINDOW,
     // Expose quota headers so clients know how many requests they have left.
     addHeaders: {
       'x-ratelimit-limit': true,
@@ -198,9 +216,7 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     async (_request, reply) => {
       if (process.env.DATABASE_URL) {
         try {
-          const prisma = new PrismaClient();
-          await prisma.$queryRaw`SELECT 1`;
-          await prisma.$disconnect();
+          await getSharedPrisma().$queryRaw`SELECT 1`;
         } catch {
           return reply.status(503).send({ ok: false, reason: 'database unavailable' });
         }
@@ -247,14 +263,13 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
       // not subject to counter-reset issues on process restart.
       if (process.env.DATABASE_URL) {
         try {
-          const prisma = new PrismaClient();
+          const prisma = getSharedPrisma();
           const [queueDepth, passedCount, failedCount, reviewCount] = await Promise.all([
             prisma.verificationJob.count({ where: { status: 'queued' } }),
             prisma.verificationJob.count({ where: { status: 'passed' } }),
             prisma.verificationJob.count({ where: { status: 'failed' } }),
             prisma.verificationJob.count({ where: { status: 'needs_review' } }),
           ]);
-          await prisma.$disconnect();
           output +=
             [
               '',
@@ -299,6 +314,10 @@ export function buildApp(store: AppStore = createDefaultStore()): FastifyInstanc
     }
     const { closeQueue } = await import('./lib/queue');
     await closeQueue();
+    if (_sharedPrisma) {
+      await _sharedPrisma.$disconnect();
+      _sharedPrisma = null;
+    }
   });
 
   registerGitHubRoutes(app, store, githubConfig);

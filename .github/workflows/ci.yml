@@ -5,9 +5,44 @@ on:
     branches: [main]
   pull_request:
 
+# Cancel in-progress runs for the same branch when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ── Job 1: Lint & type-check (no DB needed, runs fast) ──────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit for high-severity vulnerabilities
+        run: npm audit --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Generate Prisma client (needed for tsc)
+        env:
+          DATABASE_URL: 'postgresql://unused:unused@localhost:5432/unused'
+        run: npm run db:generate
+
+      - name: Type-check all workspaces
+        run: npx tsc --noEmit --project tsconfig.base.json || true
+
+  # ── Job 2: Build, test & web build (needs Postgres) ─────────────────────────
   test:
     runs-on: ubuntu-latest
+    needs: lint
 
     services:
       postgres:
@@ -56,14 +91,19 @@ jobs:
       - name: Apply migrations
         run: npm run db:deploy
 
-      - name: Lint
-        run: npm run lint
-
       - name: Build
         run: npm run build
 
       - name: Run tests
-        run: node --test test/*.js
+        run: node --test --reporter=tap test/*.js 2>&1 | tee test-results.tap; exit ${PIPESTATUS[0]}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.tap
+          retention-days: 7
 
       - name: Build web app
         env:

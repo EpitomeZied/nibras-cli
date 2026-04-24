@@ -3,19 +3,10 @@ import { apiRequest, readCliConfig, writeCliConfig } from '@nibras/core';
 import { createSpinner } from '../ui/spinner';
 import { printBox } from '../ui/box';
 import { tryOpenBrowser } from './login-browser';
+import { parseOption, hasFlag } from '../util/args';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function parseOption(args: string[], name: string): string | null {
-  const index = args.indexOf(name);
-  if (index === -1) return null;
-  return args[index + 1] || null;
-}
-
-function hasFlag(args: string[], flag: string): boolean {
-  return args.includes(flag);
 }
 
 export async function commandLogin(args: string[], plain: boolean): Promise<void> {

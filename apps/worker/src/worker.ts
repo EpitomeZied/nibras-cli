@@ -19,6 +19,13 @@ import {
 } from '@nibras/grading';
 import { runSandboxed } from './sandbox';
 import { VERIFICATION_QUEUE_NAME, parseRedisUrl, type VerificationJobPayload } from './queue';
+import {
+  MAX_CLAIM_AGE_MS,
+  DEFAULT_POLL_INTERVAL_MS,
+  DEFAULT_HEALTH_PORT,
+  MAX_STUDENT_LEVEL,
+  GIT_CLONE_TIMEOUT_MS,
+} from './constants';
 
 const execFileAsync = promisify(execFile);
 
@@ -30,9 +37,11 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
-const POLL_INTERVAL_MS = parseInt(process.env.WORKER_POLL_INTERVAL_MS || '2000', 10);
-const HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '9090', 10);
-const MAX_CLAIM_AGE_MS = 5 * 60_000;
+const POLL_INTERVAL_MS = parseInt(
+  process.env.WORKER_POLL_INTERVAL_MS || String(DEFAULT_POLL_INTERVAL_MS),
+  10
+);
+const HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || String(DEFAULT_HEALTH_PORT), 10);
 
 let shuttingDown = false;
 
@@ -247,7 +256,7 @@ async function runAiGrading(
       'git',
       ['clone', '--depth=1', '--branch', attempt.branch, cloneUrl, tmpDir],
       {
-        timeout: 60_000,
+        timeout: GIT_CLONE_TIMEOUT_MS,
       }
     );
 
@@ -546,8 +555,6 @@ async function checkAndAutoUpgradeStudentLevel(
   submissionAttemptId: string,
   prisma: PrismaClient
 ): Promise<void> {
-  const MAX_LEVEL = 4;
-
   const submission = await prisma.submissionAttempt.findUnique({
     where: { id: submissionAttemptId },
     include: { project: true },
@@ -563,7 +570,7 @@ async function checkAndAutoUpgradeStudentLevel(
   });
   if (!userRow) return;
   const currentLevel: number = (userRow as { yearLevel: number }).yearLevel ?? 1;
-  if (currentLevel >= MAX_LEVEL) return;
+  if (currentLevel >= MAX_STUDENT_LEVEL) return;
 
   // Gather all active courses at this year level.
   const yearCourses = await prisma.course.findMany({
@@ -593,10 +600,19 @@ async function checkAndAutoUpgradeStudentLevel(
   }
 
   // All Year-N courses are complete — atomically promote the student globally.
+  // Use updateMany with a WHERE yearLevel = currentLevel guard so that if two
+  // workers race on the same student, only one transaction wins.
   const nextLevel = currentLevel + 1;
   await prisma.$transaction(async (tx) => {
-    // 1. Advance the global year level.
-    await tx.user.update({ where: { id: userId }, data: { yearLevel: nextLevel } });
+    // 1. Advance the global year level — idempotent guard prevents double-promotion.
+    const updated = await tx.user.updateMany({
+      where: { id: userId, yearLevel: currentLevel },
+      data: { yearLevel: nextLevel },
+    });
+    if (updated.count === 0) {
+      // Another worker already promoted this student — skip remaining steps.
+      return;
+    }
 
     // 2. Sync every existing student membership.
     await tx.courseMembership.updateMany({
@@ -682,74 +698,22 @@ async function failJob(
   });
 }
 
-async function tick(prisma: PrismaClient): Promise<void> {
-  const job = await claimJob(prisma);
-  if (!job) {
-    return;
-  }
-  log('info', 'Claimed job', { jobId: job.id, submissionAttemptId: job.submissionAttemptId });
-
-  const transaction = process.env.SENTRY_DSN
-    ? Sentry.startInactiveSpan({ name: 'verification-job', op: 'worker.job' })
-    : null;
-
-  try {
-    const { exitCode, log: verificationLog } = await runVerification(
-      job.submissionAttemptId,
-      prisma
-    );
-    let aiResult: AiRunResult | null = null;
-    if (exitCode === 0) {
-      try {
-        aiResult = await runAiGrading(job.submissionAttemptId, prisma);
-      } catch (err) {
-        log('warn', 'AI grading error (non-fatal)', {
-          jobId: job.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-    await finalizeJob(
-      job.id,
-      job.submissionAttemptId,
-      job.attempt,
-      exitCode,
-      verificationLog,
-      aiResult,
-      prisma
-    );
-    if (exitCode === 0) {
-      try {
-        await checkAndAutoUpgradeStudentLevel(job.submissionAttemptId, prisma);
-      } catch (err) {
-        log('warn', 'Auto-upgrade check error (non-fatal)', {
-          jobId: job.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-    log('info', 'Job completed', { jobId: job.id, exitCode, aiRan: aiResult !== null });
-    transaction?.setStatus({ code: 1, message: 'ok' });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log('error', 'Job failed', { jobId: job.id, error: message });
-    if (process.env.SENTRY_DSN) {
-      Sentry.captureException(err, { tags: { jobId: job.id } });
-    }
-    transaction?.setStatus({ code: 2, message: 'internal_error' });
-    await failJob(job.id, job.submissionAttemptId, job.attempt, job.maxAttempts, message, prisma);
-  } finally {
-    transaction?.end();
-  }
-}
-
-async function processBullJob(
-  job: Job<VerificationJobPayload>,
-  prisma: PrismaClient
+/**
+ * Core job execution logic shared by the DB-polling path (`tick`) and the
+ * BullMQ path (`processBullJob`).  Runs verification, optional AI grading,
+ * persists results, and triggers the student auto-upgrade check.
+ *
+ * @param rethrow - When true, re-throws after recording a failure so the
+ *   caller (BullMQ) can mark the job as failed and trigger its own retry.
+ */
+async function executeJob(
+  jobId: string,
+  submissionAttemptId: string,
+  attempt: number,
+  maxAttempts: number,
+  prisma: PrismaClient,
+  rethrow = false
 ): Promise<void> {
-  const { jobId, submissionAttemptId, attempt, maxAttempts } = job.data;
-  log('info', 'BullMQ job received', { jobId, submissionAttemptId });
-
   const transaction = process.env.SENTRY_DSN
     ? Sentry.startInactiveSpan({ name: 'verification-job', op: 'worker.job' })
     : null;
@@ -767,15 +731,7 @@ async function processBullJob(
         });
       }
     }
-    await finalizeJob(
-      jobId,
-      submissionAttemptId,
-      attempt,
-      exitCode,
-      verificationLog,
-      aiResult,
-      prisma
-    );
+    await finalizeJob(jobId, submissionAttemptId, attempt, exitCode, verificationLog, aiResult, prisma);
     if (exitCode === 0) {
       try {
         await checkAndAutoUpgradeStudentLevel(submissionAttemptId, prisma);
@@ -786,18 +742,37 @@ async function processBullJob(
         });
       }
     }
-    log('info', 'BullMQ job completed', { jobId, exitCode, aiRan: aiResult !== null });
+    log('info', 'Job completed', { jobId, exitCode, aiRan: aiResult !== null });
     transaction?.setStatus({ code: 1, message: 'ok' });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log('error', 'BullMQ job failed', { jobId, error: message });
+    log('error', 'Job failed', { jobId, error: message });
     if (process.env.SENTRY_DSN) Sentry.captureException(err, { tags: { jobId } });
     transaction?.setStatus({ code: 2, message: 'internal_error' });
     await failJob(jobId, submissionAttemptId, attempt, maxAttempts, message, prisma);
-    throw err; // Let BullMQ handle retries
+    if (rethrow) throw err;
   } finally {
     transaction?.end();
   }
+}
+
+async function tick(prisma: PrismaClient): Promise<void> {
+  const job = await claimJob(prisma);
+  if (!job) {
+    return;
+  }
+  log('info', 'Claimed job', { jobId: job.id, submissionAttemptId: job.submissionAttemptId });
+  await executeJob(job.id, job.submissionAttemptId, job.attempt, job.maxAttempts, prisma, false);
+}
+
+async function processBullJob(
+  job: Job<VerificationJobPayload>,
+  prisma: PrismaClient
+): Promise<void> {
+  const { jobId, submissionAttemptId, attempt, maxAttempts } = job.data;
+  log('info', 'BullMQ job received', { jobId, submissionAttemptId });
+  // rethrow=true so BullMQ can mark the job as failed and trigger its own retries.
+  await executeJob(jobId, submissionAttemptId, attempt, maxAttempts, prisma, true);
 }
 
 async function main(): Promise<void> {

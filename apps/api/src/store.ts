@@ -1414,6 +1414,10 @@ export interface AppStore {
     }
   ): Promise<ReviewRecord>;
   getTrackingReview(apiBaseUrl: string, submissionId: string): Promise<ReviewRecord | null>;
+  getTrackingReviewsBySubmissionIds(
+    apiBaseUrl: string,
+    submissionIds: string[]
+  ): Promise<Map<string, ReviewRecord>>;
   getSubmissionStudentEmail(
     apiBaseUrl: string,
     submissionId: string
@@ -4981,6 +4985,22 @@ export class FileStore implements AppStore {
         .filter((entry) => entry.submissionId === submissionId)
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null
     );
+  }
+
+  async getTrackingReviewsBySubmissionIds(
+    apiBaseUrl: string,
+    submissionIds: string[]
+  ): Promise<Map<string, ReviewRecord>> {
+    const data = this.read(apiBaseUrl);
+    const result = new Map<string, ReviewRecord>();
+    for (const submissionId of submissionIds) {
+      const review =
+        data.reviews
+          .filter((entry) => entry.submissionId === submissionId)
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] || null;
+      if (review) result.set(submissionId, review);
+    }
+    return result;
   }
 
   async getSubmissionStudentEmail(

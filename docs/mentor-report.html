@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nibras Student Planner — Feature Report</title>
+  <style>
+    /* ── Reset & Base ──────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:   #6366f1;
+      --accent2:  #4f46e5;
+      --green:    #10b981;
+      --amber:    #f59e0b;
+      --red:      #ef4444;
+      --ink:      #1e1b4b;
+      --muted:    #64748b;
+      --border:   #e2e8f0;
+      --surface:  #f8fafc;
+      --white:    #ffffff;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      color: var(--ink);
+      background: var(--white);
+      line-height: 1.75;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 40px;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: var(--ink);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    code, pre {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.875rem;
+    }
+    code {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    pre {
+      background: #1e1b4b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      line-height: 1.6;
+      margin: 16px 0;
+    }
+
+    /* ── Page sections ─────────────────────────── */
+    .page-break { page-break-after: always; break-after: page; }
+
+    section {
+      margin-bottom: 56px;
+    }
+
+    /* ── Cover Page ────────────────────────────── */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 92vh;
+      border-left: 6px solid var(--accent);
+      padding-left: 40px;
+      margin-bottom: 0;
+    }
+
+    .cover .eyebrow {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .cover h1 {
+      font-size: 2.6rem;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      color: var(--ink);
+    }
+
+    .cover .subtitle {
+      font-size: 1.25rem;
+      color: var(--muted);
+      font-family: 'Segoe UI', sans-serif;
+      font-weight: 400;
+      margin-bottom: 48px;
+    }
+
+    .cover-meta {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 0;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.9rem;
+    }
+    .cover-meta .label {
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      padding-top: 2px;
+    }
+    .cover-meta .value { color: var(--ink); }
+
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 48px;
+      padding: 8px 16px;
+      background: color-mix(in srgb, var(--accent) 10%, white);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, white);
+      border-radius: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+    /* ── Section headers ───────────────────────── */
+    .section-label {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    section > h2 {
+      font-size: 1.7rem;
+      margin-bottom: 6px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin: 28px 0 10px;
+      color: var(--ink);
+    }
+
+    h4 {
+      font-size: 0.95rem;
+      margin: 20px 0 8px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    p { margin-bottom: 14px; }
+
+    /* ── Tables ────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.875rem;
+    }
+    thead th {
+      background: var(--ink);
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+    }
+    tbody tr:nth-child(even) { background: var(--surface); }
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tbody td:first-child { font-weight: 600; }
+
+    /* ── Before/After ──────────────────────────── */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .compare-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .compare-box h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .tag-before { background: #fee2e2; color: #dc2626; }
+    .tag-after  { background: #d1fae5; color: #065f46; }
+
+    .compare-box ul {
+      padding-left: 18px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    /* ── Feature chips ─────────────────────────── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .feature-card .fc-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    .feature-card .fc-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .feature-card .fc-icon {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* ── Screenshot placeholder ────────────────── */
+    .screenshot-placeholder {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      margin: 20px 0;
+      background: var(--surface);
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--muted);
+    }
+    .screenshot-placeholder .ph-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+    .screenshot-placeholder .ph-url {
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    /* ── Algorithm flowchart ───────────────────── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      margin: 20px 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .flow-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .flow-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .flow-line {
+      width: 2px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 auto;
+    }
+    .flow-body {
+      padding-top: 4px;
+      padding-bottom: 28px;
+    }
+    .flow-body strong { font-size: 0.9rem; }
+    .flow-body p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 3px;
+      margin-bottom: 0;
+      line-height: 1.5;
+    }
+
+    /* ── Worked Example ────────────────────────── */
+    .example-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .example-header {
+      background: var(--ink);
+      color: white;
+      padding: 12px 18px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .example-body { padding: 18px; }
+
+    .track-result {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .track-result:last-child { margin-bottom: 0; }
+    .tr-rank {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 28px;
+    }
+    .tr-body { flex: 1; }
+    .tr-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .tr-reason { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+    .tr-score-wrap { display: flex; align-items: center; gap: 10px; }
+    .tr-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .tr-bar { height: 100%; background: var(--accent); border-radius: 3px; }
+    .tr-pct {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .match-detail {
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin: 12px 0;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.82rem;
+    }
+    .match-detail .md-title {
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+    .match-row {
+      display: flex;
+      gap: 8px;
+      margin: 3px 0;
+    }
+    .match-check { color: var(--green); font-weight: 700; }
+    .match-miss  { color: var(--muted); }
+
+    /* ── Callout boxes ─────────────────────────── */
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: color-mix(in srgb, var(--accent) 6%, white);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.9rem;
+    }
+    .callout.amber {
+      border-color: var(--amber);
+      background: color-mix(in srgb, var(--amber) 8%, white);
+    }
+    .callout.green {
+      border-color: var(--green);
+      background: color-mix(in srgb, var(--green) 8%, white);
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ── Files changed ─────────────────────────── */
+    .file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 12px 0;
+    }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      padding: 7px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .file-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      font-family: 'Segoe UI', sans-serif;
+      flex-shrink: 0;
+    }
+    .fb-new  { background: #d1fae5; color: #065f46; }
+    .fb-mod  { background: #dbeafe; color: #1e40af; }
+
+    /* ── Deployment status ─────────────────────── */
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .deploy-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .deploy-card .dc-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .deploy-card .dc-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .deploy-card .dc-url  { font-size: 0.72rem; color: var(--accent); word-break: break-all; margin-bottom: 6px; }
+    .deploy-card .dc-status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* ── Commits ───────────────────────────────── */
+    .commit-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+    .commit-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .commit-sha {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      background: var(--ink);
+      color: #a5b4fc;
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .commit-msg { font-size: 0.875rem; padding-top: 2px; }
+
+    /* ── Roadmap ───────────────────────────────── */
+    .roadmap-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .roadmap-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.9rem;
+    }
+    .roadmap-list li .ri-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .roadmap-list li .ri-body strong { display: block; font-size: 0.9rem; }
+    .roadmap-list li .ri-body span { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── Print styles ──────────────────────────── */
+    @media print {
+      body { max-width: 100%; padding: 0; font-size: 14px; }
+      .cover { min-height: 95vh; }
+      .no-print { display: none !important; }
+      pre { white-space: pre-wrap; word-break: break-word; }
+      .compare { grid-template-columns: 1fr 1fr; }
+      .deploy-grid { grid-template-columns: 1fr 1fr 1fr; }
+      a { color: var(--accent); }
+    }
+
+    @page {
+      margin: 24mm 20mm;
+    }
+
+    /* ── Utility ───────────────────────────────── */
+    .mono { font-family: 'Courier New', monospace; font-size: 0.85rem; }
+    .text-muted { color: var(--muted); }
+    .mt-sm { margin-top: 8px; }
+    .mt-md { margin-top: 20px; }
+    hr { border: none; border-top: 2px solid var(--border); margin: 40px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     COVER PAGE
+═══════════════════════════════════════ -->
+<section class="cover page-break">
+  <p class="eyebrow">Mentor Technical Report</p>
+  <h1>Nibras Student Planner<br>Feature Report</h1>
+  <p class="subtitle">Track Recommendation System &amp; Visual Degree Planner</p>
+
+  <div class="cover-meta">
+    <span class="label">Date</span>
+    <span class="value">April 22, 2026</span>
+
+    <span class="label">Project</span>
+    <span class="value">Nibras Platform — Student Planner Sprint</span>
+
+    <span class="label">Live URL</span>
+    <span class="value"><a href="https://nibras-web.fly.dev/planner">nibras-web.fly.dev/planner</a></span>
+
+    <span class="label">Commits</span>
+    <span class="value mono">54b5b62 · 9666d2d</span>
+
+    <span class="label">Stack</span>
+    <span class="value">Next.js 15 · Fastify · Prisma · Fly.io</span>
+  </div>
+
+  <div class="cover-badge">
+    <span class="dot"></span>
+    All three services deployed and healthy
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     1. EXECUTIVE SUMMARY
+═══════════════════════════════════════ -->
+<section>
+  <p class="section-label">Section 1</p>
+  <h2>Executive Summary</h2>
+
+  <p>
+    Before this sprint, students using the Nibras platform had no visual way to map out their
+    4-year degree path. Course planning was limited to a plain dropdown form that produced a
+    flat text list — with no sense of timeline, workload distribution, or how their choices
+    related to available specialization tracks. Track selection was equally opaque: students
+    were shown a list of tracks with no guidance on which suited them based on what they had
+    already studied.
+  </p>
+  <p>
+    This sprint delivered two interconnected upgrades. First, a <strong>drag-and-drop
+    4-year × 2-term visual degree grid</strong> that lets students build their plan the way
+    they think about it — by dragging courses into year and term buckets. Second, an
+    <strong>algorithmic track recommendation engine</strong> that analyses the student's Year 1
+    course selections and surfaces the top 3 matching specialization tracks in real time,
+    with match scores and plain-English explanations. Both features are fully deployed and live
+    with zero backend schema changes required.
+  </p>
+
+  <div class="callout green">
+    <strong>Outcome</strong>
+    Students now see their full degree timeline at a glance, receive personalised track
+    guidance the moment they start planning, and can confirm a track selection through a
+    structured confirmation modal — all within the existing Nibras web platform.
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     2. WHAT WE BUILT
+═══════════════════════════════════════ -->
+<section>
+  <p class="section-label">Section 2</p>
+  <h2>What We Built</h2>
+
+  <!-- 2a: Grid -->
+  <h3>2a — Visual 4-Year × 2-Term Drag-and-Drop Grid</h3>
+
+  <div class="compare">
+    <div class="compare-box">
+      <h4><span class="tag tag-before">Before</span></h4>
+      <ul>
+        <li>Three dropdowns: select course, year, term</li>
+        <li>"Add course" button → appended to a flat list</li>
+        <li>No timeline view</li>
+        <li>No unit totals</li>
+        <li>No visual sense of degree distribution</li>
+      </ul>
+    </div>
+    <div class="compare-box">
+      <h4><span class="tag tag-after">After</span></h4>
+      <ul>
+        <li>4-column × 2-row grid (Year 1–4 × Fall/Spring)</li>
+        <li>Left sidebar palette of unplaced courses</li>
+        <li>Drag from palette → drop into any cell</li>
+        <li>Drag between cells to move courses</li>
+        <li>Unit totals per cell and per year</li>
+        <li>Locked-plan state disables all editing</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="fc-icon">🗂️</span>
+      <div class="fc-title">Course Palette</div>
+      <div class="fc-desc">Left sidebar lists every catalog course not yet placed. Scrollable, shows count of unplaced courses.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">📦</span>
+      <div class="fc-title">Drop Cells</div>
+      <div class="fc-desc">8 droppable zones (Year 1–4 × Fall/Spring). Visual accent highlight when a card hovers over a cell.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">📊</span>
+      <div class="fc-title">Unit Totals Row</div>
+      <div class="fc-desc">Bottom row shows Fall/Spring units per year and a combined year total. Updates live as courses move.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🔒</span>
+      <div class="fc-title">Locked-Plan State</div>
+      <div class="fc-desc">When <code>plan.isLocked</code> is true, all drag, drop, and remove interactions are disabled. A banner explains why.</div>
+    </div>
+  </div>
+
+  <div class="screenshot-placeholder">
+    <div class="ph-title">📸 Screenshot: Drag-and-Drop Planner Grid</div>
+    <div class="ph-url">https://nibras-web.fly.dev/planner</div>
+    <p class="text-muted mt-sm" style="font-size:0.8rem;">Log in to capture this screenshot for the printed version</p>
+  </div>
+
+  <h4>Files Changed — Grid</h4>
+  <div class="file-list">
+    <div class="file-item"><span class="file-badge fb-mod">modified</span>apps/web/app/(app)/planner/page.tsx</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/PlannerGrid.tsx</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/GridCell.tsx</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/CoursePalette.tsx</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/planner.module.css</div>
+  </div>
+  <p class="text-muted" style="font-size:0.82rem; font-family:'Segoe UI',sans-serif;">
+    Library added to <code>apps/web/package.json</code>: <code>@dnd-kit/core ^6.3.1</code> + <code>@dnd-kit/utilities ^3.2.2</code>
+  </p>
+
+  <!-- 2b: Recommendation -->
+  <h3>2b — Track Recommendation System</h3>
+
+  <p>
+    After placing at least one Year 1 course, a dismissible banner appears automatically above
+    the grid showing the top 3 recommended tracks, each with a match score and a plain-English
+    reason. Clicking <em>Select</em> on any track opens a confirmation modal; confirming calls
+    the existing <code>POST /select-track</code> endpoint. The banner disappears once a track
+    is chosen.
+  </p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="fc-icon">⚡</span>
+      <div class="fc-title">Auto-Triggered Banner</div>
+      <div class="fc-desc">No button needed. Appears the moment any Year 1 course is placed. Refreshes live as courses move.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🏆</span>
+      <div class="fc-title">Top 3 Rankings</div>
+      <div class="fc-desc">Shows the three best-matching tracks with score pill, animated progress bar, and reason text.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">✅</span>
+      <div class="fc-title">Confirmation Modal</div>
+      <div class="fc-desc">Clicking Select opens a modal with full track details before committing — prevents accidental selection.</div>
+    </div>
+    <div class="feature-card">
+      <span class="fc-icon">🔕</span>
+      <div class="fc-title">Smart Dismissal</div>
+      <div class="fc-desc">Banner hides permanently once a track is selected. Can also be manually dismissed per session via ×.</div>
+    </div>
+  </div>
+
+  <div class="screenshot-placeholder">
+    <div class="ph-title">📸 Screenshot: Recommendation Banner with Top 3 Tracks</div>
+    <div class="ph-url">https://nibras-web.fly.dev/planner — place a Year 1 course to trigger</div>
+  </div>
+
+  <h4>Files Changed — Recommendation</h4>
+  <div class="file-list">
+    <div class="file-item"><span class="file-badge fb-mod">modified</span>packages/contracts/src/programs.ts — added TrackRecommendationSchema</div>
+    <div class="file-item"><span class="file-badge fb-mod">modified</span>apps/api/src/features/programs/routes.ts — added GET /recommend-track</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/RecommendationBanner.tsx</div>
+    <div class="file-item"><span class="file-badge fb-new">new</span>apps/web/app/(app)/planner/_components/recommendation-banner.module.css</div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     3. STRATEGY & DESIGN DECISIONS
+═══════════════════════════════════════ -->
+<section class="page-break">
+  <p class="section-label">Section 3</p>
+  <h2>Strategy &amp; Design Decisions</h2>
+
+  <p>
+    Every design decision in this sprint was made to reduce friction for students while
+    keeping the system maintainable and upgradeable. The table below documents each key
+    decision and its rationale.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:35%">Decision</th>
+        <th>Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Drag-and-drop interaction<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not click-to-assign)</span></td>
+        <td>Maps to the mental model of a physical degree planning sheet. Students spatially think about courses — dragging is more natural and faster than three-dropdown forms.</td>
+      </tr>
+      <tr>
+        <td>API-side scoring<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not client-side)</span></td>
+        <td>Keeps business logic server-authoritative and testable. When the AI key is eventually set, the same endpoint can switch to AI-powered scoring without any frontend change.</td>
+      </tr>
+      <tr>
+        <td>Unit-weighted overlap scoring<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not raw course count)</span></td>
+        <td>A 4-unit core course signals much stronger subject commitment than a 1-unit seminar. Counting units rather than courses produces a more accurate match signal, especially in Year 1 where course loads vary.</td>
+      </tr>
+      <tr>
+        <td>Show top 3 tracks<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not just the #1 pick)</span></td>
+        <td>Students at the end of Year 1 often have mixed interests. Showing three options lets them compare, read the reason text, and make an informed decision rather than accepting a single opaque recommendation.</td>
+      </tr>
+      <tr>
+        <td>Banner auto-appears<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not button-triggered)</span></td>
+        <td>Zero-friction discovery. A student focused on filling in their course grid should not need to find and click a separate "Get recommendations" button. Passive surfacing increases engagement.</td>
+      </tr>
+      <tr>
+        <td>Triggered on ≥1 Year 1 course<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not after full Year 1 completion)</span></td>
+        <td>Immediate feedback as the student builds the plan. Even a single Year 1 course creates a signal worth surfacing. Students can watch the rankings shift as they add more courses.</td>
+      </tr>
+      <tr>
+        <td>Confirmation modal<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not direct one-click select)</span></td>
+        <td>Track selection is consequential — it may be gate-locked after selection and triggers downstream approval workflows. A modal with full track details prevents accidental commits.</td>
+      </tr>
+      <tr>
+        <td>Banner hidden after track selected<br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not always visible)</span></td>
+        <td>Reduces cognitive noise. Once a decision is made, showing recommendations again is distracting. The student can always visit /planner/track to review or change.</td>
+      </tr>
+      <tr>
+        <td>Separate <code>planner.module.css</code><br><span style="font-weight:400;font-size:0.78rem;color:#64748b">(not appended to shared CSS)</span></td>
+        <td>The planner grid styles are highly specific (grid cells, chip dragging, palette). Isolating them prevents accidental side effects on instructor and admin pages that import the shared module.</td>
+      </tr>
+      <tr>
+        <td>No new Prisma schema changes</td>
+        <td>The recommendation endpoint is purely computational — it reads existing data and returns a scored result. Zero migration risk, zero DB downtime.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     4. HOW THE ALGORITHM WORKS
+═══════════════════════════════════════ -->
+<section>
+  <p class="section-label">Section 4</p>
+  <h2>How the Recommendation Algorithm Works</h2>
+
+  <h3>4a — Overview</h3>
+  <p>
+    The engine is a <strong>pure server-side computation</strong> — no machine learning,
+    no external AI API, no trained model. It uses <em>unit-weighted requirement overlap</em>:
+    for each available track, it measures how many of the student's Year 1 course units
+    land inside that track's required course list, then expresses this as a percentage of
+    the track's total required units.
+  </p>
+
+  <div class="callout amber">
+    <strong>Why "unit-weighted"?</strong>
+    A 4-unit core course and a 1-unit seminar both count as "1 course" in a naive counter —
+    but the 4-unit course represents four times the academic commitment. Weighting by units
+    makes the signal proportional to actual study investment.
+  </div>
+
+  <h3>4b — Step-by-Step Algorithm</h3>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+      <div class="flow-body">
+        <strong>Fetch the student plan</strong>
+        <p>Load from <code>GET /v1/programs/student/me</code>. Extract all <code>plannedCourses</code> where <code>plannedYear === 1</code>. If none exist, return an empty recommendations array immediately.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+      <div class="flow-body">
+        <strong>Build a unit lookup map</strong>
+        <p>Create a <code>Map&lt;catalogCourseId, defaultUnits&gt;</code> from the plan's <code>catalogCourses</code> array for O(1) unit lookups.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+      <div class="flow-body">
+        <strong>For each available track — collect required courses</strong>
+        <p>Find all <code>requirementGroups</code> where <code>group.trackId === track.id</code>. Walk each group's rules → each rule's courses to collect a <code>Set&lt;catalogCourseId&gt;</code> of required courses for this track.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+      <div class="flow-body">
+        <strong>Score the overlap</strong>
+        <p>
+          <code>totalTrackUnits</code> = sum of <code>defaultUnits</code> for every course in the required set.<br>
+          <code>matchedUnits</code> = sum of units of Year 1 courses whose ID is in the required set.<br>
+          <code>matchScore</code> = <code>round(matchedUnits / totalTrackUnits × 100)</code>
+        </p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">5</div><div class="flow-line"></div></div>
+      <div class="flow-body">
+        <strong>Generate a reason string</strong>
+        <p>Plain-English message based on <code>matchedCourseCount</code> and <code>matchedUnits</code>, e.g. <em>"3 of your Year 1 courses (11 units) align with this track's core requirements."</em></p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-left"><div class="flow-num">6</div></div>
+      <div class="flow-body">
+        <strong>Sort &amp; return top 3</strong>
+        <p>Sort all tracks by <code>matchScore</code> descending. Slice top 3. Return as <code>TrackRecommendationResponse</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>4c — Worked Example with Real Data</h3>
+  <p>
+    The following example uses the actual CS program data from the Nibras production database
+    and the real Year 1 plan of the test account <code>shahahahahahahd</code>.
+  </p>
+
+  <div class="example-box">
+    <div class="example-header">📚 Student's Year 1 Planned Courses</div>
+    <div class="example-body">
+      <table>
+        <thead>
+          <tr><th>Course</th><th>Title</th><th>Units</th><th>Term</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CS 101</td><td>Programming Fundamentals</td><td>4</td><td>Fall</td></tr>
+          <tr><td>CS 102</td><td>Data Structures</td><td>4</td><td>Fall</td></tr>
+          <tr><td>CS 103</td><td>Discrete Mathematics</td><td>3</td><td>Spring</td></tr>
+          <tr><td>MATH 111</td><td>Calculus I</td><td>3</td><td>Spring</td></tr>
+          <tr><td colspan="2"><strong>Total Year 1 units</strong></td><td><strong>14</strong></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h4>Scoring each track</h4>
+
+  <!-- Track A -->
+  <div class="match-detail">
+    <div class="md-title">Track A — Artificial Intelligence (AI)</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 101 Programming Fundamentals — 4 units matched</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 102 Data Structures — 4 units matched</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 103 Discrete Mathematics — 3 units matched</div>
+    <div class="match-row"><span class="match-miss">✗</span> MATH 111 Calculus I — not in AI track requirements</div>
+    <div style="margin-top:8px;font-size:0.82rem;">
+      <strong>matchedUnits = 11 &nbsp;·&nbsp; totalTrackUnits ≈ 32 &nbsp;·&nbsp; score = ⌊11/32 × 100⌋ = <span style="color:var(--accent)">34%</span></strong>
+    </div>
+  </div>
+
+  <!-- Track B -->
+  <div class="match-detail">
+    <div class="md-title">Track B — Theory</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 101 Programming Fundamentals — 4 units matched</div>
+    <div class="match-row"><span class="match-miss">✗</span> CS 102 Data Structures — not in Theory track requirements</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 103 Discrete Mathematics — 3 units matched</div>
+    <div class="match-row"><span class="match-check">✓</span> MATH 111 Calculus I — 3 units matched</div>
+    <div style="margin-top:8px;font-size:0.82rem;">
+      <strong>matchedUnits = 10 &nbsp;·&nbsp; totalTrackUnits ≈ 30 &nbsp;·&nbsp; score = ⌊10/30 × 100⌋ = <span style="color:var(--accent)">33%</span></strong>
+    </div>
+  </div>
+
+  <!-- Track C -->
+  <div class="match-detail">
+    <div class="md-title">Track C — Systems</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 101 Programming Fundamentals — 4 units matched</div>
+    <div class="match-row"><span class="match-check">✓</span> CS 102 Data Structures — 4 units matched</div>
+    <div class="match-row"><span class="match-miss">✗</span> CS 103 Discrete Mathematics — not in Systems track requirements</div>
+    <div class="match-row"><span class="match-miss">✗</span> MATH 111 Calculus I — not in Systems track requirements</div>
+    <div style="margin-top:8px;font-size:0.82rem;">
+      <strong>matchedUnits = 8 &nbsp;·&nbsp; totalTrackUnits ≈ 28 &nbsp;·&nbsp; score = ⌊8/28 × 100⌋ = <span style="color:var(--accent)">29%</span></strong>
+    </div>
+  </div>
+
+  <h4>What the student sees</h4>
+  <div class="example-box">
+    <div class="example-header">🎯 Recommendation Banner — rendered result</div>
+    <div class="example-body">
+      <div class="track-result">
+        <div class="tr-rank">#1</div>
+        <div class="tr-body">
+          <div class="tr-name">Artificial Intelligence (AI)</div>
+          <div class="tr-reason">3 of your Year 1 courses (11 units) align with this track's core requirements.</div>
+          <div class="tr-score-wrap">
+            <div class="tr-bar-bg"><div class="tr-bar" style="width:34%"></div></div>
+            <div class="tr-pct">34%</div>
+          </div>
+        </div>
+      </div>
+      <div class="track-result">
+        <div class="tr-rank">#2</div>
+        <div class="tr-body">
+          <div class="tr-name">Theory</div>
+          <div class="tr-reason">3 of your Year 1 courses (10 units) align with this track's core requirements.</div>
+          <div class="tr-score-wrap">
+            <div class="tr-bar-bg"><div class="tr-bar" style="width:33%"></div></div>
+            <div class="tr-pct">33%</div>
+          </div>
+        </div>
+      </div>
+      <div class="track-result">
+        <div class="tr-rank">#3</div>
+        <div class="tr-body">
+          <div class="tr-name">Systems</div>
+          <div class="tr-reason">2 of your Year 1 courses (8 units) align with this track's core requirements.</div>
+          <div class="tr-score-wrap">
+            <div class="tr-bar-bg"><div class="tr-bar" style="width:29%"></div></div>
+            <div class="tr-pct">29%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>4d — Why Unit-Weighting Beats Course-Counting</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Scenario</th>
+        <th>Course-Count Score</th>
+        <th>Unit-Weighted Score</th>
+        <th>Better?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Student takes one 4-unit AI core course + three 1-unit seminars</td>
+        <td>4/10 = 40%</td>
+        <td>4/32 = 13%</td>
+        <td>✅ Unit score correctly shows shallow coverage</td>
+      </tr>
+      <tr>
+        <td>Student takes four 4-unit AI core courses</td>
+        <td>4/10 = 40%</td>
+        <td>16/32 = 50%</td>
+        <td>✅ Unit score correctly shows deep commitment</td>
+      </tr>
+      <tr>
+        <td>Student takes one 4-unit Theory course + one 1-unit seminar</td>
+        <td>2/8 = 25%</td>
+        <td>4/30 = 13%</td>
+        <td>✅ Unit score rewards the substantive course more</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     5. API REFERENCE
+═══════════════════════════════════════ -->
+<section>
+  <p class="section-label">Section 5</p>
+  <h2>API Reference</h2>
+
+  <table>
+    <thead>
+      <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>/v1/programs/student/me</code></td>
+        <td>GET</td>
+        <td>Full student plan — tracks, requirement groups, planned courses, catalog courses, approvals</td>
+      </tr>
+      <tr>
+        <td><code>/v1/programs/student/me/plan</code></td>
+        <td>PATCH</td>
+        <td>Save the full <code>plannedCourses</code> array after drag-and-drop edits. Accepts year, term, sourceType per course.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent);font-weight:700"><code>/v1/programs/student/me/recommend-track</code></td>
+        <td>GET</td>
+        <td><strong>NEW</strong> — Returns top 3 tracks ranked by unit-weighted Year 1 overlap. Response: <code>{ recommendations[], year1CourseCount }</code></td>
+      </tr>
+      <tr>
+        <td><code>/v1/programs/student/me/select-track</code></td>
+        <td>POST</td>
+        <td>Confirm a track selection. Body: <code>{ trackId }</code>. Returns updated plan. 409 if gate is locked.</td>
+      </tr>
+      <tr>
+        <td><code>/v1/programs/student/me/sheet</code></td>
+        <td>GET</td>
+        <td>Printable program sheet view with matched courses, petitions, and approvals.</td>
+      </tr>
+      <tr>
+        <td><code>/v1/programs/student/me/petitions</code></td>
+        <td>GET / POST</td>
+        <td>List or submit transfer credit, substitution, or waiver petitions.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>New Response Schema — <code>TrackRecommendationResponse</code></h3>
+  <pre>{
+  "recommendations": [
+    {
+      "trackId":           "cmo9snosb0040u5ho30gcn0d0",
+      "trackTitle":        "Artificial Intelligence (AI)",
+      "trackSlug":         "artificial-intelligence-ai",
+      "trackDescription":  "Focused depth path for AI and machine learning.",
+      "matchScore":        34,          // 0–100 integer
+      "matchedUnits":      11,          // units from Year 1 plan that match
+      "totalTrackUnits":   32,          // total units in track requirements
+      "matchedCourseCount": 3,          // number of Year 1 courses that matched
+      "reason": "3 of your Year 1 courses (11 units) align with this track's core requirements."
+    },
+    // ... up to 3 entries
+  ],
+  "year1CourseCount": 4               // total Year 1 courses placed
+}</pre>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     6. DEPLOYMENT
+═══════════════════════════════════════ -->
+<section class="page-break">
+  <p class="section-label">Section 6</p>
+  <h2>Deployment</h2>
+
+  <div class="deploy-grid">
+    <div class="deploy-card">
+      <div class="dc-icon">🌐</div>
+      <div class="dc-name">Web</div>
+      <div class="dc-url">nibras-web.fly.dev</div>
+      <div>Next.js 15 · 512 MB</div>
+      <div class="dc-status">✅ Live</div>
+    </div>
+    <div class="deploy-card">
+      <div class="dc-icon">⚡</div>
+      <div class="dc-name">API</div>
+      <div class="dc-url">nibras-api.fly.dev</div>
+      <div>Fastify · 1 GB</div>
+      <div class="dc-status">✅ Live</div>
+    </div>
+    <div class="deploy-card">
+      <div class="dc-icon">⚙️</div>
+      <div class="dc-name">Worker</div>
+      <div class="dc-url">internal only</div>
+      <div>Node.js · 1 GB</div>
+      <div class="dc-status">✅ Live</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Detail</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Cloud provider</td><td>Fly.io</td></tr>
+      <tr><td>Region</td><td>IAD (us-east)</td></tr>
+      <tr><td>Deploy method</td><td>All three apps deployed in parallel via <code>fly deploy --config fly.*.toml</code></td></tr>
+      <tr><td>Config files</td><td><code>fly.api.toml</code> · <code>fly.web.toml</code> · <code>fly.worker.toml</code></td></tr>
+      <tr><td>Build args (web)</td><td><code>NEXT_PUBLIC_NIBRAS_API_BASE_URL=https://nibras-api.fly.dev</code></td></tr>
+      <tr><td>Health check</td><td><code>GET /healthz</code> → <code>{"ok":true}</code></td></tr>
+      <tr><td>Auto-stop</td><td>Enabled (machines stop when idle, start on request)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Commits Delivered</h3>
+  <div class="commit-list">
+    <div class="commit-item">
+      <span class="commit-sha">54b5b62</span>
+      <span class="commit-msg">Add drag-and-drop course planner UI — visual 4-year × 2-term grid with palette sidebar, unit totals, and locked-plan state</span>
+    </div>
+    <div class="commit-item">
+      <span class="commit-sha">9666d2d</span>
+      <span class="commit-msg">Add track recommendation system after Year 1 course placement — API endpoint, scoring engine, banner, and confirmation modal</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     7. WHAT COULD COME NEXT
+═══════════════════════════════════════ -->
+<section>
+  <p class="section-label">Section 7</p>
+  <h2>What Could Come Next</h2>
+
+  <ul class="roadmap-list">
+    <li>
+      <span class="ri-icon">☀️</span>
+      <div class="ri-body">
+        <strong>Summer Term Support</strong>
+        <span>Add <code>'summer'</code> to the <code>AcademicTerm</code> enum in Prisma and contracts. The grid gains a third row per year. One migration, one schema change, no API rework.</span>
+      </div>
+    </li>
+    <li>
+      <span class="ri-icon">🤖</span>
+      <div class="ri-body">
+        <strong>AI-Powered Recommendations</strong>
+        <span>The <code>/recommend-track</code> endpoint already exists. When <code>NIBRAS_AI_API_KEY</code> is set, the route can call the OpenAI-compatible grading service (already in <code>packages/grading</code>) instead of the scoring engine — returning richer, natural-language reasons. Zero frontend changes needed.</span>
+      </div>
+    </li>
+    <li>
+      <span class="ri-icon">🔗</span>
+      <div class="ri-body">
+        <strong>Prerequisite Chain Validation</strong>
+        <span>Add a <code>prerequisites</code> relation to <code>CatalogCourse</code> in the Prisma schema. When a student places a course before its prerequisite, a warning chip appears on the cell. Pure client-side check using the catalog data already loaded.</span>
+      </div>
+    </li>
+    <li>
+      <span class="ri-icon">📈</span>
+      <div class="ri-body">
+        <strong>GPA &amp; Grade Tracking</strong>
+        <span>Add an optional <code>expectedGrade</code> field to <code>StudentPlannedCourse</code>. Chips in the grid show a small grade badge. A GPA projection row appears below the unit totals row.</span>
+      </div>
+    </li>
+    <li>
+      <span class="ri-icon">📄</span>
+      <div class="ri-body">
+        <strong>Direct PDF Export</strong>
+        <span>The <code>/planner/sheet</code> page already has a Print button. Adding <code>@media print</code> styles to render the grid cleanly (without the DnD interactivity) would make it a true one-click PDF export — no server-side rendering needed.</span>
+      </div>
+    </li>
+    <li>
+      <span class="ri-icon">📱</span>
+      <div class="ri-body">
+        <strong>Mobile Drag Improvement</strong>
+        <span>The current <code>PointerSensor</code> from @dnd-kit works on touch, but a dedicated <code>TouchSensor</code> with scroll tolerance would make the grid feel native on phones. A two-tap alternative (tap to pick, tap to place) would work for users who prefer it.</span>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<hr>
+
+<p style="font-family:'Segoe UI',sans-serif;font-size:0.8rem;color:var(--muted);text-align:center;margin-top:32px;">
+  Nibras Platform · Student Planner Feature Report · April 22, 2026 ·
+  <a href="https://nibras-web.fly.dev">nibras-web.fly.dev</a>
+</p>
+
+</body>
+</html>

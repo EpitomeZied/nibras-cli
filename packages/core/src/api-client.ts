@@ -1,4 +1,5 @@
 import { readCliConfig, writeCliConfig } from './config';
+import { TOKEN_REFRESH_THRESHOLD_MS } from './constants';
 
 export class ApiError extends Error {
   statusCode: number;
@@ -13,7 +14,15 @@ export class ApiError extends Error {
   }
 }
 
-const TOKEN_REFRESH_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+/** Thrown when the refresh token is invalid/expired and the user must re-login. */
+export class AuthExpiredError extends Error {
+  constructor() {
+    super('Your session has expired. Run `nibras login` to authenticate again.');
+    this.name = 'AuthExpiredError';
+  }
+}
+
+// TOKEN_REFRESH_THRESHOLD_MS is imported from ./constants.
 
 async function maybeRefreshToken(baseUrl: string): Promise<void> {
   const config = readCliConfig();
@@ -31,7 +40,18 @@ async function maybeRefreshToken(baseUrl: string): Promise<void> {
       body: JSON.stringify({ refreshToken: config.refreshToken }),
     });
     if (!response.ok) {
-      return; // Silently skip; the original token may still be valid
+      if (response.status >= 400 && response.status < 500) {
+        // 4xx means the refresh token itself is invalid or revoked.
+        // Clear the stored credentials so the next API call gets an
+        // actionable error rather than a confusing 401.
+        writeCliConfig({ ...config, accessToken: undefined, refreshToken: undefined, tokenCreatedAt: undefined });
+        throw new AuthExpiredError();
+      }
+      // 5xx or unexpected — warn and fall through with the existing token.
+      process.stderr.write(
+        `[nibras] Warning: token refresh failed (${response.status}) — proceeding with existing token.\n`
+      );
+      return;
     }
     const data = (await response.json()) as { accessToken: string; refreshToken: string };
     writeCliConfig({
@@ -40,8 +60,9 @@ async function maybeRefreshToken(baseUrl: string): Promise<void> {
       refreshToken: data.refreshToken,
       tokenCreatedAt: new Date().toISOString(),
     });
-  } catch {
-    // Network error during refresh — proceed with existing token
+  } catch (err) {
+    if (err instanceof AuthExpiredError) throw err;
+    // Transient network error — proceed with existing token silently.
   }
 }
 

@@ -33,7 +33,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function commandSubmit(plain: boolean): Promise<void> {
+export async function commandSubmit(plain: boolean, args: string[] = []): Promise<void> {
+  const force = args.includes('--force');
+
   const config = readCliConfig();
   if (!config.accessToken) {
     throw new Error('You are not logged in. Run `nibras login` first.');
@@ -54,6 +56,23 @@ export async function commandSubmit(plain: boolean): Promise<void> {
   const testExitCode = await runTests(testCommand, projectRoot);
   if (!plain && process.stdout.isTTY) {
     console.log();
+  }
+
+  // Fail fast if local tests didn't pass, unless --force is passed.
+  if (testExitCode !== 0 && !force) {
+    printBox(
+      'Tests failed — submission aborted',
+      [
+        `Command:   ${testCommand}`,
+        `Exit code: ${testExitCode}`,
+        '',
+        'Fix your tests or run with --force to submit anyway.',
+      ],
+      'error',
+      plain
+    );
+    process.exitCode = 1;
+    return;
   }
 
   // ── Step 3: Stage files ───────────────────────────────────────────────────

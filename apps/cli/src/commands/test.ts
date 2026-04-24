@@ -2,10 +2,7 @@ import { spawn } from 'node:child_process';
 import { buildProjectTestCommand, loadProjectManifest } from '@nibras/core';
 import picocolors from 'picocolors';
 import { printBox } from '../ui/box';
-
-function hasFlag(args: string[], flag: string): boolean {
-  return args.includes(flag);
-}
+import { hasFlag } from '../util/args';
 
 function runShellCommand(command: string, cwd: string, extraArgs: string[]): Promise<number> {
   const fullCommand = extraArgs.length > 0 ? `${command} ${extraArgs.join(' ')}` : command;

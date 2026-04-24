@@ -4961,6 +4961,28 @@ export class PrismaStore implements AppStore {
     return review ? toReviewRecord(review) : null;
   }
 
+  async getTrackingReviewsBySubmissionIds(
+    apiBaseUrl: string,
+    submissionIds: string[]
+  ): Promise<Map<string, ReviewRecord>> {
+    await this.seed(apiBaseUrl);
+    if (submissionIds.length === 0) return new Map();
+    // Fetch the most-recent review per submission in a single query, then
+    // reduce to a Map keyed by submissionAttemptId.
+    const reviews = await this.prisma.review.findMany({
+      where: { submissionAttemptId: { in: submissionIds } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const result = new Map<string, ReviewRecord>();
+    for (const review of reviews) {
+      // Keep only the first (most-recent) review for each submission.
+      if (!result.has(review.submissionAttemptId)) {
+        result.set(review.submissionAttemptId, toReviewRecord(review));
+      }
+    }
+    return result;
+  }
+
   async getSubmissionStudentEmail(
     _apiBaseUrl: string,
     submissionId: string

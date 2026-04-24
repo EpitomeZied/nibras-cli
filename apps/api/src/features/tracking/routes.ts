@@ -552,11 +552,12 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
       ).filter(
         (entry) => auth.user.systemRole === 'admin' || canManage || entry.userId === auth.user.id
       );
-      const reviews = (
-        await Promise.all(
-          submissions.map((entry) => store.getTrackingReview(requestBaseUrl(request), entry.id))
-        )
-      ).filter(isReviewRecord);
+      // Batched lookup — single query for all submissions in this milestone.
+      const reviewsMap = await store.getTrackingReviewsBySubmissionIds(
+        requestBaseUrl(request),
+        submissions.map((entry) => entry.id)
+      );
+      const reviews = Array.from(reviewsMap.values());
       return TrackingMilestoneSchema.parse(presentMilestone(milestone, submissions, reviews));
     }
   );
@@ -674,13 +675,21 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
         reply.code(201);
         return ProjectRoleApplicationSchema.parse(application);
       } catch (error) {
-        reply
-          .code(422)
-          .send(
-            Errors.validation(
-              error instanceof Error ? error.message : 'Failed to save application.'
-            )
-          );
+        // Re-throw unknown errors so Fastify's 500 handler captures them.
+        // Only return 422 for explicit validation/business-logic errors.
+        if (error instanceof Error && error.name === 'ZodError') {
+          reply.code(422).send(Errors.validation(error.message));
+          return;
+        }
+        if (
+          error instanceof Error &&
+          (error.message.includes('already applied') ||
+            error.message.includes('Unique constraint'))
+        ) {
+          reply.code(422).send(Errors.validation(error.message));
+          return;
+        }
+        throw error;
       }
     }
   );
@@ -1272,12 +1281,12 @@ export function registerTrackingRoutes(app: FastifyInstance, store: AppStore): v
             await store.listTrackingMilestoneSubmissions(requestBaseUrl(request), milestone.id)
           ).filter((entry) => entry.userId === auth.user.id);
           submissionsByMilestone[milestone.id] = submissions;
-          const reviews = (
-            await Promise.all(
-              submissions.map((entry) => store.getTrackingReview(requestBaseUrl(request), entry.id))
-            )
-          ).filter(isReviewRecord);
-          reviewsByMilestone[milestone.id] = reviews;
+          // Batched lookup — single query for all submissions in this milestone.
+          const reviewsMap = await store.getTrackingReviewsBySubmissionIds(
+            requestBaseUrl(request),
+            submissions.map((entry) => entry.id)
+          );
+          reviewsByMilestone[milestone.id] = Array.from(reviewsMap.values());
         }
       }
       return presentStudentDashboard({

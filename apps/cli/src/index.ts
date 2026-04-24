@@ -187,7 +187,7 @@ export async function runCli(argv: string[]): Promise<void> {
       return;
     }
     if (command === 'submit') {
-      await commandSubmit(plain);
+      await commandSubmit(plain, rest);
       return;
     }
     throw new Error(`Unknown command "${command}". Run \`nibras --help\` for available commands.`);

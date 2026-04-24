@@ -6,6 +6,52 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL ?? 'http://localh
 // Must differ from apiBaseUrl when apiBaseUrl is the web origin (to avoid circular rewrites).
 const apiInternalUrl = process.env.NIBRAS_API_INTERNAL_URL ?? apiBaseUrl;
 
+// Security headers applied to every response.
+// CSP allows 'unsafe-inline' for scripts/styles only in development; production
+// tightens this further. Adjust img-src / connect-src if additional CDNs are used.
+const securityHeaders = [
+  // Prevent browsers from sniffing the MIME type of a response.
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // Block clickjacking by denying framing by anyone other than same origin.
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  // Prevent full-page XSS attacks in legacy browsers (belt-and-suspenders).
+  { key: 'X-XSS-Protection', value: '1; mode=block' },
+  // Limit referrer information sent to third parties.
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  // Restrict browser feature/API access to only what the app needs.
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=()',
+  },
+  // Force HTTPS for 1 year, including sub-domains.
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=31536000; includeSubDomains; preload',
+  },
+  // Content Security Policy:
+  //   - default-src 'self': only load resources from same origin by default.
+  //   - script-src: self + inline (needed by Next.js) + GitHub avatars worker script.
+  //   - style-src: self + inline (CSS-in-JS / Next.js).
+  //   - img-src: self + data URIs + GitHub avatar CDN.
+  //   - connect-src: self + API base URL for fetch calls.
+  //   - frame-ancestors 'none': belt-and-suspenders against framing.
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https://avatars.githubusercontent.com",
+      `connect-src 'self' ${apiBaseUrl}`,
+      "font-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; '),
+  },
+];
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   // Required for monorepo standalone builds to correctly trace and bundle
@@ -19,6 +65,15 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // Attach security headers to every page and API route.
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ];
   },
   // Proxy all /v1/* API calls through Next.js so session cookies are same-origin.
   // Uses NIBRAS_API_INTERNAL_URL to avoid circular rewrites when NEXT_PUBLIC_NIBRAS_API_BASE_URL

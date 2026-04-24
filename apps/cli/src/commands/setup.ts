@@ -12,12 +12,7 @@ import {
 } from '@nibras/core';
 import { createSpinner } from '../ui/spinner';
 import { printBox } from '../ui/box';
-
-function parseOption(args: string[], name: string): string | null {
-  const index = args.indexOf(name);
-  if (index === -1) return null;
-  return args[index + 1] || null;
-}
+import { parseOption } from '../util/args';
 
 function isGitHubUrl(url: string | null | undefined): url is string {
   if (!url) return false;
