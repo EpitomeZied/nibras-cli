@@ -42,11 +42,47 @@ export const appNavItems: AppNavItem[] = [
     visibility: 'all',
   },
   {
+    href: '/tutor',
+    label: 'Tutor',
+    description: 'Chat, insights, smart routing, and recommendations.',
+    visibility: 'all',
+  },
+  {
+    href: '/community',
+    label: 'Community',
+    description: 'Ask questions, share answers, and join course discussions.',
+    visibility: 'all',
+  },
+  {
+    href: '/competitions',
+    label: 'Competitions',
+    description: 'Contests, practice problems, ranking, and competitive history.',
+    visibility: 'all',
+  },
+  {
+    href: '/achievements',
+    label: 'Achievements',
+    description: 'Badges, reputation, leaderboards, and level progression.',
+    visibility: 'all',
+    matchPrefixes: ['/levels'],
+  },
+  {
     href: '/instructor',
     label: 'Instructor',
     description: 'Manage courses, templates, team formation, and programs.',
     visibility: 'instructor',
     matchPrefixes: ['/instructor/programs'],
+  },
+  {
+    href: '/instructor/analytics',
+    label: 'Analytics',
+    description: 'Aggregate signal across courses — submissions, pass rate, engagement.',
+    visibility: 'instructor',
+    matchPrefixes: [
+      '/instructor/analytics/courses',
+      '/instructor/analytics/engagement',
+      '/instructor/analytics/students',
+    ],
   },
   {
     href: '/admin',
@@ -139,6 +175,78 @@ export const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/settings': {
     title: 'Settings',
     subtitle: 'Manage your account preferences and connected services.',
+  },
+  '/achievements': {
+    title: 'Achievements',
+    subtitle: 'Track the badges you have earned and the milestones still ahead.',
+  },
+  '/achievements/leaderboard': {
+    title: 'Leaderboard',
+    subtitle: 'Compare your standing against the rest of the cohort.',
+  },
+  '/achievements/reputation': {
+    title: 'Reputation',
+    subtitle: 'Detailed breakdown of reputation changes over time.',
+  },
+  '/levels': {
+    title: 'Levels',
+    subtitle: 'Tier progression based on reputation and contributions.',
+  },
+  '/tutor': {
+    title: 'AI Tutor',
+    subtitle: 'Chat with the tutor about any topic you’re working through.',
+  },
+  '/tutor/insights': {
+    title: 'Learning Insights',
+    subtitle: 'Where you’re strong, where you’re struggling, and what to study next.',
+  },
+  '/tutor/routing': {
+    title: 'Smart Routing',
+    subtitle: 'Map a learning goal to a step-by-step study plan.',
+  },
+  '/tutor/recommendations': {
+    title: 'Recommendations',
+    subtitle: 'Specialization and track suggestions tailored to your grades.',
+  },
+  '/community': {
+    title: 'Community',
+    subtitle: 'Ask questions, share answers, and learn from your peers.',
+  },
+  '/community/discussions': {
+    title: 'Course Discussions',
+    subtitle: 'Long-form threads scoped to your enrolled courses.',
+  },
+  '/competitions': {
+    title: 'Competitions',
+    subtitle: 'Upcoming contests and linked accounts.',
+  },
+  '/competitions/practice': {
+    title: 'Practice',
+    subtitle: 'Problems from Codeforces, LeetCode, and AtCoder.',
+  },
+  '/competitions/ranking': {
+    title: 'Ranking',
+    subtitle: 'How you rank across linked competitive platforms.',
+  },
+  '/competitions/history': {
+    title: 'Contest History',
+    subtitle: 'Your past contest performance and rating trend.',
+  },
+  '/instructor/analytics': {
+    title: 'Analytics',
+    subtitle: 'Aggregate cross-course signal and risk callouts.',
+  },
+  '/instructor/analytics/courses': {
+    title: 'Course Analytics',
+    subtitle: 'Per-course completion, average grade, and pass rate.',
+  },
+  '/instructor/analytics/engagement': {
+    title: 'Engagement',
+    subtitle: 'Time-on-task broken down by day and course.',
+  },
+  '/instructor/analytics/students': {
+    title: 'Students',
+    subtitle: 'Per-student engagement, grades, and risk classification.',
   },
 };
 

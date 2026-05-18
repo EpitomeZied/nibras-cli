@@ -741,6 +741,23 @@ NIBRAS_WEB_BASE_URL=http://localhost:3000
 # NIBRAS_WEB_BASE_URL=https://nibras.stanford.edu
 ```
 
+##### Web app external services
+The web app ports student-dashboard features (Gamification, AI Tutor, Community,
+Competitions, Analytics) that talk to external production backends directly
+from the browser. Each `NEXT_PUBLIC_*` URL below is whitelisted under
+`connect-src` of the CSP set in `apps/web/next.config.ts`.
+```bash
+NEXT_PUBLIC_NIBRAS_ADMIN_API_URL=https://nibras-backend.up.railway.app/api
+NEXT_PUBLIC_NIBRAS_COMMUNITY_API_URL=https://nibras-backend.up.railway.app/api
+NEXT_PUBLIC_NIBRAS_TRACKING_API_URL=https://nibras-api.fly.dev
+NEXT_PUBLIC_NIBRAS_COMPETITIONS_API_URL=https://nibras-backend.up.railway.app/api
+NEXT_PUBLIC_NIBRAS_RECOMMENDATION_API_URL=https://recommendationmodel-production-0f8e.up.railway.app/api
+```
+Per-tab debug override: append `?adminApi=…&communityApi=…&trackingApi=…&competitionsApi=…&recommendationApi=…`
+to the URL, or set the matching `nibras_<service>_api_url` localStorage key.
+External backends must respond with `Access-Control-Allow-Origin: <web origin>`
+and `Access-Control-Allow-Headers: Authorization, Content-Type`.
+
 #### Optional Configuration
 
 ##### Job Queue (Redis)

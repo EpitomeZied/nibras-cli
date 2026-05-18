@@ -1,0 +1,63 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.error {
+  border-color: color-mix(in oklab, var(--danger, #ef4444) 50%, var(--border));
+  background: color-mix(in oklab, var(--danger, #ef4444) 6%, var(--surface));
+}
+
+.icon {
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.error .icon {
+  color: var(--danger, #ef4444);
+}
+
+.defaultIcon {
+  display: block;
+}
+
+.title {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.description {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 420px;
+}
+
+.action {
+  margin-top: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong, var(--surface));
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.action:hover {
+  border-color: var(--primary, #22c55e);
+  background: color-mix(in oklab, var(--primary, #22c55e) 8%, var(--surface));
+}

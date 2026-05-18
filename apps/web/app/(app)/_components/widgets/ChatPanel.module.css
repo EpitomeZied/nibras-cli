@@ -1,0 +1,227 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  min-height: 480px;
+  max-height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+.scroller {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empty {
+  margin: auto;
+  text-align: center;
+  color: var(--text-muted);
+  max-width: 380px;
+}
+
+.empty strong {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.empty p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 88%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background: color-mix(in oklab, var(--primary, #22c55e) 14%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--primary, #22c55e) 30%, var(--border));
+}
+
+.assistantMessage {
+  align-self: flex-start;
+  background: var(--surface-strong, color-mix(in oklab, var(--surface) 60%, transparent));
+  border: 1px solid var(--border);
+}
+
+.pendingMessage {
+  opacity: 0.85;
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.role {
+  font-weight: 700;
+}
+
+.pendingPill,
+.errorPill {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pendingPill {
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 60%, transparent));
+  color: var(--text-muted);
+}
+
+.errorPill {
+  background: color-mix(in oklab, var(--danger, #ef4444) 18%, transparent);
+  color: var(--danger, #ef4444);
+}
+
+.body p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.body :global(code) {
+  font-family: var(--font-geist-mono, ui-monospace, SFMono-Regular);
+  font-size: 12.5px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 50%, transparent));
+}
+
+.body :global(pre) {
+  font-family: var(--font-geist-mono, ui-monospace, SFMono-Regular);
+  font-size: 12.5px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 50%, transparent));
+  margin: 6px 0 0;
+  overflow-x: auto;
+}
+
+.body :global(strong) {
+  font-weight: 700;
+}
+
+.body :global(a) {
+  color: var(--primary, #22c55e);
+  text-decoration: underline;
+}
+
+.citations {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.citations li {
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.citations a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.followUps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.followUpChip {
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.followUpChip:hover {
+  border-color: var(--primary, #22c55e);
+  color: var(--text);
+}
+
+.composer {
+  border-top: 1px solid var(--border);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input {
+  resize: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary, #22c55e);
+}
+
+.composerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.sendBtn {
+  background: var(--primary, #22c55e);
+  color: #052e16;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sendBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

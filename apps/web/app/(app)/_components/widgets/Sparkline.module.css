@@ -1,0 +1,10 @@
+.spark {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.empty {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--text-muted);
+}

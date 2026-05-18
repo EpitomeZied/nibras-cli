@@ -1,0 +1,203 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 64ch;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 240px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary, #22c55e);
+}
+
+.difficultyPicker {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.difficultyChip {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.difficultyChipActive {
+  background: color-mix(in oklab, var(--primary, #22c55e) 18%, var(--surface));
+  color: var(--primary, #22c55e);
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagChip {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tagChip:hover {
+  border-color: var(--primary, #22c55e);
+  color: var(--text);
+}
+
+.tagChipActive {
+  background: var(--primary, #22c55e);
+  border-color: var(--primary, #22c55e);
+  color: #052e16;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+}
+
+.row:hover {
+  border-color: var(--primary, #22c55e);
+}
+
+.rowSolved {
+  opacity: 0.7;
+}
+
+.problemTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.problemTitle a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.problemTitle a:hover {
+  color: var(--primary, #22c55e);
+}
+
+.problemMeta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.difficultyBadge {
+  font-family: var(--font-geist-mono, ui-monospace, SFMono-Regular);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 50%, transparent));
+  color: var(--text);
+  min-width: 50px;
+  text-align: center;
+}
+
+.hostTag {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary, #22c55e) 14%, transparent);
+  color: var(--primary, #22c55e);
+  font-weight: 700;
+}
+
+.bookmarkBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bookmarkBtn:hover {
+  border-color: var(--primary, #22c55e);
+  color: var(--text);
+}
+
+.bookmarkBtnActive {
+  border-color: var(--primary, #22c55e);
+  color: var(--primary, #22c55e);
+  background: color-mix(in oklab, var(--primary, #22c55e) 12%, var(--surface));
+}
+
+.solvedBadge {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary, #22c55e) 22%, transparent);
+  color: var(--primary, #22c55e);
+  font-weight: 700;
+}

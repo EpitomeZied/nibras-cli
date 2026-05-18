@@ -71,6 +71,68 @@ const NAV_ICONS: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  Achievements: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M4 3h8v2a4 4 0 11-8 0V3z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path d="M8 9v3M5 13h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path
+        d="M3 4H1.5v1.5A2.5 2.5 0 004 8M13 4h1.5v1.5A2.5 2.5 0 0112 8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+    </svg>
+  ),
+  Tutor: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.5 3.5l1.5 1.5M11 11l1.5 1.5M3.5 12.5L5 11M11 5l1.5-1.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <circle cx="8" cy="8" r="2.4" fill="currentColor" opacity=".85" />
+    </svg>
+  ),
+  Community: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 4a2 2 0 012-2h6a2 2 0 012 2v4a2 2 0 01-2 2H6l-3 3v-3H4a2 2 0 01-2-2V4z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  Competitions: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M4 2v11M4 2h7l-1.5 3L11 8H4"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <circle cx="4" cy="14" r="1.2" fill="currentColor" />
+    </svg>
+  ),
+  Analytics: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 14V3M2 14h12"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <rect x="4" y="8" width="2.5" height="4.5" rx="0.6" fill="currentColor" opacity=".8" />
+      <rect x="8" y="5" width="2.5" height="7.5" rx="0.6" fill="currentColor" opacity=".85" />
+      <rect x="12" y="10" width="2.5" height="2.5" rx="0.6" fill="currentColor" opacity=".6" />
+    </svg>
+  ),
   Settings: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3" />

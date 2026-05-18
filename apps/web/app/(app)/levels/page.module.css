@@ -1,0 +1,184 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 64ch;
+}
+
+.summaryCard {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.currentTier {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.currentBadge {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1c1917;
+}
+
+.currentText strong {
+  display: block;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.currentText span {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.progressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 70%, transparent));
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary, #22c55e), #38bdf8);
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.tierList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tierRow {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.tierRowActive {
+  border-color: var(--primary, #22c55e);
+  background: color-mix(in oklab, var(--primary, #22c55e) 6%, var(--surface));
+}
+
+.tierBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1c1917;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.tierBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tierBody strong {
+  font-size: 14px;
+}
+
+.tierBody span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tierState {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.statusUnlocked {
+  background: color-mix(in oklab, var(--primary, #22c55e) 18%, transparent);
+  color: var(--primary, #22c55e);
+}
+
+.statusCurrent {
+  background: color-mix(in oklab, var(--primary, #22c55e) 22%, transparent);
+  color: var(--primary, #22c55e);
+}
+
+.statusLocked {
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 60%, transparent));
+  color: var(--text-muted);
+}

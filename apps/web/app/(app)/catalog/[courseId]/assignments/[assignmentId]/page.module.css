@@ -1,0 +1,271 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.breadcrumb a {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--primary, #22c55e);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.statusBadge {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.statusNotStarted {
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 60%, transparent));
+  color: var(--text-muted);
+}
+
+.statusInProgress {
+  background: color-mix(in oklab, #38bdf8 22%, transparent);
+  color: #38bdf8;
+}
+
+.statusSubmitted {
+  background: color-mix(in oklab, var(--primary, #22c55e) 18%, transparent);
+  color: var(--primary, #22c55e);
+}
+
+.statusGraded {
+  background: color-mix(in oklab, #a78bfa 22%, transparent);
+  color: #a78bfa;
+}
+
+.statusLate {
+  background: color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
+  color: var(--danger, #ef4444);
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.description {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.rubricList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rubricRow {
+  display: grid;
+  grid-template-columns: 1fr 60px;
+  gap: 12px;
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rubricRow:last-child {
+  border-bottom: none;
+}
+
+.rubricCriterion {
+  font-weight: 600;
+}
+
+.rubricWeight {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.rubricDescription {
+  font-size: 12px;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.resourceList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resourceLink {
+  color: var(--primary, #22c55e);
+  text-decoration: none;
+  font-size: 12.5px;
+}
+
+.resourceLink:hover {
+  text-decoration: underline;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+
+.metaRow span:first-child {
+  color: var(--text-muted);
+}
+
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.composerInput {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-geist-mono, ui-monospace, SFMono-Regular);
+  font-size: 12.5px;
+  min-height: 200px;
+  color: var(--text);
+  resize: vertical;
+}
+
+.composerInput:focus {
+  outline: none;
+  border-color: var(--primary, #22c55e);
+}
+
+.preflight {
+  font-size: 12px;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preflightRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preflightOk {
+  color: var(--primary, #22c55e);
+}
+
+.preflightWarn {
+  color: var(--warning, #f59e0b);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.draftStatus {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.submitBtn {
+  background: var(--primary, #22c55e);
+  color: #052e16;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.submitBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

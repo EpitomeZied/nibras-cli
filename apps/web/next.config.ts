@@ -6,6 +6,28 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_NIBRAS_API_BASE_URL ?? 'http://localh
 // Must differ from apiBaseUrl when apiBaseUrl is the web origin (to avoid circular rewrites).
 const apiInternalUrl = process.env.NIBRAS_API_INTERNAL_URL ?? apiBaseUrl;
 
+// External backends consumed by the ported student-dashboard pages. The browser
+// fetches these directly (no Next.js rewrite), so each origin must appear in
+// `connect-src` of the CSP header below.
+const externalServiceOrigins: string[] = [
+  process.env.NEXT_PUBLIC_NIBRAS_ADMIN_API_URL ?? 'https://nibras-backend.up.railway.app',
+  process.env.NEXT_PUBLIC_NIBRAS_COMMUNITY_API_URL ?? 'https://nibras-backend.up.railway.app',
+  process.env.NEXT_PUBLIC_NIBRAS_TRACKING_API_URL ?? 'https://nibras-api.fly.dev',
+  process.env.NEXT_PUBLIC_NIBRAS_COMPETITIONS_API_URL ?? 'https://nibras-backend.up.railway.app',
+  process.env.NEXT_PUBLIC_NIBRAS_RECOMMENDATION_API_URL ??
+    'https://recommendationmodel-production-0f8e.up.railway.app',
+]
+  .map((value) => {
+    try {
+      return new URL(value).origin;
+    } catch {
+      return null;
+    }
+  })
+  .filter((value): value is string => value !== null);
+
+const connectSrc = ["'self'", apiBaseUrl, ...new Set(externalServiceOrigins)].join(' ');
+
 // Security headers applied to every response.
 // CSP allows 'unsafe-inline' for scripts/styles only in development; production
 // tightens this further. Adjust img-src / connect-src if additional CDNs are used.
@@ -43,7 +65,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://avatars.githubusercontent.com https://i.ytimg.com",
-      `connect-src 'self' ${apiBaseUrl}`,
+      `connect-src ${connectSrc}`,
       "font-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",

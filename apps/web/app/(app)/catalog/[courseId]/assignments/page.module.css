@@ -1,0 +1,117 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.breadcrumb a {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--primary, #22c55e);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.row:hover {
+  border-color: var(--primary, #22c55e);
+  transform: translateY(-1px);
+}
+
+.assignmentTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.assignmentMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dueBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.dueSoon {
+  background: color-mix(in oklab, var(--warning, #f59e0b) 22%, transparent);
+  color: var(--warning, #f59e0b);
+}
+
+.dueLate {
+  background: color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
+  color: var(--danger, #ef4444);
+}
+
+.dueOk {
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 50%, transparent));
+  color: var(--text-muted);
+}
+
+.statusBadge {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.statusNotStarted {
+  background: var(--surface-strong, color-mix(in oklab, var(--border) 60%, transparent));
+  color: var(--text-muted);
+}
+
+.statusInProgress {
+  background: color-mix(in oklab, #38bdf8 22%, transparent);
+  color: #38bdf8;
+}
+
+.statusSubmitted {
+  background: color-mix(in oklab, var(--primary, #22c55e) 18%, transparent);
+  color: var(--primary, #22c55e);
+}
+
+.statusGraded {
+  background: color-mix(in oklab, #a78bfa 22%, transparent);
+  color: #a78bfa;
+}
+
+.statusLate {
+  background: color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
+  color: var(--danger, #ef4444);
+}
